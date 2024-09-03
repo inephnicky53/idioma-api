@@ -1,0 +1,93 @@
+{% if field.value is not empty %}
+    <div class="discussions">
+        {% for value in field.value %}
+            {% set detailParticipant = ea_url()
+                .setController('App\\Controller\\Admin\\User\\UserCrudController')
+                .setAction(constant('EasyCorp\\Bundle\\EasyAdminBundle\\Config\\Action::DETAIL'))
+                .setEntityId(value.id) %}
+            <div class="discussion">
+                <div class="photo"
+                     style="background-image: url({{ value.thumbnail ? vich_uploader_asset(value.thumbnail, 'file') }});">
+                </div>
+                <div class="desc-contact">
+                    <a class="name" href="{{ detailParticipant }}">{{ value }}</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    Pas de participants
+{% endif %}
+
+
+<style>
+    .online {
+        position: relative;
+        top: 30px;
+        left: 35px;
+        width: 13px;
+        height: 13px;
+        background-color: #8BC34A;
+        border-radius: 13px;
+        border: 3px solid #FAFAFA;
+    }
+
+    .timer {
+        margin-left: 15%;
+        font-family: 'Open Sans', sans-serif;
+        font-size: 11px;
+        padding: 3px 8px;
+        color: #BBB;
+        background-color: #FFF;
+        border: 1px solid #E5E5E5;
+        border-radius: 15px;
+    }
+
+
+    .discussions .discussion .photo {
+        margin-left: 20px;
+        display: block;
+        width: 45px;
+        height: 45px;
+        background: #E6E7ED;
+        -moz-border-radius: 50px;
+        -webkit-border-radius: 50px;
+        background-position: center;
+        background-size: cover;
+        background-repeat: no-repeat;
+    }
+
+    .online {
+        position: relative;
+        top: 30px;
+        left: 35px;
+        width: 13px;
+        height: 13px;
+        background-color: #8BC34A;
+        border-radius: 13px;
+        border: 3px solid #FAFAFA;
+    }
+
+    .desc-contact {
+        height: 43px;
+        width: 50%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .discussions .discussion {
+        width: 100%;
+        height: 90px;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .discussions .discussion .name {
+        margin: 0 0 0 20px;
+        font-size: 11pt;
+        vertical-align: middle;
+        align-items: center;
+    }
+</style>

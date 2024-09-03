@@ -1,0 +1,48 @@
+user:
+  user: Utilisateur
+  student: Etudiant
+  teacher: Professeur
+  admin: Administrateur
+
+  hours:
+    empty: pas d'heures avec ce professeur
+    with_number: >
+      {number, plural,
+        =0  {pas d'heures avec ce professeur}
+        =1  {avec une heure}
+        other  {avec # heures}
+      }
+  participant:
+    as_participants: comme participants
+planning:
+  no_course: Pas de nom du cours
+  empty: Pas de planning
+  with_teacher: avec le professeur
+
+
+monday: lundi
+tuesday: mardi
+wednesday: mercredi
+thursday: jeudi
+friday: vendredi
+saturday: samedi
+sunday: dimanche
+
+A1: A1
+A2: A2
+B1: B1
+B2: B2
+C1: C1
+C2: C2
+Natif: Langue natale
+
+comment:
+  empty: Pas de commentaire
+
+teacher:
+  favorite:
+    added: Vous avez ajouté ce professeur dans vos favoris
+    removed: Vous venez de retirer ce professeur
+    cant_remove: Vous avez des heurs disponible pour ce professeur
+    no_exist: Ce professeur ne fait pas partie de vos favoris
+

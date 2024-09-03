@@ -1,0 +1,25 @@
+user.user: Users
+user.student: Student
+user.teacher: Professeur
+user.admin: Administrator
+user.hours.empty: __user.hours.empty
+user.hours.with_number: __user.hours.with_number
+user.participant.as_participants: __user.participant.as_participants
+planning.no_course: __planning.no_course
+planning.empty: __planning.empty
+planning.with_teacher: __planning.with_teacher
+monday: monday
+tuesday: __tuesday
+wednesday: __wednesday
+thursday: __thursday
+friday: __friday
+saturday: __saturday
+sunday: __sunday
+comment.empty: __comment.empty
+
+teacher:
+  favorite:
+    added: Vous avez ajouté ce professeur dans vos favoris
+    removed: Vous venez de retirer ce professeur
+    cant_remove: Vous avez des heurs disponible pour ce professeur
+    no_exist: Ce professeur ne fait pas partie de vos favoris

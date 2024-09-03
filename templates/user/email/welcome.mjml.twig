@@ -1,0 +1,59 @@
+{% extends "base_email.mjml.twig" %}
+
+{% block title %}{{ subject }}{% endblock %}
+
+{% block email_content %}
+    <mj-section background-color="#ffffff" padding-left="15px" padding-right="15px">
+        <mj-column width="100%">
+            <mj-text color="#212b35" font-weight="bold" font-size="20px">
+                Bienvenue sur {{ idioma.name }} !
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Cher/Chère {{ user }},
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Nous sommes ravis de vous accueillir sur Idioma International, votre nouvelle plateforme
+                d'apprentissage des langues !
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Vous venez de faire le premier pas vers l'acquisition d'une nouvelle langue, et nous
+                sommes là pour vous accompagner tout au long de ce passionnant voyage.
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Sur {{ idioma.name }}, vous aurez accès à :
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                <ul>
+                    <li style="padding-bottom: 20px"><strong>Des cours interactifs et ludiques:</strong>
+                        conçus par des experts en pédagogie des langues
+                    </li>
+                    <li style="padding-bottom: 20px"><strong>Un large choix de ressources:</strong>
+                        vidéos, exercices, dialogues, etc... pour pratiquer à votre rythme.
+                    </li>
+                    <li><strong>Suivi adaptée:</strong> Un système de suivi de vos progrès pour vous
+                        motiver et vous guider.
+                    </li>
+                    <li><strong>Suivi communautaire:</strong> Une communauté d'apprenants dynamique avec
+                        qui échanger et pratiquerr.
+                    </li>
+                </ul>
+            </mj-text>
+            <mj-button background-color="#3d165b" align="center" color="#ffffff" font-size="17px"
+                       font-weight="bold" href="{{ idioma.find_teacher }}" width="300px">
+                Réserver un cours
+            </mj-button>
+            <mj-text color="#637381" font-size="16px" padding-top="30px">
+
+                N'hésitez pas à nous contacter si vous avez la moindre question. Nous serons ravis de
+                vous aider à atteindre vos objectifs linguistiques.
+            </mj-text>
+            <mj-text color="#637381" font-size="16px" padding-bottom="0">
+                Bonne découverte et bon apprentissage !
+            </mj-text>
+            <mj-text color="#637381" font-size="16px" padding-bottom="0">
+                L'équipe {{ idioma.name }}
+            </mj-text>
+        </mj-column>
+    </mj-section>
+
+{% endblock %}

@@ -1,0 +1,29 @@
+{% if field.value is not empty %}
+    <ol>
+        {% for value in field.value %}
+            {% set detailUrl = ea_url()
+                .setController('App\\Controller\\Admin\\Teacher\\TeacherCrudController')
+                .setAction(constant('EasyCorp\\Bundle\\EasyAdminBundle\\Config\\Action::DETAIL'))
+                .setEntityId(value.teacher.id) %}
+            <li>
+                <div>
+                    <b><a href="{{ detailUrl }}">{{ value }}</a></b>
+                    {% if value.canTrial %}
+                        <span class="badge badge-success">essaie disponible</span>
+                    {% endif %}
+                </div>
+
+                <small>
+                    {% if value.hours > 0 %}
+                        {{ "user.hours.with_number"|trans({"number": value.hours}) }}
+                    {% else %}
+                        <span class="text-warning">{{ 'user.hours.empty'|trans }}</span>
+                    {% endif %}
+                    <br>ajouté le {{ value.createdAt|date('Y-m-d H:i') }}
+                </small>
+            </li>
+        {% endfor %}
+    </ol>
+{% else %}
+    Pas de professeurs suivis
+{% endif %}

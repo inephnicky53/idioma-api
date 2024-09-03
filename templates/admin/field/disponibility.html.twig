@@ -1,0 +1,12 @@
+{% if field.value is not empty %}
+    <ol>
+        {% for value in field.value %}
+            <li>
+                <b>{{ value.day|trans({}, 'messages') }}</b> de <b>{{ value.start }}</b> à <b>{{ value.end }}</b><br>
+                <em>{{ value.isActive ? "actif" : "non actif" }}</em>
+            </li>
+        {% endfor %}
+    </ol>
+{% else %}
+    Pas de disponibilité
+{% endif %}

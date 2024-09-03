@@ -1,0 +1,13 @@
+{# templates/admin/my-custom-page.html.twig #}
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block title %}Tableau de bord{% endblock %}
+
+{% block content_title %}Tableau de bord{% endblock %}
+
+{% block page_actions %}
+    <a class="btn btn-primary" href="{{ path('admin') }}">Actualiser</a>
+{% endblock %}
+
+{% block main %}
+{% endblock %}

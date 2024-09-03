@@ -1,0 +1,16 @@
+{% if field.value is not empty %}
+    <ol>
+        {% for value in field.value %}
+            <li>
+                <b>{{ value.course }}</b><br>
+                {{ value.start|date > "now"|date ? 'aura' : 'a eu' }} lieu de <b>{{ value.start|date('Y-m-d H:i') }}</b>
+                à <b>{{ value.end|date('Y-m-d H:i') }}</b><br> avec
+                {% for participant in value.participants %}
+                    {{ participant }}, &nbsp;
+                {% endfor %}
+            </li>
+        {% endfor %}
+    </ol>
+{% else %}
+    Pas de planning
+{% endif %}

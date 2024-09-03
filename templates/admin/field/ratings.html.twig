@@ -1,0 +1,18 @@
+{% if field.value is not empty %}
+    <ol>
+        {% for value in field.value %}
+            {% set detailUrl = ea_url()
+                .setController('App\\Controller\\Admin\\UserCrudController')
+                .setAction(constant('EasyCorp\\Bundle\\EasyAdminBundle\\Config\\Action::DETAIL'))
+                .setEntityId(value.user.id) %}
+            <li>
+                <b>{{ value.stars }}</b> étoils
+                par <em><a href="{{ detailUrl }}">{{ value.user }}</a></em><br>
+                {{ value.comment ?? "Pas de commentaire" }} <br>
+                <hr>
+            </li>
+        {% endfor %}
+    </ol>
+{% else %}
+    Pas de langues d'objectif
+{% endif %}

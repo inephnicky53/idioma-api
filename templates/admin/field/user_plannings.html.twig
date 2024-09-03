@@ -1,0 +1,42 @@
+{% if field.value is not empty %}
+    <ol>
+        {% for value in field.value %}
+            {% set detailTeacher = ea_url()
+                .setController('App\\Controller\\Admin\\Teacher\\TeacherCrudController')
+                .setAction(constant('EasyCorp\\Bundle\\EasyAdminBundle\\Config\\Action::DETAIL'))
+                .setEntityId(value.teacher.id) %}
+            <li>
+                <b>
+                    {% if value.course %}
+                        {{ value.course }}
+                    {% else %}
+                        <span class="text-warning">
+                            {{ "planning.no_course"|trans }}
+                        </span>
+                    {% endif %}
+                </b><br>
+                {{ value.start|date > "now"|date ? 'aura' : 'a eu' }} lieu de {{ value.start|date('Y-m-d H:i') }}
+                à {{ value.end|date('Y-m-d H:i') }}<br>
+                {{ 'planning.with_teacher'|trans }} <a href="{{ detailTeacher }}">{{ value.teacher }}</a>
+                {% if value.participants|length > 1 %}
+                    <br> et
+                    {% for participant in value.participants %}
+                        {% set detailParticipant = ea_url()
+                            .setController('App\\Controller\\Admin\\User\\UserCrudController')
+                            .setAction(constant('EasyCorp\\Bundle\\EasyAdminBundle\\Config\\Action::DETAIL'))
+                            .setEntityId(participant.id) %}
+                        <a href="{{ detailParticipant }}">
+                            {{ participant }}
+                        </a>,
+                    {% endfor %}
+                    {{ "user.participant.as_participants"|trans }}
+                {% endif %}
+                {% if not loop.last %}
+                    <hr>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ol>
+{% else %}
+    {{ 'planning.empty'|trans }}
+{% endif %}

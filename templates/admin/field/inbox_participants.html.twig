@@ -1,0 +1,7 @@
+{% if field.value is not empty %}
+    {% for value in field.value %}
+        {{ value }}{{ not loop.last ? ", " }}
+    {% endfor %}
+{% else %}
+    Pas de participants
+{% endif %}

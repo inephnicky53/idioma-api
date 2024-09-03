@@ -1,0 +1,17 @@
+{% if field.value is not empty %}
+    <ul>
+        {% for language in field.value %}
+            {% set detailUrl = ea_url()
+                .setController('App\\Controller\\Admin\\LanguageCrudController')
+                .setAction(constant('EasyCorp\\Bundle\\EasyAdminBundle\\Config\\Action::DETAIL'))
+                .setEntityId(language.id) %}
+            <li>
+                <a href="{{ detailUrl }}" style="display: block">
+                    {{ language.name }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <div class="text-danger">Pas de langues d'objectif</div>
+{% endif %}
