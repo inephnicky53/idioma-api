@@ -37,6 +37,7 @@ class UserSubscriber implements EventSubscriberInterface
     public function onUserCreated(UserCreatedEvent $event): void
     {
         $user = $event->getUser();
+        dd($user);
         try {
             $subject = "Bienvenue sur Idioma International";
             $email = (new TemplatedEmail())

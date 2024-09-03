@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Api\UrlGeneratorInterface;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
@@ -35,7 +36,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
             read: false
         ),
     ],
-    mercure: true,
+    mercure: 'object.getMercureOptions()',
 )]
 class InboxThread
 {
@@ -72,11 +73,6 @@ class InboxThread
         $this->dateConstructor();
         $this->messages = new ArrayCollection();
         $this->participants = new ArrayCollection();
-    }
-
-    public function __toString(): string
-    {
-        return $this->getTeacher()->getUser()->getFullname();
     }
 
     public function getId(): ?int
@@ -166,5 +162,20 @@ class InboxThread
     public function getLastMessage(): mixed
     {
         return $this->messages->last() ?? null;
+    }
+
+    public function getMercureOptions(): array
+    {
+        $topic = '@=iri(object, ' . UrlGeneratorInterface::ABS_PATH . ')';
+
+        return [
+            'private' => true,
+            'topics' => [$topic],
+        ];
+    }
+
+    public function __toString(): string
+    {
+        return $this->getTeacher()->getUser()->getFullname();
     }
 }
