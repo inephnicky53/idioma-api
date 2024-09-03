@@ -123,11 +123,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:show', 'teacher:list', 'user:courses', 'user:teachers', 'user:inbox', 'planning:show'])]
+    #[Groups(['user:show', 'teacher:list', 'user:courses', 'user:teachers', 'user:inbox', 'planning:show', 'inbox_thread:list'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
-    #[Groups(['user:show', 'user:register', 'course:list', 'user:inbox', 'planning:show'])]
+    #[Groups(['user:show', 'user:register', 'course:list', 'user:inbox', 'planning:show', 'inbox_thread:list'])]
     private ?string $email = null;
 
     #[ORM\Column]
@@ -162,22 +162,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private bool $isVerified = false;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['user:register', 'planning:show', 'user:update'])]
+    #[Groups(['user:register', 'planning:show', 'user:update', 'inbox_thread:list'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['user:register', 'planning:show', 'user:update'])]
+    #[Groups(['user:register', 'planning:show', 'user:update', 'inbox_thread:list'])]
     private ?string $firstname = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['user:register', 'planning:show', 'user:update'])]
+    #[Groups(['user:register', 'planning:show', 'user:update', 'inbox_thread:list'])]
     private ?string $postname = null;
 
     #[ORM\Column(nullable: true)]
     private ?\DateTime $birthdayAt;
 
     #[ORM\Column(length: 15, unique: true, nullable: true)]
-    #[Groups(['user:register', 'planning:show'])]
+    #[Groups(['user:register', 'planning:show', 'inbox_thread:list'])]
     private ?string $phone = null;
 
     #[ORM\Column]

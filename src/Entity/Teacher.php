@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\RangeFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
@@ -135,11 +136,10 @@ use Symfony\Component\Serializer\Annotation\Groups;
     'id' => 'exact',
     'language' => 'exact',
     'teachingLanguages' => 'exact',
-    'spokenLanguages' => 'exact',
-    'price' => 'exact',
-    'status' => 'exact',
+    'spokenLanguages' => 'exact'
 ])]
 #[ApiFilter(BooleanFilter::class, properties: ['isActive'])]
+#[ApiFilter(RangeFilter::class, properties: ['price'])]
 class Teacher
 {
     const STATUS_WAITING = 0;
@@ -163,11 +163,11 @@ class Teacher
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['teacher:list', 'course:list', 'user:courses', 'user:teachers', 'planning:show'])]
+    #[Groups(['teacher:list', 'course:list', 'user:courses', 'user:teachers', 'planning:show', 'user:inbox', 'inbox_thread:list'])]
     private ?int $id = null;
 
     #[ORM\OneToOne(inversedBy: 'teacher', cascade: ['persist', 'remove'])]
-    #[Groups(['teacher:list', 'course:list', 'user:courses', 'user:teachers', 'planning:show'])]
+    #[Groups(['teacher:list', 'course:list', 'user:courses', 'user:teachers', 'planning:show', 'user:inbox', 'inbox_thread:list'])]
     private ?User $user = null;
 
     #[ORM\ManyToMany(targetEntity: Language::class, inversedBy: 'teachers')]
@@ -197,11 +197,11 @@ class Teacher
     private Collection $ratings;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['teacher:list', 'teacher:pricing', 'teacher:disponibilities'])]
+    #[Groups(['teacher:list', 'teacher:pricing', 'teacher:disponibilities', 'user:teachers'])]
     private ?float $price = null;
 
     #[ORM\ManyToOne(inversedBy: 'teachers')]
-    #[Groups(['teacher:list', 'teacher:pricing', 'teacher:disponibilities'])]
+    #[Groups(['teacher:list', 'teacher:pricing', 'teacher:disponibilities', 'user:teachers'])]
     private ?Currency $currency = null;
 
     #[ORM\OneToMany(mappedBy: 'teacher', targetEntity: UserTeacher::class)]
@@ -272,7 +272,7 @@ class Teacher
     private bool $isFavorite = false;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['teacher:list'])]
+    #[Groups(['teacher:list', 'inbox_thread:list'])]
     private ?string $profile = null;
 
     #[ORM\Column(length: 255, options: ['default' => self::STATUS_WAITING])]

@@ -18,8 +18,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Entity(repositoryClass: InboxThreadRepository::class)]
 #[ApiResource(
     operations: [
-        new Get(),
-        new GetCollection(),
+        new Get(
+            normalizationContext: ['groups' => ['inbox_thread:read']],
+        ),
+        new GetCollection(
+            normalizationContext: ['groups' => ['inbox_thread:list']],
+        ),
         new Post(
             denormalizationContext: ['groups' => ['inbox:new']],
         ),
@@ -28,6 +32,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
             controller: UserThreadController::class,
             normalizationContext: ['groups' => ['user:inbox', 'user:inbox:threads']],
             security: "is_granted('ROLE_USER')",
+            read: false
         ),
     ],
     mercure: true,
@@ -43,10 +48,11 @@ class InboxThread
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:inbox:threads'])]
+    #[Groups(['user:inbox:threads', 'inbox_thread:read'])]
     private ?int $id = null;
 
     #[ORM\OneToMany(targetEntity: InboxMessage::class, mappedBy: 'thread', cascade: ['persist'], orphanRemoval: true)]
+    #[Groups(['inbox_thread:read'])]
     private Collection $messages;
 
     #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'inboxThreads')]
@@ -54,7 +60,7 @@ class InboxThread
     private Collection $participants;
 
     #[ORM\ManyToOne]
-    #[Groups(['inbox:new', 'user:inbox:threads'])]
+    #[Groups(['inbox:new', 'user:inbox', 'user:inbox:threads', 'inbox_thread:list'])]
     private ?Teacher $teacher = null;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
@@ -156,10 +162,9 @@ class InboxThread
         return $this;
     }
 
-
     #[Groups(['user:inbox:threads'])]
     public function getLastMessage(): mixed
     {
-        return $this->messages->last();
+        return $this->messages->last() ?? null;
     }
 }

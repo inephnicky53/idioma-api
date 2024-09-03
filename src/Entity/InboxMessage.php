@@ -5,15 +5,10 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Metadata\GraphQl\Mutation;
-use ApiPlatform\Metadata\GraphQl\Query;
-use ApiPlatform\Metadata\GraphQl\QueryCollection;
 use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use App\Repository\InboxMessageRepository;
-use App\State\Inbox\NewMessageProcessor;
-use App\State\Teacher\SaveTeacherProcessor;
 use App\Trait\Datable;
 use App\Trait\Deletable;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -39,12 +34,8 @@ use Symfony\Component\Serializer\Annotation\Groups;
             security: "is_granted('ROLE_USER')",
         ),
         new Post(
+            normalizationContext: ['groups' => ['inbox:chat:send']],
             denormalizationContext: ['groups' => ['inbox:chat:send']],
-        ),
-        new Post(
-            uriTemplate: "thread/messages/new",
-            security: "is_granted('ROLE_USER')",
-            processor: NewMessageProcessor::class
         ),
         new Patch(name: 'update')
     ],
@@ -60,34 +51,37 @@ class InboxMessage
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:inbox:threads'])]
+    #[Groups(['user:inbox:threads', 'inbox_thread:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'inboxMessages')]
-    #[Groups(['inbox:chat:send', 'user:inbox:threads'])]
+    #[Groups(['inbox:chat:send', 'user:inbox:threads', 'inbox_thread:read'])]
     private ?User $author = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Groups(['inbox:chat:send', 'user:inbox:threads'])]
+    #[Groups(['inbox:chat:send', 'user:inbox:threads', 'inbox_thread:read'])]
     private ?string $body = null;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
-    #[Groups(['user:inbox:threads'])]
+    #[Groups(['user:inbox:threads', 'inbox_thread:read'])]
     private ?Attachment $attachment = null;
 
     #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'messageTags')]
+    #[Groups(['inbox_thread:read'])]
     private ?self $tagMessage = null;
 
     #[ORM\OneToMany(mappedBy: 'tagMessage', targetEntity: self::class)]
     private Collection $messageTags;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['inbox_thread:read', 'user:inbox:threads'])]
     private ?\DateTimeImmutable $receivedAt = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['inbox_thread:read', 'user:inbox:threads'])]
     private ?\DateTimeImmutable $readAt = null;
 
-    #[ORM\ManyToOne(inversedBy: 'messages')]
+    #[ORM\ManyToOne(cascade: ['persist'], inversedBy: 'messages')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['inbox:chat:send'])]
     private ?InboxThread $thread = null;
@@ -96,6 +90,8 @@ class InboxMessage
     {
         $this->dateConstructor();
         $this->messageTags = new ArrayCollection();
+        if (is_null($this->receivedAt))
+            $this->receivedAt = new \DateTimeImmutable();
     }
 
     public function __toString(): string
