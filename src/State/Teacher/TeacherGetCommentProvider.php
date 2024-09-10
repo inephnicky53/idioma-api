@@ -22,8 +22,7 @@ class TeacherGetCommentProvider implements ProviderInterface
         /** @var Teacher $teacher */
         $teacher = $this->inner->provide($operation, $uriVariables, $context);
 
-        $comments = $teacher->getRatings()->map(fn (Rating $rating) => $rating->getComment());
 
-        return $comments->toArray();
+        return $teacher->getRatings()->toArray();
     }
 }
