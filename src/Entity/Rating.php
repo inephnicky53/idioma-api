@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Post;
 use App\Controller\Api\Rating\ApiPostRatingController;
@@ -17,7 +18,7 @@ use function Symfony\Component\Translation\t;
 #[ORM\Entity(repositoryClass: RatingRepository::class)]
 #[ApiResource(
     operations: [
-        new Get(
+        new GetCollection(
             uriTemplate: 'teachers/{teacherId}/comments',
             uriVariables: [
                 'teacherId' => new Link(toProperty: 'teacher', fromClass: Teacher::class),
