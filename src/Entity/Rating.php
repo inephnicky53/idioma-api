@@ -3,9 +3,12 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Post;
 use App\Controller\Api\Rating\ApiPostRatingController;
 use App\Repository\RatingRepository;
+use App\State\Teacher\TeacherGetCommentProvider;
 use App\Trait\Datable;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -14,6 +17,12 @@ use function Symfony\Component\Translation\t;
 #[ORM\Entity(repositoryClass: RatingRepository::class)]
 #[ApiResource(
     operations: [
+        new Get(
+            uriTemplate: 'teachers/{teacherId}/comments',
+            uriVariables: [
+                'teacherId' => new Link(toProperty: 'teacher', fromClass: Teacher::class),
+            ],
+        ),
         new Post(
             controller: ApiPostRatingController::class,
             denormalizationContext: ['groups' => ['rating:new']],

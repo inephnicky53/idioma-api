@@ -26,7 +26,6 @@ use App\State\Teacher\TeacherCertificationsProcessor;
 use App\State\Teacher\TeacherDisponibilitiesProcessor;
 use App\State\Teacher\TeacherCollectionProvider;
 use App\State\Teacher\TeacherCheckProvider;
-use App\State\Teacher\TeacherGetCommentProvider;
 use App\State\Teacher\TeacherGetProvider;
 use App\Trait\Activable;
 use App\Trait\Datable;
@@ -50,10 +49,6 @@ use Symfony\Component\Serializer\Annotation\Groups;
         ),
         new Get(
             provider: TeacherGetProvider::class,
-        ),
-        new Get(
-            uriTemplate: 'teachers/{id}/comments',
-            provider: TeacherGetCommentProvider::class,
         ),
         new Get(
             uriTemplate: "teacher/check",
