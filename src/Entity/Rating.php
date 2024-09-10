@@ -56,6 +56,7 @@ class Rating
 
     #[ORM\ManyToOne(inversedBy: 'ratings')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['rating:list'])]
     private ?User $user = null;
 
     #[ORM\Column(length: 255, nullable: true)]
