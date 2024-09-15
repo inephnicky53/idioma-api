@@ -28,10 +28,6 @@ class Contact
     #[Groups(['contact:create'])]
     private ?string $lastname = null;
 
-    #[ORM\Column(length: 255)]
-    #[Groups(['contact:create'])]
-    private ?string $firstname = null;
-
     #[ORM\Column(length: 180)]
     #[Groups(['contact:create'])]
     private ?string $email = null;
@@ -69,18 +65,6 @@ class Contact
     public function setLastname(string $lastname): static
     {
         $this->lastname = $lastname;
-
-        return $this;
-    }
-
-    public function getFirstname(): ?string
-    {
-        return $this->firstname;
-    }
-
-    public function setFirstname(string $firstname): static
-    {
-        $this->firstname = $firstname;
 
         return $this;
     }

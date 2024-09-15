@@ -20,7 +20,6 @@ class ContactCrudController extends AbstractCrudController
     {
         yield IdField::new('id', '#')->hideOnForm();
         yield TextField::new('lastname', 'Nom');
-        yield TextField::new('firstname', 'Prénom');
         yield EmailField::new('email', 'Email');
         yield TextField::new('phone', 'Phone');
         yield TextField::new('title', 'Titre');
