@@ -8,6 +8,7 @@ use App\Controller\Admin\Teacher\OnWaitingTeacherCrudController;
 use App\Controller\Admin\Teacher\TeacherCrudController;
 use App\Entity\Category;
 use App\Entity\Certification;
+use App\Entity\Contact;
 use App\Entity\Course;
 use App\Entity\Currency;
 use App\Entity\InboxThread;
@@ -151,6 +152,7 @@ class DashboardController extends AbstractDashboardController
             MenuItem::linkToCrud("Ajouter", "fas fa-plus", User::class)
                 ->setAction(Action::NEW),
         ]);
+        yield MenuItem::linkToCrud("Contacts", "fas fa-users", Contact::class);
 
         yield MenuItem::section('Comptabilité');
         yield MenuItem::subMenu("Comptabilité", "fas fa-book")->setSubItems([
