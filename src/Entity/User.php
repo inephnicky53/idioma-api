@@ -13,8 +13,12 @@ use App\Controller\Api\User\ApiPhoneVerificationController;
 use App\Controller\Api\User\ApiPhoneVerifyController;
 use App\Controller\Api\User\ApiUserCoursesController;
 use App\Controller\Api\User\ApiUserMeController;
+use App\Dto\ResetPasswordInput;
+use App\Dto\ResetRequestedInput;
 use App\Repository\UserRepository;
 use App\Service\GeoIP;
+use App\State\User\ResetPasswordProcessor;
+use App\State\User\ResetRequestedProcessor;
 use App\State\User\UserMeProcessor;
 use App\State\User\UserPasswordHasher;
 use App\Trait\Datable;
@@ -96,6 +100,16 @@ use function Symfony\Component\String\u;
         denormalizationContext: ['groups' => ['user:register']],
         write: false
     ),
+    new Post(
+        uriTemplate: '/users/reset-requested',
+        input: ResetRequestedInput::class,
+        processor: ResetRequestedProcessor::class
+    ),
+    new Post(
+        uriTemplate: '/users/reset-password',
+        input: ResetPasswordInput::class,
+        processor: ResetPasswordProcessor::class
+    ),
     new Patch(
         uriTemplate: '/users/{id}',
         denormalizationContext: ['groups' => ['user:update']],
@@ -138,7 +152,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:register'])]
     private ?string $password = null;
 
-    #[Groups(['user:update'])]
+    #[Groups(['user:update', 'user:reset-password'])]
     private ?string $plainPassword = null;
 
     #[ORM\Column(length: 3, nullable: true, options: ["default" => "CD"])]
