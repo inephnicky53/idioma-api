@@ -72,6 +72,11 @@ class OTP
         return $this;
     }
 
+    public function isExpired(): ?bool
+    {
+        return false;
+    }
+
     public function getExpiredAt(): ?DateTimeImmutable
     {
         return $this->expiredAt;

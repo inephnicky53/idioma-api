@@ -7,16 +7,16 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
-use ApiPlatform\Metadata\Put;
 use App\Controller\Api\ApiRegisterController;
-use App\Controller\Api\User\ApiPhoneVerificationController;
 use App\Controller\Api\User\ApiPhoneVerifyController;
 use App\Controller\Api\User\ApiUserCoursesController;
 use App\Controller\Api\User\ApiUserMeController;
 use App\Dto\ResetPasswordInput;
 use App\Dto\ResetRequestedInput;
+use App\Dto\VerifyOTPInput;
 use App\Repository\UserRepository;
 use App\Service\GeoIP;
+use App\State\User\OTPVerificationProcessor;
 use App\State\User\ResetPasswordProcessor;
 use App\State\User\ResetRequestedProcessor;
 use App\State\User\UserMeProcessor;
@@ -30,7 +30,6 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use GeoIp2\Exception\AddressNotFoundException;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -87,12 +86,10 @@ use function Symfony\Component\String\u;
         security: "is_granted('ROLE_USER')",
         read: false,
     ),
-    new Get(
-        uriTemplate: 'user/phone/verification',
-        controller: ApiPhoneVerificationController::class,
-        normalizationContext: ['groups' => ['user:phone:verify']],
-        security: "is_granted('ROLE_USER')",
-        read: false
+    new Post(
+        uriTemplate: 'users/otp/verification',
+        input: VerifyOTPInput::class,
+        processor: OTPVerificationProcessor::class,
     ),
     new Post(
         uriTemplate: '/register',
@@ -103,7 +100,7 @@ use function Symfony\Component\String\u;
     new Post(
         uriTemplate: '/users/reset-requested',
         input: ResetRequestedInput::class,
-        processor: ResetRequestedProcessor::class
+        processor: ResetRequestedProcessor::class,
     ),
     new Post(
         uriTemplate: '/users/reset-password',

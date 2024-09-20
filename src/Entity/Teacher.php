@@ -136,7 +136,8 @@ use Symfony\Component\Serializer\Annotation\Groups;
     'id' => 'exact',
     'language' => 'exact',
     'teachingLanguages' => 'exact',
-    'spokenLanguages' => 'exact'
+    'spokenLanguages' => 'exact',
+    'status' => 'exact'
 ])]
 #[ApiFilter(BooleanFilter::class, properties: ['isActive'])]
 #[ApiFilter(RangeFilter::class, properties: ['price'])]
