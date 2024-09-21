@@ -13,6 +13,7 @@ use App\Service\GeoIP;
 use App\Service\SmsService;
 use GeoIp2\Exception\AddressNotFoundException;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -26,6 +27,7 @@ class UserManager
         private readonly SmsService                  $smsService,
         private readonly UserPasswordHasherInterface $passwordHasher,
         private readonly JWTTokenManagerInterface    $jwtManager,
+        private readonly Security $security,
         private readonly RequestStack                $stack
     )
     {
@@ -77,13 +79,10 @@ class UserManager
         return new JsonResponse(['message' => 'Un OTP de validation vous a été envoyé', 'token' => $token]);
     }
 
-    public function resetPassword(ResetPasswordInput $dto)
+    public function resetPassword(ResetPasswordInput $dto): User
     {
-        $otp = $this->OTPRepository->findOneBy(['code' => $dto->code]);
-        if (is_null($otp))
-            throw new \Exception('otp not valid');
-
-        $user = $otp->getUser();
+        /** @var User $user */
+        $user = $this->security->getUser();
         if (is_null($user))
             throw new UserNotFoundException();
 
