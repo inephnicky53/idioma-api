@@ -12,6 +12,7 @@ use App\Repository\UserRepository;
 use App\Service\GeoIP;
 use App\Service\SmsService;
 use GeoIp2\Exception\AddressNotFoundException;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -24,6 +25,7 @@ class UserManager
         private readonly OTPRepository               $OTPRepository,
         private readonly SmsService                  $smsService,
         private readonly UserPasswordHasherInterface $passwordHasher,
+        private readonly JWTTokenManagerInterface    $jwtManager,
         private readonly RequestStack                $stack
     )
     {
@@ -70,7 +72,9 @@ class UserManager
         $message = "Votre code de réinitialisation est : {$otp->getPass()}";
         $this->smsService->sendBc($user->getPhone(), $message);
 
-        return new JsonResponse(['message' => 'Un OTP de validation vous a été envoyé']);
+        $token = $this->jwtManager->create($user);
+
+        return new JsonResponse(['message' => 'Un OTP de validation vous a été envoyé', 'token' => $token]);
     }
 
     public function resetPassword(ResetPasswordInput $dto)

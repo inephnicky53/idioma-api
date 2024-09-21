@@ -15,7 +15,9 @@ class ResetRequestedProcessor implements ProcessorInterface
     {
     }
 
-    /** @var ResetRequestedInput $data */
+    /** @throws \Exception
+     * @var ResetRequestedInput $data
+     */
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = [])
     {
         return $this->manager->resetRequested($data);
