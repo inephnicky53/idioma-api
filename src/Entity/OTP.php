@@ -14,6 +14,7 @@ use Doctrine\ORM\Mapping as ORM;
 class OTP
 {
     const TYPE_USER = 'TYPE_USER';
+    const TYPE_RESET_PASSWORD = 'TYPE_RESET_PASSWORD';
     const TYPE_WALLET = 'TYPE_WALLET';
     const TYPE_WITHDRAWAL = 'TYPE_WITHDRAWAL';
 

@@ -68,7 +68,9 @@ class UserManager
         if (is_null($user))
             throw new \Exception('Utilisateur non trouvé');
 
-        $otp = OTP::generate($user, 4, 2, OTP::TYPE_USER, $user->getPhone(), $user->getId());
+        $this->OTPRepository->deleteBy($user, OTP::TYPE_RESET_PASSWORD);
+
+        $otp = OTP::generate($user, 4, 2, OTP::TYPE_RESET_PASSWORD, $user->getPhone(), $user->getId());
         $this->OTPRepository->add($otp, true);
 
         $message = "Votre code de réinitialisation est : {$otp->getPass()}";
