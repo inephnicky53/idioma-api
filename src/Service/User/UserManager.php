@@ -6,6 +6,7 @@ use App\Dto\ResetPasswordInput;
 use App\Dto\ResetRequestedInput;
 use App\Entity\OTP;
 use App\Entity\User;
+use App\Event\ResetPasswordEvent;
 use App\Exception\UserNotFoundException;
 use App\Repository\OTPRepository;
 use App\Repository\UserRepository;
@@ -13,6 +14,7 @@ use App\Service\GeoIP;
 use App\Service\SmsService;
 use GeoIp2\Exception\AddressNotFoundException;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -27,8 +29,9 @@ class UserManager
         private readonly SmsService                  $smsService,
         private readonly UserPasswordHasherInterface $passwordHasher,
         private readonly JWTTokenManagerInterface    $jwtManager,
-        private readonly Security $security,
-        private readonly RequestStack                $stack
+        private readonly Security                    $security,
+        private readonly RequestStack                $stack,
+        private readonly EventDispatcherInterface    $dispatcher
     )
     {
     }
@@ -93,6 +96,8 @@ class UserManager
         $user->eraseCredentials();
 
         $this->userRepository->add($user, true);
+
+        $this->dispatcher->dispatch(new ResetPasswordEvent($user));
 
         return $user;
     }

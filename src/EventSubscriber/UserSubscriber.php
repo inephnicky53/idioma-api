@@ -2,6 +2,7 @@
 
 namespace App\EventSubscriber;
 
+use App\Event\ResetPasswordEvent;
 use App\Event\UserValidatedEvent;
 use App\Event\UserPwdResetedEvent;
 use App\Event\UserCreatedEvent;
@@ -73,21 +74,9 @@ class UserSubscriber implements EventSubscriberInterface
         }
     }
 
-    public function onUserPwdReseted(UserPwdResetedEvent $event): void
+    public function onUserPwdReseted(ResetPasswordEvent $event): void
     {
         $user = $event->getUser();
-        $plainPassword = Generator::generate(8, Generator::COMPLEXITY_STRONG);
-
-        $user->setPassword(
-            $this->userPasswordHasher->hashPassword(
-                $user,
-                $plainPassword
-            )
-        );
-
-        //$this->em->persist($user);
-        $this->em->flush();
-
         try {
             $subject = "Réinitialisation de votre mot de passe";
             $email = (new TemplatedEmail())
@@ -97,22 +86,11 @@ class UserSubscriber implements EventSubscriberInterface
                 ->context([
                     'user' => $user,
                     'subject' => $subject,
-                    'plainPassword' => $plainPassword,
                 ]);
 
             $this->mailer->send($email);
         } catch (TransportExceptionInterface $e) {
         }
-
-        $message = "Mode de passe reinitialise, voici votre nouveau mot de passe: " . $plainPassword;
-        if ($this->kernel->getEnvironment() == "prod")
-            $this->smsService->sendBc($user->getPhone(), $message);
-
-        $message = "Le mot de passe de {$user->getFullname()} est réinitialisé avec succès, l'utilisateur sera notifié";
-        if ($this->kernel->getEnvironment() == "dev") {
-            $message .= " ({$plainPassword})";
-        }
-        $this->request->getSession()->getFlashBag()->set('success', $message);
     }
 
     public static function getSubscribedEvents(): array
@@ -120,7 +98,7 @@ class UserSubscriber implements EventSubscriberInterface
         return [
             UserCreatedEvent::class => 'onUserCreated',
             UserValidatedEvent::class => 'onUserValidated',
-            UserPwdResetedEvent::class => 'onUserPwdReseted',
+            ResetPasswordEvent::class => 'onUserPwdReseted',
         ];
     }
 }
