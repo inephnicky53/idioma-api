@@ -92,6 +92,8 @@ class UserManager
         $user->setPassword($hashedPassword);
         $user->eraseCredentials();
 
+        $this->userRepository->add($user, true);
+
         return $user;
     }
 }
