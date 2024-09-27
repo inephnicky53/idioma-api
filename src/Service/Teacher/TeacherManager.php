@@ -18,7 +18,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\HttpFoundation\Response;
 
 class TeacherManager
 {
@@ -158,16 +157,12 @@ class TeacherManager
 
     public function save(Teacher $teacher): Teacher
     {
-        $hasTeacher = false;
-
-        $teacher->getStudents()->map(function (UserTeacher $userTeacher) use ($teacher, &$hasTeacher) {
-            if ($userTeacher->getTeacher()->getId() === $teacher->getId())
-                $hasTeacher = true;
-        });
-
-        if ($hasTeacher)
+        if ($teacher->getStudents()->exists(function (UserTeacher $userTeacher) use ($teacher) {
+            return $userTeacher->getTeacher()->getId() === $teacher->getId();
+        })) {
             throw new Exception("Ce professeur est déjà ajouté");
-
+        }
+        
         $userTeacher = new UserTeacher();
         $userTeacher
             ->setTeacher($teacher)

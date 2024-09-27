@@ -1,0 +1,28 @@
+{% extends 'base_email.mjml.twig' %}
+
+{% block title %}{{ subject }}{% endblock %}
+
+{% block email_content %}
+    <mj-section background-color="#ffffff" padding-left="15px" padding-right="15px">
+        <mj-column width="100%">
+            <mj-text color="#212b35" font-weight="bold" font-size="20px">
+                Cher/Chère {{ user }},
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Nous avons reçu une demande de réinitialisation de votre mot de passe. <br>
+                Pour valider cette demande, veuillez utiliser le code OTP ci-dessous :
+            </mj-text>
+            <mj-text color="#007bff" font-size="24px" font-weight="bold" padding-top="10px">
+                {{ otp.pass }}
+            </mj-text>
+            <mj-text color="#637381" font-size="16px" padding-top="20px">
+                Entrez ce code sur notre site pour compléter la réinitialisation de votre mot de passe.
+            </mj-text>
+            <mj-text color="#637381" font-size="16px" padding-top="20px">
+                Si vous n'avez pas demandé de réinitialisation, veuillez ignorer cet e-mail.
+            </mj-text>
+        </mj-column>
+    </mj-section>
+{% endblock %}
+
+

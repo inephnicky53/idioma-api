@@ -12,5 +12,10 @@ class ResetRequestedInput
 {
     #[Assert\NotNull]
     #[Assert\NotBlank]
-    public ?string $phone = null;
+    public ?string $type = null;
+    
+
+    #[Assert\NotNull]
+    #[Assert\NotBlank]
+    public ?string $value = null;
 }
