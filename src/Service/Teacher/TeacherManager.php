@@ -14,6 +14,7 @@ use App\Model\CreateTeacherModel;
 use App\Repository\CertificationRepository;
 use App\Repository\CurrencyRepository;
 use App\Repository\LanguageRepository;
+use App\Repository\UserTeacherRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -26,6 +27,7 @@ class TeacherManager
         private readonly LanguageRepository      $languageRepository,
         private readonly CurrencyRepository      $currencyRepository,
         private readonly CertificationRepository $certificationRepository,
+        private readonly UserTeacherRepository $userTeacherRepository,
         private readonly Security                $security,
         private readonly EventDispatcherInterface $dispatcher
     )
@@ -157,16 +159,15 @@ class TeacherManager
 
     public function save(Teacher $teacher): Teacher
     {
-        if ($teacher->getStudents()->exists(function (UserTeacher $userTeacher) use ($teacher) {
-            return $userTeacher->getTeacher()->getId() === $teacher->getId();
-        })) {
+        $user = $this->security->getUser();
+
+        if ($this->userTeacherRepository->findOneBy(['user' => $user, 'teacher' => $teacher]))
             throw new Exception("Ce professeur est déjà ajouté");
-        }
-        
+
         $userTeacher = new UserTeacher();
         $userTeacher
             ->setTeacher($teacher)
-            ->setUser($this->security->getUser());
+            ->setUser($user);
 
         $this->em->persist($userTeacher);
         $this->em->flush();
@@ -176,12 +177,11 @@ class TeacherManager
 
     public function unsaved(Teacher $data): Teacher
     {
-        $teacher = false;
-        $students = $data->getStudents();
-        $students->map(function (UserTeacher $userTeacher) use ($data, &$teacher) {
-            if ($userTeacher->getTeacher()->getId() === $data->getId())
-                $teacher = $userTeacher;
-        });
+        $user = $this->security->getUser();
+        $teacher = $this->userTeacherRepository->findOneBy(['user' => $user, 'teacher' => $data->getId()]);
+
+        if (is_null($teacher))
+            throw new Exception("Ce professeur est déjà ajouté");
 
         if ($teacher) {
             if ($teacher->getHours() > 0)
