@@ -27,6 +27,7 @@ use App\State\Teacher\TeacherDisponibilitiesProcessor;
 use App\State\Teacher\TeacherCollectionProvider;
 use App\State\Teacher\TeacherCheckProvider;
 use App\State\Teacher\TeacherGetProvider;
+use App\State\Teacher\UnsavedTeacherProcessor;
 use App\Trait\Activable;
 use App\Trait\Datable;
 use App\Trait\Ratingable;
@@ -70,9 +71,8 @@ use Symfony\Component\Serializer\Annotation\Groups;
         ),
         new Delete(
             uriTemplate: "teachers/{id}/favorite",
-            controller: ApiRemoveTeacherController::class,
             security: "is_granted('ROLE_USER')",
-            write: false
+            processor: UnsavedTeacherProcessor::class,
         ),
         new Post(
             uriTemplate: "teachers/become",
