@@ -12,3 +12,4 @@ class ApiUserMeController extends AbstractController
     {
         return $this->getUser();
     }
+}

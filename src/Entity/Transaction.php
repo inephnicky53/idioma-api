@@ -15,8 +15,9 @@ class Transaction
         Datable::__construct as private dateConstructor;
     }
 
-    const MODE_LIVE = 'live';
-    const MODE_SANDBOX = 'sandbox';
+    const OPERATOR_BANK = 'PAYIN-BNK';
+    const OPERATOR_MOBILE = 'PAYIN-MOB';
+    const OPERATOR_PAYPAL = 'PAYPAL';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -57,10 +58,6 @@ class Transaction
 
     #[ORM\OneToOne(mappedBy: 'transaction', cascade: ['persist', 'remove'])]
     private ?Order $command = null;
-
-    #[ORM\Column(length: 20)]
-    private ?string $mode = null;
-
 
     public function __construct()
     {
@@ -112,6 +109,15 @@ class Transaction
     public function getOperator(): ?string
     {
         return $this->operator;
+    }
+
+    public static function getOperatorList(): array
+    {
+        return [
+            self::OPERATOR_BANK,
+            self::OPERATOR_MOBILE,
+            self::OPERATOR_PAYPAL,
+        ];
     }
 
     public function setOperator(string $operator): static
@@ -211,18 +217,6 @@ class Transaction
         }
 
         $this->command = $command;
-
-        return $this;
-    }
-
-    public function getMode(): ?string
-    {
-        return $this->mode;
-    }
-
-    public function setMode(string $mode): static
-    {
-        $this->mode = $mode;
 
         return $this;
     }

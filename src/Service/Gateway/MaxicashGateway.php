@@ -24,8 +24,7 @@ class MaxicashGateway implements GatewayInterface
 
     public function process($transaction)
     {
-        $mode = $transaction->getMode();
-        $order = $transaction->getOrderCommand();
+        $order = $transaction->getCommand();
 
         $clientHttp = HttpClient::create();
         $headers = [
@@ -33,7 +32,8 @@ class MaxicashGateway implements GatewayInterface
             'Accept' => 'application/json',
         ];
 
-        $uri = $mode == Transaction::MODE_LIVE ? 'https://webapi.maxicashapp.com' : 'https://webapi-test.maxicashapp.com';
+        #$uri = 'https://webapi.maxicashapp.com';
+        $uri = 'https://webapi-test.maxicashapp.com';
 
         $currency = $transaction->getCurrency();
         $payment_phone = $transaction->getPhone();
@@ -54,7 +54,6 @@ class MaxicashGateway implements GatewayInterface
   "CurrencyCode": "$currency"
 }
 BODY;
-        //dd($body);
         try {
             $response = $clientHttp->request('POST', $uri.'/Integration/PayNowSync', [
                 'headers' => array_merge($headers, []),
@@ -67,5 +66,12 @@ BODY;
                 'message' => $exception->getMessage()
             ];
         }
+    }
+
+    public function support(): array
+    {
+        return [
+            Transaction::OPERATOR_MOBILE
+        ];
     }
 }

@@ -15,12 +15,13 @@
         <div class="col-md-4">
             <div class="border p-3 rounded-2xl border-gray-400">
                 <div class="flex justify-between items-center w-full p-2">
-                    <div class="flex justify-center align-items-center bg-[#e3be62] rounded-full w-[90px] h-[90px]">
+                    <div class="flex justify-center align-items-center bg-[#e3be62] rounded-2xl w-[90px] h-[90px]">
                         <i class="fas fa-graduation-cap text-4xl text-white"></i>
                     </div>
                     <div class="text-right space-y-2">
-                        <h5 class="font-semibold">Élèves</h5>
+                        <h5 class="font-semibold">Total d'élèves actifs</h5>
                         <h4 class="text-2xl font-bold">{{ stats.total['students'] }}</h4>
+                        <small class="">{{ stats.total['teachers']['waiting'] }} inscrits</small>
                     </div>
                 </div>
             </div>
@@ -28,12 +29,13 @@
         <div class="col-md-4">
             <div class="border p-3 rounded-2xl border-gray-400">
                 <div class="flex justify-between items-center w-full p-2">
-                    <div class="flex justify-center align-items-center bg-[#e3be62] rounded-full w-[90px] h-[90px]">
+                    <div class="flex justify-center align-items-center bg-[#e3be62] rounded-2xl w-[90px] h-[90px]">
                         <i class="fas fa-user-tie text-4xl text-white"></i>
                     </div>
                     <div class="text-right space-y-2">
-                        <h5 class="font-semibold">Professeurs</h5>
-                        <h4 class="text-2xl font-bold">{{ stats.total['teachers'] }}</h4>
+                        <h5 class="font-semibold">Professeurs validés</h5>
+                        <h4 class="text-2xl font-bold">{{ stats.total['teachers']['value'] }}</h4>
+                        <small class="">{{ stats.total['teachers']['waiting'] }} en attente</small>
                     </div>
                 </div>
             </div>
@@ -41,12 +43,12 @@
         <div class="col-md-4">
             <div class="border p-3 rounded-2xl border-gray-400">
                 <div class="flex justify-between items-center w-full p-2">
-                    <div class="flex justify-center align-items-center bg-[#e3be62] rounded-full w-[90px] h-[90px]">
-                        <i class="fas fa-users text-4xl text-white"></i>
+                    <div class="flex justify-center align-items-center bg-[#e3be62] rounded-2xl w-[90px] h-[90px]">
+                        <i class="fas fa-hourglass-start text-4xl text-white"></i>
                     </div>
                     <div class="text-right space-y-2">
-                        <h5 class="font-semibold">Utilisateurs</h5>
-                        <h4 class="text-2xl font-bold">{{ stats.total['users'] }}</h4>
+                        <h5 class="font-semibold">Temps total de cours dispensé</h5>
+                        <h4 class="text-2xl font-bold">{{ stats.total['hours_courses'] }}</h4>
                     </div>
                 </div>
             </div>
@@ -54,11 +56,11 @@
         <div class="col-md-4">
             <div class="border p-3 rounded-2xl border-gray-400">
                 <div class="flex justify-between items-center w-full p-2">
-                    <div class="flex justify-center align-items-center bg-[#e3be62] rounded-full w-[90px] h-[90px]">
+                    <div class="flex justify-center align-items-center bg-[#e3be62] rounded-2xl w-[90px] h-[90px]">
                         <i class="fas fa-chalkboard-teacher text-4xl text-white"></i>
                     </div>
                     <div class="text-right space-y-2">
-                        <h5 class="font-semibold">Cours dispensés</h5>
+                        <h5 class="font-semibold">Total de cours disponibles</h5>
                         <h4 class="text-2xl font-bold">{{ stats.total['courses'] }}</h4>
                     </div>
                 </div>
@@ -67,7 +69,7 @@
         <div class="col-md-4">
             <div class="border p-3 rounded-2xl border-gray-400">
                 <div class="flex justify-between items-center w-full p-2">
-                    <div class="flex justify-center align-items-center bg-[#e3be62] rounded-full w-[90px] h-[90px]">
+                    <div class="flex justify-center align-items-center bg-[#e3be62] rounded-2xl w-[90px] h-[90px]">
                         <i class="fas fa-chalkboard text-4xl text-white"></i>
                     </div>
                     <div class="text-right space-y-2">
@@ -80,12 +82,12 @@
         <div class="col-md-4">
             <div class="border p-3 rounded-2xl border-gray-400">
                 <div class="flex justify-between items-center w-full p-2">
-                    <div class="flex justify-center align-items-center bg-[#e3be62] rounded-full w-[90px] h-[90px]">
-                        <i class="fas fa-hourglass-start text-4xl text-white"></i>
+                    <div class="flex justify-center align-items-center bg-[#e3be62] rounded-2xl w-[90px] h-[90px]">
+                        <i class="fas fa-users text-4xl text-white"></i>
                     </div>
                     <div class="text-right space-y-2">
-                        <h5 class="font-semibold">Heure de cours totale</h5>
-                        <h4 class="text-2xl font-bold">{{ stats.total['hours_courses'] }}</h4>
+                        <h5 class="font-semibold">Utilisateurs</h5>
+                        <h4 class="text-2xl font-bold">{{ stats.total['users'] }}</h4>
                     </div>
                 </div>
             </div>

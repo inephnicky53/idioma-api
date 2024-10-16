@@ -15,7 +15,6 @@ class Idioma
     // Format de date
     public const DATE_FORMAT = "D M d Y h:i:s \G\M\TO";
 
-
     const STATE_SUCCESS = "SUCCESS";
     const STATE_PROCESS = "PROCESS";
     const STATE_ERROR = "ERROR";
@@ -35,6 +34,7 @@ class Idioma
     const LEVEL_C1 = "C1";
     const LEVEL_C2 = "C2";
     const LEVEL_NATIF = "Natif";
+
     const MONDAY = 'monday';
     const TUESDAY = 'tuesday';
     const WEDNESDAY = 'wednesday';
@@ -42,7 +42,6 @@ class Idioma
     const FRIDAY = 'friday';
     const SATURDAY = 'saturday';
     const SUNDAY = 'sunday';
-
 
     public static function getStatusList(): array
     {

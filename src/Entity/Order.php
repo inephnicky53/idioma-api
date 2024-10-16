@@ -5,7 +5,9 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
+use App\Dto\CreateOrderInput;
 use App\Repository\OrderRepository;
+use App\State\Transaction\CreateTransactionProcessor;
 use App\Trait\Datable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -17,9 +19,15 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ApiResource(
     operations: [
         new GetCollection(
-            normalizationContext: ['groups' => ['order:list']],
+            security: 'is_granted("ROLE_USER")',
         ),
-    ]
+        new Post(
+            security: 'is_granted("ROLE_USER")',
+            input: CreateOrderInput::class,
+            processor: CreateTransactionProcessor::class
+        )
+    ],
+    normalizationContext: ['groups' => ['order:list']],
 )]
 class Order
 {
@@ -31,12 +39,21 @@ class Order
     #[Groups(['order:list'])]
     private ?int $id = null;
 
-    #[ORM\OneToMany(mappedBy: 'command', targetEntity: UserCourse::class, cascade: ["persist"])]
-    private Collection $userCourses;
+    #[ORM\Column(length: 255)]
+    private ?string $reference = null;
+
+    /**
+     * @var Collection<int, OrderProduct>
+     */
+    #[ORM\OneToMany(targetEntity: OrderProduct::class, mappedBy: 'command', orphanRemoval: true)]
+    private Collection $products;
 
     #[ORM\Column]
     #[Groups(['order:list', 'order:new'])]
     private ?float $amount = null;
+
+    #[ORM\ManyToOne]
+    private ?Currency $currency = null;
 
     #[ORM\Column(length: 255)]
     private ?string $status = null;
@@ -47,54 +64,20 @@ class Order
     #[ORM\OneToOne(inversedBy: 'command', cascade: ['persist', 'remove'])]
     private ?Transaction $transaction = null;
 
-    #[ORM\ManyToOne]
-    private ?Currency $currency = null;
-
-    #[ORM\OneToMany(mappedBy: 'command', targetEntity: OrderTeacher::class, cascade: ['persist'], orphanRemoval: true)]
-    private Collection $orderTeachers;
+    #[ORM\Column(length: 10)]
+    private ?string $operator = null;
 
     public function __construct()
     {
         if (is_null($this->createdAt))
             $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = new \DateTimeImmutable();
-        $this->userCourses = new ArrayCollection();
-        $this->orderTeachers = new ArrayCollection();
+        $this->products = new ArrayCollection();
     }
 
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    /**
-     * @return Collection<int, UserCourse>
-     */
-    public function getUserCourses(): Collection
-    {
-        return $this->userCourses;
-    }
-
-    public function addUserCourse(UserCourse $userCourse): static
-    {
-        if (!$this->userCourses->contains($userCourse)) {
-            $this->userCourses->add($userCourse);
-            $userCourse->setCommand($this);
-        }
-
-        return $this;
-    }
-
-    public function removeUserCourse(UserCourse $userCourse): static
-    {
-        if ($this->userCourses->removeElement($userCourse)) {
-            // set the owning side to null (unless already changed)
-            if ($userCourse->getCommand() === $this) {
-                $userCourse->setCommand(null);
-            }
-        }
-
-        return $this;
     }
 
     public function getAmount(): ?float
@@ -157,32 +140,56 @@ class Order
         return $this;
     }
 
-    /**
-     * @return Collection<int, OrderTeacher>
-     */
-    public function getOrderTeachers(): Collection
+    public function getReference(): ?string
     {
-        return $this->orderTeachers;
+        return $this->reference;
     }
 
-    public function addOrderTeacher(OrderTeacher $orderTeacher): static
+    public function setReference(string $reference): static
     {
-        if (!$this->orderTeachers->contains($orderTeacher)) {
-            $this->orderTeachers->add($orderTeacher);
-            $orderTeacher->setCommand($this);
+        $this->reference = $reference;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, OrderProduct>
+     */
+    public function getProducts(): Collection
+    {
+        return $this->products;
+    }
+
+    public function addProduct(OrderProduct $product): static
+    {
+        if (!$this->products->contains($product)) {
+            $this->products->add($product);
+            $product->setCommand($this);
         }
 
         return $this;
     }
 
-    public function removeOrderTeacher(OrderTeacher $orderTeacher): static
+    public function removeProduct(OrderProduct $product): static
     {
-        if ($this->orderTeachers->removeElement($orderTeacher)) {
+        if ($this->products->removeElement($product)) {
             // set the owning side to null (unless already changed)
-            if ($orderTeacher->getCommand() === $this) {
-                $orderTeacher->setCommand(null);
+            if ($product->getCommand() === $this) {
+                $product->setCommand(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getOperator(): ?string
+    {
+        return $this->operator;
+    }
+
+    public function setOperator(string $operator): static
+    {
+        $this->operator = $operator;
 
         return $this;
     }

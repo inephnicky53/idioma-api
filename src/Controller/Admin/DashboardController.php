@@ -17,6 +17,7 @@ use App\Entity\Order;
 use App\Entity\Package;
 use App\Entity\Planning;
 use App\Entity\Rate;
+use App\Entity\Teacher;
 use App\Entity\Transaction;
 use App\Entity\User;
 use App\Entity\UserCourse;
@@ -69,7 +70,7 @@ class DashboardController extends AbstractDashboardController
 
         array_map(function (User $user) use (&$users, &$teachers, &$students) {
             $users->add($user);
-            if (in_array($user->getRoles(), [User::STUDENT]))
+            if ($user->getRoles() == User::STUDENT)
                 $students->add($user);
             if ($user->getTeacher())
                 $teachers->add($user);
@@ -84,7 +85,10 @@ class DashboardController extends AbstractDashboardController
         }, $plannings);
 
         $stats->total['users'] = count($users);
-        $stats->total['teachers'] = $teachers->count();
+        $stats->total['teachers'] = [
+            'value' => $teachers->count(),
+            'waiting' => $teachers->filter(fn (Teacher $teacher) => $teacher->getStatus() === Teacher::STATUS_WAITING)->count()
+        ];
         $stats->total['students'] = $students->count();
         $stats->total['courses'] = count($userCourses);
         $stats->total['waiting_courses'] = 0;

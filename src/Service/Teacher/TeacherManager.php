@@ -59,6 +59,7 @@ class TeacherManager
             ->setExperience($model->experience)
             ->setLanguage($language)
             ->setLink($model->link)
+            ->setVideo($model->video)
             ->setProfile($model->profile)
             ->setTimezone($model->timezone)
             ->setStatus(Teacher::STATUS_WAITING)

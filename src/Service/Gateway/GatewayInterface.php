@@ -8,4 +8,5 @@ interface GatewayInterface
 {
     public function process(Transaction $transaction);
 
+    public function support(): array;
 }

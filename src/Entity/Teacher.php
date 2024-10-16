@@ -228,9 +228,9 @@ class Teacher
     #[Groups(['teacher:list', 'teacher:media'])]
     private ?string $link = null;
 
-    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['teacher:show', 'teacher:media'])]
-    private ?Attachment $video = null;
+    private ?string $video = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['teacher:show', 'teacher:disponibilities'])]
@@ -624,12 +624,12 @@ class Teacher
         return $this;
     }
 
-    public function getVideo(): ?Attachment
+    public function getVideo(): ?string
     {
         return $this->video;
     }
 
-    public function setVideo(?Attachment $video): static
+    public function setVideo(?string $video): static
     {
         $this->video = $video;
 

@@ -5,6 +5,8 @@ namespace App\Service;
 
 
 use App\Entity\Transaction;
+use App\Entity\UserCourse;
+use App\Entity\UserTeacher;
 use App\Idioma;
 use App\Kimia;
 use DateTime;
@@ -65,13 +67,13 @@ class CheckTransaction
      * @param mixed $body
      * @param Transaction $transaction
      */
-    private function process(mixed $body, Transaction $transaction)
+    private function process(mixed $body, Transaction $transaction): void
     {
         if (isset($body['transaction']) && $body['transaction']['status'] === '0') {
             $transaction->setStatus(Idioma::STATUS_SUCCESS);
-            $this->process->approuveOrder($transaction);
+            $this->approuveOrder($transaction);
         } else {
-            $this->process->desapprouveOrder($transaction);
+            $this->disapproveOrder($transaction);
             $transaction->setStatus(Idioma::STATUS_ERROR);
         }
         $transaction->setMessage($body['message']);
@@ -81,4 +83,33 @@ class CheckTransaction
         $this->em->flush();
     }
 
+    public function approuveOrder(Transaction $transaction): void
+    {
+        $order = $transaction->getCommand();
+        $order->setStatus(Idioma::STATUS_SUCCESS);
+
+        $order->getUserCourses()->map(function (UserCourse $course) {
+            $course
+                ->setIsBuyed(true)
+                ->setBuyedAt(new DateTimeImmutable());
+        });
+
+        $order->getOrderTeachers()->map(function (UserTeacher $userTeacher) {
+            $userTeacher
+                ->addHours(1)
+                ->setBuyedAt(new DateTimeImmutable());
+        });
+
+        $this->em->flush();
+
+    }
+
+    public function disapproveOrder(Transaction $transaction): void
+    {
+        $order = $transaction->getCommand();
+        $order->setStatus(Idioma::STATUS_FAILED);
+
+        $this->em->persist($order);
+        $this->em->flush();
+    }
 }
