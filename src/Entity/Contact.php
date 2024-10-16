@@ -32,10 +32,6 @@ class Contact
     #[Groups(['contact:create'])]
     private ?string $email = null;
 
-    #[ORM\Column(length: 255)]
-    #[Groups(['contact:create'])]
-    private ?string $title = null;
-
     #[ORM\Column(type: Types::TEXT)]
     #[Groups(['contact:create'])]
     private ?string $content = null;
@@ -77,18 +73,6 @@ class Contact
     public function setEmail(string $email): static
     {
         $this->email = $email;
-
-        return $this;
-    }
-
-    public function getTitle(): ?string
-    {
-        return $this->title;
-    }
-
-    public function setTitle(string $title): static
-    {
-        $this->title = $title;
 
         return $this;
     }

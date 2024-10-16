@@ -225,7 +225,7 @@ class Teacher
     private ?string $motivation = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['teacher:show', 'teacher:media'])]
+    #[Groups(['teacher:list', 'teacher:media'])]
     private ?string $link = null;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
@@ -262,15 +262,6 @@ class Teacher
     #[ORM\OneToMany(mappedBy: 'teacher', targetEntity: TeachingLanguage::class, cascade: ["persist"], orphanRemoval: true)]
     #[Groups(['teacher:show', 'teacher:become'])]
     private Collection $teachingLanguages;
-
-    #[Groups(['teacher:list'])]
-    private bool $canTrial = true;
-
-    #[Groups(['teacher:show'])]
-    private float $userHours = 0;
-
-    #[Groups(['teacher:list'])]
-    private bool $isFavorite = false;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['teacher:list', 'inbox_thread:list'])]
@@ -869,47 +860,6 @@ class Teacher
                 $teachingLanguage->setTeacher(null);
             }
         }
-
-        return $this;
-    }
-
-    public function isCanTrial(): bool
-    {
-        return $this->canTrial;
-    }
-
-    public function setCanTrial(bool $canTrial): static
-    {
-        $this->canTrial = $canTrial;
-
-        return $this;
-    }
-
-    public function getUserHours(): float
-    {
-        return $this->userHours;
-    }
-
-    public function setUserHours(float $userHours): static
-    {
-        $this->userHours = $userHours;
-
-        return $this;
-    }
-
-    public function isFavorite(): bool
-    {
-        return $this->isFavorite;
-    }
-
-    public function getIsFavorite(): bool
-    {
-        return $this->isFavorite;
-    }
-
-    public function setIsFavorite(bool $isFavorite): static
-    {
-        $this->isFavorite = $isFavorite;
 
         return $this;
     }

@@ -34,10 +34,6 @@ class UserTeacher
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $buyedAt = null;
 
-    #[ORM\Column(options: ['default' => true])]
-    #[Groups(['user:teachers'])]
-    private ?bool $canTrial = true;
-
     public function __construct()
     {
         if (is_null($this->createdAt))
@@ -90,7 +86,7 @@ class UserTeacher
         return $this;
     }
 
-    public function getHours(): ?float
+    public function getHours(): float
     {
         return $this->hours;
     }
@@ -117,18 +113,6 @@ class UserTeacher
     public function setBuyedAt(?\DateTimeImmutable $buyedAt): static
     {
         $this->buyedAt = $buyedAt;
-
-        return $this;
-    }
-
-    public function isCanTrial(): ?bool
-    {
-        return $this->canTrial;
-    }
-
-    public function setCanTrial(bool $canTrial): static
-    {
-        $this->canTrial = $canTrial;
 
         return $this;
     }
