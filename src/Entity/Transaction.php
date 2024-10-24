@@ -22,12 +22,13 @@ class Transaction
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['order:list'])]
     private ?int $id = null;
 
     #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $responsedAt = null;
+    private ?\DateTimeImmutable $respondedAt = null;
 
-    #[ORM\Column(length: 15)]
+    #[ORM\Column(length: 15, nullable: true)]
     #[Groups('transaction:new')]
     private ?string $phone = null;
 
@@ -70,14 +71,14 @@ class Transaction
         return $this->id;
     }
 
-    public function getResponsedAt(): ?\DateTimeImmutable
+    public function getRespondedAt(): ?\DateTimeImmutable
     {
-        return $this->responsedAt;
+        return $this->respondedAt;
     }
 
-    public function setResponsedAt(?\DateTimeImmutable $responsedAt): static
+    public function setRespondedAt(?\DateTimeImmutable $respondedAt): static
     {
-        $this->responsedAt = $responsedAt;
+        $this->respondedAt = $respondedAt;
 
         return $this;
     }
@@ -87,7 +88,7 @@ class Transaction
         return $this->phone;
     }
 
-    public function setPhone(string $phone): static
+    public function setPhone(?string $phone): static
     {
         $this->phone = $phone;
 

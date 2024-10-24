@@ -9,7 +9,6 @@ use App\Trait\Activable;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
-
 #[ApiResource(
     operations: [
         new GetCollection(
@@ -25,14 +24,15 @@ class Package
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['package:list', 'order:list'])]
     private ?int $id = null;
 
     #[ORM\Column]
-    #[Groups(['package:list'])]
+    #[Groups(['package:list', 'order:list'])]
     private ?int $hours = null;
 
     #[ORM\Column]
-    #[Groups(['package:list'])]
+    #[Groups(['package:list', 'order:list'])]
     private ?float $discount = null;
 
     public function getId(): ?int

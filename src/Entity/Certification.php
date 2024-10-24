@@ -41,14 +41,10 @@ class Certification
     #[Groups(['certification:get'])]
     private ?string $name = null;
 
-    #[ORM\OneToMany(mappedBy: 'certification', targetEntity: TeacherCertification::class, orphanRemoval: true)]
-    private Collection $teacherCertifications;
-
     public function __construct()
     {
         $this->dateConstructor();
         $this->languages = new ArrayCollection();
-        $this->teacherCertifications = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -88,36 +84,6 @@ class Certification
     public function setName(string $name): static
     {
         $this->name = $name;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, TeacherCertification>
-     */
-    public function getTeacherCertifications(): Collection
-    {
-        return $this->teacherCertifications;
-    }
-
-    public function addTeacherCertification(TeacherCertification $teacherCertification): static
-    {
-        if (!$this->teacherCertifications->contains($teacherCertification)) {
-            $this->teacherCertifications->add($teacherCertification);
-            $teacherCertification->setCertification($this);
-        }
-
-        return $this;
-    }
-
-    public function removeTeacherCertification(TeacherCertification $teacherCertification): static
-    {
-        if ($this->teacherCertifications->removeElement($teacherCertification)) {
-            // set the owning side to null (unless already changed)
-            if ($teacherCertification->getCertification() === $this) {
-                $teacherCertification->setCertification(null);
-            }
-        }
 
         return $this;
     }

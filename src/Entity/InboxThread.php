@@ -9,6 +9,7 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use App\Controller\Api\Inbox\UserThreadController;
 use App\Repository\InboxThreadRepository;
+use App\State\Inbox\CreateInboxThreadProcessor;
 use App\Trait\Datable;
 use App\Trait\Deletable;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -19,21 +20,17 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Entity(repositoryClass: InboxThreadRepository::class)]
 #[ApiResource(
     operations: [
+        new GetCollection(
+            uriTemplate: "user/inbox/threads",
+            normalizationContext: ['groups' => ['user:inbox']],
+            security: "is_granted('ROLE_USER')",
+        ),
         new Get(
             normalizationContext: ['groups' => ['inbox_thread:read']],
         ),
-        new GetCollection(
-            normalizationContext: ['groups' => ['inbox_thread:list']],
-        ),
         new Post(
             denormalizationContext: ['groups' => ['inbox:new']],
-        ),
-        new Get(
-            uriTemplate: "user/inbox/threads",
-            controller: UserThreadController::class,
-            normalizationContext: ['groups' => ['user:inbox', 'user:inbox:threads']],
-            security: "is_granted('ROLE_USER')",
-            read: false
+            processor: CreateInboxThreadProcessor::class,
         ),
     ],
     mercure: 'object.getMercureOptions()',
@@ -49,7 +46,7 @@ class InboxThread
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:inbox:threads', 'inbox_thread:read'])]
+    #[Groups(['user:inbox', 'inbox_thread:read'])]
     private ?int $id = null;
 
     #[ORM\OneToMany(targetEntity: InboxMessage::class, mappedBy: 'thread', cascade: ['persist'], orphanRemoval: true)]
@@ -61,11 +58,11 @@ class InboxThread
     private Collection $participants;
 
     #[ORM\ManyToOne]
-    #[Groups(['inbox:new', 'user:inbox', 'user:inbox:threads', 'inbox_thread:list'])]
+    #[Groups(['inbox:new', 'user:inbox', 'inbox_thread:list'])]
     private ?Teacher $teacher = null;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
-    #[Groups(['inbox:new', 'user:inbox:threads'])]
+    #[Groups(['inbox:new', 'user:inbox'])]
     private ?Course $course = null;
 
     public function __construct()
@@ -158,10 +155,13 @@ class InboxThread
         return $this;
     }
 
-    #[Groups(['user:inbox:threads'])]
-    public function getLastMessage(): mixed
+    #[Groups(['user:inbox'])]
+    public function getLastMessage(): ?InboxMessage
     {
-        return $this->messages->last() ?? null;
+        $messages = $this->messages->toArray();
+        usort($messages, fn($a, $b) => $a->getCreatedAt() <=> $b->getCreatedAt());
+
+        return end($messages) ?: null;
     }
 
     public function getMercureOptions(): array

@@ -12,52 +12,68 @@ class CreateTeacherInput
 {
     #[Assert\NotNull]
     #[Assert\NotBlank]
-    public string $fullname;
+    public ?string $fullname = null;
 
-    public string $firstname;
+    public ?string $firstname = null; 
 
-    public string $lastname;
+    public ?string $lastname = null; 
 
-    public string $country;
+    #[Assert\NotBlank]
+    public ?string $country = null;
 
-    public string $language;
+    #[Assert\NotBlank]
+    public ?string $language = null;
 
-    public string $phone;
+    #[Assert\NotBlank]
+    #[Assert\Regex(
+        pattern: '/^\d{10,15}$/', // Regex pour valider le numéro de téléphone
+        message: 'Le numéro de téléphone doit contenir entre 10 et 15 chiffres.'
+    )]
+    public ?string $phone = null;
 
-    public float $price;
+    #[Assert\Positive] // S'assurer que le prix est positif
+    public ?float $price = null;
 
-    public string $currency;
+    #[Assert\NotBlank]
+    public ?string $currency = null;
 
-    public string $profile;
+    public ?string $profile = null; 
 
-    public string $video;
+    public ?string $video = null; 
 
-    public string $link;
+    public ?string $link = null; 
 
-    public string $shortDescription;
+    public ?string $shortDescription = null; 
 
-    public string $description;
+    public ?string $description = null; 
 
-    public string $experience;
+    public ?string $experience = null; 
 
-    public string $motivation;
+    public ?string $motivation = null; 
 
-    public string $hookTitle;
+    public ?string $hookTitle = null; 
 
-    public string $timezone;
+    public ?string $timezone = null; 
 
-    /** @var CertificationModel[] $certifications */
-    public array $certifications;
+    /** @var CertificationModel[] */
+    public array $certifications = [];
 
-    /** @var FormationModel[] $formations */
-    public array $formations;
+    /** @var FormationModel[] */
+    public array $formations = [];
 
-    /** @var AvailabilityModel[] $presentations */
-    public array $availabilities;
-
-    /** @var LanguageModel[] $spokenLanguages */
+    /** @var AvailabilityModel[] */
+    public array $availabilities = [];
+    /** @var LanguageModel[] */
     public array $spokenLanguages = [];
+    /** @var LanguageModel[] */
+    public array $languages = [];
 
-    /** @var LanguageModel[] $languages */
-    public array  $languages = [];
+    public function __construct()
+    {
+        $this->certifications = [];
+        $this->formations = [];
+        $this->availabilities = [];
+        $this->spokenLanguages = [];
+        $this->languages = [];
+    }
 }

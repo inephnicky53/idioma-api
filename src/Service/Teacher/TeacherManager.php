@@ -11,7 +11,6 @@ use App\Entity\UserTeacher;
 use App\Event\TeacherCreatedEvent;
 use App\Event\TeacherValidatedEvent;
 use App\Model\CreateTeacherModel;
-use App\Repository\CertificationRepository;
 use App\Repository\CurrencyRepository;
 use App\Repository\LanguageRepository;
 use App\Repository\UserTeacherRepository;
@@ -26,7 +25,6 @@ class TeacherManager
         private readonly EntityManagerInterface  $em,
         private readonly LanguageRepository      $languageRepository,
         private readonly CurrencyRepository      $currencyRepository,
-        private readonly CertificationRepository $certificationRepository,
         private readonly UserTeacherRepository $userTeacherRepository,
         private readonly Security                $security,
         private readonly EventDispatcherInterface $dispatcher
@@ -79,10 +77,6 @@ class TeacherManager
         }
 
         foreach ($model->certifications as $item) {
-            $certification = $this->certificationRepository->findOneBy(['name' => $item->certification]);
-            if (is_null($certification))
-                throw new Exception("La certification sélectionnée n'existe pas");
-
             $lang = $this->languageRepository->findOneBy(['locale' => $item->language]);
             if (is_null($lang))
                 throw new Exception("La langue sélectionnée n'existe pas");
@@ -90,7 +84,7 @@ class TeacherManager
             $teacher->addTeacherCertification(
                 (new TeacherCertification())
                     ->addLanguage($language)
-                    ->setCertification($certification)
+                    ->setCertification($item->certification)
                     ->setYearStart($item->yearStart)
                     ->setYearEnd($item->yearEnd)
             );

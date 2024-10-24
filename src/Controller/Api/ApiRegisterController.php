@@ -60,7 +60,6 @@ class ApiRegisterController extends AbstractController
 
         $this->OTPRepository->deleteBy($data, OTP::TYPE_USER);
 
-        /** @var OTP $otp */
         $otp = OTP::generate($data, 4, 2, OTP::TYPE_USER, $data->getPhone(), $data->getId());
         $this->OTPRepository->add($otp, true);
 

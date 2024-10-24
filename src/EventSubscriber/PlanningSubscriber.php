@@ -3,18 +3,18 @@
 namespace App\EventSubscriber;
 
 use App\Event\PlanningCreatedEvent;
+use App\Service\NotificationService;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
-use Symfony\Component\Notifier\NotifierInterface;
 
 class PlanningSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly MailerInterface $mailer,
-        private readonly NotifierInterface $notifier
+        private readonly MailerInterface     $mailer,
+        private readonly NotificationService $notificationService,
     )
     {
     }
@@ -22,10 +22,32 @@ class PlanningSubscriber implements EventSubscriberInterface
     public function onPlanningCreated(PlanningCreatedEvent $event): void
     {
         $planning = $event->getPlanning();
+        $subject = "Nouveau booking";
+        $this->notificationService->notifyUser($planning->getTeacher()->getUser(), $subject, "Un planning vient d'être enregistré");
+
         try {
             $email = (new TemplatedEmail())
                 ->to(new Address($planning->getTeacher()->getUser()->getEmail()))
-                ->subject("Nouveau booking")
+                ->subject($subject)
+                ->htmlTemplate('email/new_booking.html.twig')
+                ->context([
+                    'data' => $planning,
+                ]);
+
+            $this->mailer->send($email);
+        } catch (TransportExceptionInterface $e) {
+        }
+    }
+
+    public function onPlanningStarted(PlanningCreatedEvent $event): void
+    {
+        $planning = $event->getPlanning();
+        $subject = "Votre programme à commencé";
+        $this->notificationService->notifyUser($planning->getTeacher()->getUser(), $subject, '');
+        try {
+            $email = (new TemplatedEmail())
+                ->to(new Address($planning->getTeacher()->getUser()->getEmail()))
+                ->subject($subject)
                 ->htmlTemplate('email/new_booking.html.twig')
                 ->context([
                     'data' => $planning,

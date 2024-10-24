@@ -13,7 +13,6 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\OpenApi\Model;
-use App\Controller\Api\Teacher\ApiRemoveTeacherController;
 use App\Controller\Api\Teacher\TeacherMediaController;
 use App\Controller\Api\Teacher\TeacherGetCoursesController;
 use App\Dto\CreateTeacherInput;
@@ -164,11 +163,11 @@ class Teacher
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['teacher:list', 'course:list', 'user:courses', 'user:teachers', 'planning:show', 'user:inbox', 'inbox_thread:list'])]
+    #[Groups(['teacher:list', 'course:list', 'user:courses', 'user:teachers', 'planning:show', 'user:inbox', 'order:list'])]
     private ?int $id = null;
 
     #[ORM\OneToOne(inversedBy: 'teacher', cascade: ['persist', 'remove'])]
-    #[Groups(['teacher:list', 'course:list', 'user:courses', 'user:teachers', 'planning:show', 'user:inbox', 'inbox_thread:list'])]
+    #[Groups(['teacher:list', 'course:list', 'user:courses', 'user:teachers', 'planning:show', 'user:inbox'])]
     private ?User $user = null;
 
     #[ORM\ManyToMany(targetEntity: Language::class, inversedBy: 'teachers')]
@@ -264,7 +263,7 @@ class Teacher
     private Collection $teachingLanguages;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['teacher:list', 'inbox_thread:list'])]
+    #[Groups(['teacher:list', 'user:inbox'])]
     private ?string $profile = null;
 
     #[ORM\Column(length: 255, options: ['default' => self::STATUS_WAITING])]

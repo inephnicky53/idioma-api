@@ -26,10 +26,9 @@ class TeacherCertification
     #[ORM\ManyToOne(inversedBy: 'teacherCertifications')]
     private ?Teacher $teacher = null;
 
-    #[ORM\ManyToOne(cascade: ['persist'], inversedBy: 'teacherCertifications')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['teacher:show', 'teacher:certifications'])]
-    private ?Certification $certification = null;
+    private ?string $certification = null;
 
     #[ORM\ManyToMany(targetEntity: Language::class)]
     #[Groups(['teacher:show', 'teacher:certifications'])]
@@ -73,7 +72,7 @@ class TeacherCertification
         return $this->certification;
     }
 
-    public function setCertification(?Certification $certification): static
+    public function setCertification(?string $certification): static
     {
         $this->certification = $certification;
 

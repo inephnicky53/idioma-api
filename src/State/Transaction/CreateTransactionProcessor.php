@@ -5,6 +5,7 @@ namespace App\State\Transaction;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Dto\CreateOrderInput;
+use App\Exception\PaymentException;
 use App\Service\Transaction\TransactionManager;
 
 class CreateTransactionProcessor implements ProcessorInterface
@@ -14,6 +15,7 @@ class CreateTransactionProcessor implements ProcessorInterface
     }
 
     /**
+     * @throws PaymentException
      * @var CreateOrderInput $data
      */
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = [])

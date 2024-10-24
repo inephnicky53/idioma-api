@@ -8,12 +8,9 @@ use App\Entity\OrderProduct;
 use App\Entity\Transaction;
 use App\Exception\PaymentException;
 use App\Idioma;
-use App\Repository\OrderRepository;
-use App\Service\Gateway\PaypalGateway;
 use App\Service\OperatorProcess;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\HttpFoundation\JsonResponse;
 
 class TransactionManager
 {
@@ -21,8 +18,6 @@ class TransactionManager
         private readonly EntityManagerInterface $em,
         private readonly OperatorProcess        $process,
         private readonly Security               $security,
-        private readonly PaypalGateway          $paypalGateway,
-        private readonly OrderRepository        $orderRepository,
     )
     {
     }
@@ -49,23 +44,35 @@ class TransactionManager
         foreach ($dto->products as $p) {
             $teacher = $p->teacher;
             $package = $p->package;
-            $amount += ($teacher->getPrice() * $package->getHours()) / $package->getDiscount();
+            $amount += ($teacher->getPrice() * $package->getHours()) * (1 - $package->getDiscount() / 100);
+
             $product = (new OrderProduct())
                 ->setTeacher($teacher)
                 ->setPackage($package)
             ;
+            $this->em->persist($product);
+
             $order->addProduct($product);
         }
 
         $order->setAmount($amount);
 
+        $this->em->persist($order);
+        $this->em->flush();
+
         $transaction = (new Transaction())
             ->setOperator($operator)
+            ->setPhone($dto->phone)
             ->setAmount($amount)
             ->setCurrency($currency)
             ->setStatus($status)
-            ->setUser($user);
+            ->setUser($user)
+            ->setCommand($order)
+        ;
 
-        return $this->process->process($transaction);
+        $this->em->persist($transaction);
+        $this->em->flush();
+
+        return $this->process->process($order->getTransaction());
     }
 }

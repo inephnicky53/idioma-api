@@ -31,6 +31,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
             uriVariables: [
                 'threadId' => new Link(toProperty: 'thread', fromClass: InboxThread::class),
             ],
+            normalizationContext: ['groups' => ['inbox_thread:read']],
             security: "is_granted('ROLE_USER')",
         ),
         new Post(
@@ -39,6 +40,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
         ),
         new Patch(name: 'update')
     ],
+    normalizationContext: ['groups' => ['inbox:get']],
     mercure: true,
 )]
 class InboxMessage
@@ -51,19 +53,19 @@ class InboxMessage
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:inbox:threads', 'inbox_thread:read'])]
+    #[Groups(['user:inbox', 'inbox_thread:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'inboxMessages')]
-    #[Groups(['inbox:chat:send', 'user:inbox:threads', 'inbox_thread:read'])]
+    #[Groups(['inbox:chat:send', 'user:inbox', 'inbox_thread:read'])]
     private ?User $author = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Groups(['inbox:chat:send', 'user:inbox:threads', 'inbox_thread:read'])]
+    #[Groups(['inbox:chat:send', 'user:inbox', 'inbox_thread:read'])]
     private ?string $body = null;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
-    #[Groups(['user:inbox:threads', 'inbox_thread:read'])]
+    #[Groups(['user:inbox', 'inbox_thread:read'])]
     private ?Attachment $attachment = null;
 
     #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'messageTags')]
@@ -74,11 +76,11 @@ class InboxMessage
     private Collection $messageTags;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['inbox_thread:read', 'user:inbox:threads'])]
+    #[Groups(['inbox_thread:read', 'user:inbox'])]
     private ?\DateTimeImmutable $receivedAt = null;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['inbox_thread:read', 'user:inbox:threads'])]
+    #[Groups(['inbox_thread:read', 'user:inbox'])]
     private ?\DateTimeImmutable $readAt = null;
 
     #[ORM\ManyToOne(cascade: ['persist'], inversedBy: 'messages')]

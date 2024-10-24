@@ -109,11 +109,12 @@ use function Symfony\Component\String\u;
     ),
     new Patch(
         uriTemplate: '/users/{id}',
+        normalizationContext: ['groups' => ['user:me']],
         denormalizationContext: ['groups' => ['user:update']],
         security: "is_granted('ROLE_USER')",
     ),
     new Patch(
-        normalizationContext: ['groups' => ['user:show']],
+        normalizationContext: ['groups' => ['user:me']],
         denormalizationContext: ['groups' => ['user:update']],
         security: "is_granted('ROLE_ADMIN') or is_granted('USER_EDIT', object)",
         securityMessage: "Désolé, vous n'avez pas le droit de modifier cet utilisateur.",
@@ -134,11 +135,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:show', 'teacher:list', 'user:courses', 'user:teachers', 'user:inbox', 'planning:show', 'inbox_thread:list', 'rating:list'])]
+    #[Groups(['user:show', 'teacher:list', 'user:courses', 'user:teachers', 'user:inbox', 'planning:show', 'rating:list'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
-    #[Groups(['user:show', 'user:register', 'course:list', 'user:inbox', 'planning:show', 'inbox_thread:list'])]
+    #[Groups(['user:show', 'user:register', 'course:list', 'user:inbox', 'planning:show'])]
     private ?string $email = null;
 
     #[ORM\Column]
@@ -153,7 +154,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $plainPassword = null;
 
     #[ORM\Column(length: 3, nullable: true, options: ["default" => "CD"])]
-    #[Groups(['user:show', 'teacher:list', 'user:inbox', 'planning:show'])]
+    #[Groups(['user:show', 'user:update', 'user:register', 'teacher:list', 'user:inbox', 'planning:show'])]
     private ?string $country;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -173,22 +174,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private bool $isVerified = false;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['user:register', 'planning:show', 'user:update', 'inbox_thread:list'])]
+    #[Groups(['user:register', 'planning:show', 'user:update', 'user:inbox'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['user:register', 'planning:show', 'user:update', 'inbox_thread:list'])]
+    #[Groups(['user:register', 'planning:show', 'user:update', 'user:inbox'])]
     private ?string $firstname = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['user:register', 'planning:show', 'user:update', 'inbox_thread:list'])]
+    #[Groups(['user:register', 'planning:show', 'user:update', 'user:inbox'])]
     private ?string $postname = null;
 
     #[ORM\Column(nullable: true)]
     private ?\DateTime $birthdayAt;
 
     #[ORM\Column(length: 15, unique: true, nullable: true)]
-    #[Groups(['user:register', 'planning:show', 'inbox_thread:list'])]
+    #[Groups(['user:register', 'planning:show', 'user:inbox'])]
     private ?string $phone = null;
 
     #[ORM\Column]
@@ -233,11 +234,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?bool $isPhoneVerified;
 
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Attachment::class, cascade: ["persist"])]
-    #[Groups(['user:register', 'course:list', 'user:courses', 'teacher:list', 'user:inbox'])]
+    #[Groups(['course:list', 'user:courses', 'teacher:list', 'user:inbox'])]
     private Collection $thumbnails;
 
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: UserCourse::class, orphanRemoval: true)]
-    #[Groups(['user:register', 'course:list'])]
+    #[Groups(['course:list'])]
     private Collection $courses;
 
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Transaction::class)]
@@ -302,7 +303,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->currency = 'USD';
         $this->birthdayAt = new DateTime("01-01-2000");
 
-        if ($ip) $this->initGeoIp($ip);
+        //if ($ip) $this->initGeoIp($ip);
         $this->thumbnails = new ArrayCollection();
         $this->courses = new ArrayCollection();
         $this->transactions = new ArrayCollection();
@@ -705,7 +706,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // if you are in the production environment you can retrieve the
             $record = GeoIP::check($ip);
 
-            $this->setCountry($record->countryCode ?? null); // 'US'
             $this->setIsp($record->isp ?? null);
             $this->setSubdivisions($record->regionName ?? null);
             $this->setCity($record->city ?? null); // 'Minneapolis'

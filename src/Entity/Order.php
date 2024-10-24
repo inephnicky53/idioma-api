@@ -4,10 +4,7 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Metadata\Post;
-use App\Dto\CreateOrderInput;
 use App\Repository\OrderRepository;
-use App\State\Transaction\CreateTransactionProcessor;
 use App\Trait\Datable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -18,16 +15,9 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Table(name: '`order`')]
 #[ApiResource(
     operations: [
-        new GetCollection(
-            security: 'is_granted("ROLE_USER")',
-        ),
-        new Post(
-            security: 'is_granted("ROLE_USER")',
-            input: CreateOrderInput::class,
-            processor: CreateTransactionProcessor::class
-        )
+        new GetCollection(security: 'is_granted("ROLE_USER")')
     ],
-    normalizationContext: ['groups' => ['order:list']],
+    normalizationContext: ['groups' => ['order:list']]
 )]
 class Order
 {
@@ -40,12 +30,14 @@ class Order
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['order:list'])]
     private ?string $reference = null;
 
     /**
      * @var Collection<int, OrderProduct>
      */
     #[ORM\OneToMany(targetEntity: OrderProduct::class, mappedBy: 'command', orphanRemoval: true)]
+    #[Groups(['order:list'])]
     private Collection $products;
 
     #[ORM\Column]
@@ -53,18 +45,22 @@ class Order
     private ?float $amount = null;
 
     #[ORM\ManyToOne]
+    #[Groups(['order:list'])]
     private ?Currency $currency = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['order:list'])]
     private ?string $status = null;
 
     #[ORM\ManyToOne(inversedBy: 'orders')]
     private ?User $user = null;
 
     #[ORM\OneToOne(inversedBy: 'command', cascade: ['persist', 'remove'])]
+    #[Groups(['order:list'])]
     private ?Transaction $transaction = null;
 
     #[ORM\Column(length: 10)]
+    #[Groups(['order:list'])]
     private ?string $operator = null;
 
     public function __construct()
