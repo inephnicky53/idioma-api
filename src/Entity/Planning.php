@@ -5,7 +5,9 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
+use App\Dto\BookPlanningInput;
 use App\Repository\PlanningRepository;
+use App\State\Planning\PlanningBookProcessor;
 use App\State\Planning\PlanningCreateProcessor;
 use App\State\Planning\UserPlanningProvider;
 use DateTimeImmutable;
@@ -25,6 +27,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
             denormalizationContext: ['groups' => ['planning:create']],
             security: "is_granted('ROLE_USER')",
             processor: PlanningCreateProcessor::class
+        ),
+        new Post(
+            uriTemplate: "plannings/book",
+            security: "is_granted('ROLE_USER')",
+            input: BookPlanningInput::class,
+            processor: PlanningBookProcessor::class
         ),
     ],
     normalizationContext: ['groups' => ['planning:show']],
@@ -88,6 +96,7 @@ class Planning
             self::STATUS_REJECTED
         ];
     }
+
     public function __construct()
     {
         if (is_null($this->createdAt))
@@ -126,7 +135,7 @@ class Planning
         return $this;
     }
 
-    public function isDispo(): bool
+    public function isFree(): bool
     {
         $now = new DateTimeImmutable('now');
         return $this->start > $now;

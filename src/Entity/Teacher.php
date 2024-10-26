@@ -80,6 +80,10 @@ use Symfony\Component\Serializer\Annotation\Groups;
             processor: CreateTeacherProcessor::class,
         ),
         new Patch(
+            denormalizationContext: ['groups' => ['teacher:update']],
+            security: "is_granted('ROLE_USER')",
+        ),
+        new Patch(
             uriTemplate: "teacher/{id}/disponibilities",
             denormalizationContext: ['groups' => ['teacher:disponibilities']],
             security: "is_granted('ROLE_USER')",
@@ -186,7 +190,7 @@ class Teacher
     private Collection $courses;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Groups(['teacher:show', 'teacher:become', 'planning:show'])]
+    #[Groups(['teacher:show', 'teacher:become', 'planning:show', 'teacher:update'])]
     private ?string $description = null;
 
     #[ORM\OneToMany(mappedBy: 'teacher', targetEntity: Social::class)]
@@ -197,7 +201,7 @@ class Teacher
     private Collection $ratings;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['teacher:list', 'teacher:pricing', 'teacher:disponibilities', 'user:teachers'])]
+    #[Groups(['teacher:list', 'teacher:pricing', 'teacher:disponibilities', 'user:teachers', 'teacher:update'])]
     private ?float $price = null;
 
     #[ORM\ManyToOne(inversedBy: 'teachers')]
@@ -208,19 +212,19 @@ class Teacher
     private Collection $students;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['teacher:list', 'teacher:become'])]
+    #[Groups(['teacher:list', 'teacher:become', 'teacher:update'])]
     private ?string $shortDescription = null;
 
     #[ORM\OneToMany(mappedBy: 'teacher', targetEntity: SpokenLanguage::class, cascade: ["persist"])]
-    #[Groups(['teacher:list', 'teacher:become'])]
+    #[Groups(['teacher:list', 'teacher:become', 'teacher:update'])]
     private Collection $spokenLanguages;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['teacher:show', 'teacher:become'])]
+    #[Groups(['teacher:show', 'teacher:become', 'teacher:update'])]
     private ?string $experience = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['teacher:show', 'teacher:become'])]
+    #[Groups(['teacher:show', 'teacher:become', 'teacher:update'])]
     private ?string $motivation = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -232,7 +236,7 @@ class Teacher
     private ?string $video = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['teacher:show', 'teacher:disponibilities'])]
+    #[Groups(['teacher:show', 'teacher:disponibilities', 'teacher:update'])]
     private ?string $timezone = null;
 
     #[ORM\OneToMany(mappedBy: 'teacher', targetEntity: Disponibility::class, cascade: ["persist"])]
@@ -263,7 +267,7 @@ class Teacher
     private Collection $teachingLanguages;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['teacher:list', 'user:inbox'])]
+    #[Groups(['teacher:list', 'user:inbox', 'teacher:update'])]
     private ?string $profile = null;
 
     #[ORM\Column(length: 255, options: ['default' => self::STATUS_WAITING])]

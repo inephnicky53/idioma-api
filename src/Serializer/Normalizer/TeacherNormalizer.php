@@ -31,11 +31,6 @@ class TeacherNormalizer implements NormalizerInterface
         if ($user && $user->getTeachers()->count() > 0) {
             foreach ($user->getTeachers() as $userTeacher) {
                 if ($object === $userTeacher->getTeacher()) {
-                    if ($userTeacher->getBuyedAt() !== null)
-                        $object->setCanTrial(false);
-
-                    $object->setUserHours($userTeacher->getHours());
-                    $object->setIsFavorite(true);
                 }
             }
         }

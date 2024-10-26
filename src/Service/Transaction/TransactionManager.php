@@ -6,11 +6,13 @@ use App\Dto\CreateOrderInput;
 use App\Entity\Order;
 use App\Entity\OrderProduct;
 use App\Entity\Transaction;
+use App\Entity\UserTeacher;
 use App\Exception\PaymentException;
 use App\Idioma;
 use App\Service\OperatorProcess;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class TransactionManager
 {
@@ -48,8 +50,7 @@ class TransactionManager
 
             $product = (new OrderProduct())
                 ->setTeacher($teacher)
-                ->setPackage($package)
-            ;
+                ->setPackage($package);
             $this->em->persist($product);
 
             $order->addProduct($product);
@@ -67,12 +68,30 @@ class TransactionManager
             ->setCurrency($currency)
             ->setStatus($status)
             ->setUser($user)
-            ->setCommand($order)
-        ;
+            ->setCommand($order);
 
         $this->em->persist($transaction);
         $this->em->flush();
 
-        return $this->process->process($order->getTransaction());
+        try {
+            //$result = $this->process->process($order->getTransaction());
+            foreach ($order->getProducts() as $product) {
+                $userTeacher = $this->em->getRepository(UserTeacher::class)
+                    ->findOneBy(['user' => $user, 'teacher' => $product->getTeacher()]);
+                if (is_null($userTeacher)) {
+                    $userTeacher = (new UserTeacher())
+                        ->setTeacher($product->getTeacher())
+                        ->setUser($user);
+                }
+                $userTeacher->setHours($product->getPackage()->getHours());
+                $userTeacher->setBuyedAt(new \DateTimeImmutable());
+                $this->em->persist($userTeacher);
+            }
+            $this->em->flush();
+        } catch (PaymentException $exception) {
+            throw $exception;
+        }
+
+        return new JsonResponse([]);
     }
 }

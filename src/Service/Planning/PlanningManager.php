@@ -2,6 +2,7 @@
 
 namespace App\Service\Planning;
 
+use App\Dto\BookPlanningInput;
 use App\Entity\Planning;
 use App\Entity\User;
 use App\Entity\UserTeacher;
@@ -65,5 +66,49 @@ class PlanningManager
         $this->dispatcher->dispatch(new PlanningCreatedEvent($data));
 
         return $data;
+    }
+
+    public function book(BookPlanningInput $dto): User
+    {
+        /** @var User $user */
+        $user = $this->security->getUser();
+
+        $this->em->beginTransaction();
+        try {
+            foreach ($dto->plannings as $input) {
+                $planning = $this->em->getRepository(Planning::class)->find($input->id);
+                if (!$planning)
+                    throw new \Exception("This planning doesn't exist");
+
+                /** @var UserTeacher $userTeacher */
+                $userTeacher = $user->getTeachers()->filter(fn(UserTeacher $userTeacher) => $userTeacher->getTeacher() === $planning->getTeacher())[0];
+                if (!$userTeacher)
+                    throw new \Exception("You don't have any hours for this teacher");
+
+                if ($userTeacher->getHours() < 1)
+                    throw new \Exception("You don't have enough available hours to book all selected plannings.");
+
+                if (!$planning->isFree())
+                    throw new \Exception("The planning with ID {$planning->getId()} is not available for booking.");
+
+                if ($planning->getParticipants()->contains($user))
+                    throw new \Exception("You have already booked the planning with ID {$planning->getId()}.");
+
+
+                $userTeacher->setHours($userTeacher->getHours() - 1);
+                $this->em->persist($userTeacher);
+
+                $planning->addParticipant($user);
+                $this->em->persist($planning);
+            }
+
+            $this->em->flush();
+            $this->em->commit();
+
+            return $user;
+        } catch (\Exception $e) {
+            $this->em->rollback();
+            throw $e;
+        }
     }
 }

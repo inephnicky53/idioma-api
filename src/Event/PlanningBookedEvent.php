@@ -6,7 +6,7 @@ namespace App\Event;
 
 use App\Entity\Planning;
 
-readonly class PlanningCreatedEvent
+readonly class PlanningBookedEvent
 {
     public function __construct(private Planning $planning)
     {
