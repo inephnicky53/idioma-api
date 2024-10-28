@@ -70,8 +70,11 @@ BODY;
 
     public function support(): array
     {
-        return [
-            Transaction::OPERATOR_MOBILE
-        ];
+        return [];
+    }
+
+    public function check(Transaction $transaction)
+    {
+        // TODO: Implement check() method.
     }
 }

@@ -72,8 +72,8 @@ class DashboardController extends AbstractDashboardController
             $users->add($user);
             if ($user->getRoles() == User::STUDENT)
                 $students->add($user);
-            if ($user->getTeacher())
-                $teachers->add($user);
+            if ($teacher = $user->getTeacher())
+                $teachers->add($teacher);
         }, $userRepository->findAll());
 
         array_map(function (UserCourse $userCourse) {

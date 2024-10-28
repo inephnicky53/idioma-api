@@ -54,13 +54,7 @@ services:
     bind:
       $processor: '@api_platform.doctrine.orm.state.persist_processor'
 
-  App\Service\Gateway\PaypalGateway:
-    tags: [ 'app.payment_gateway' ]
-
-  App\Service\Gateway\MaxicashGateway:
-    arguments:
-      - '%env(MAXICASH_ID)%'
-      - '%env(MAXICASH_PWD)%'
+  App\Service\Gateway\FlexPaieGateway:
     tags: [ 'app.payment_gateway' ]
 
   App\Service\OperatorProcess:

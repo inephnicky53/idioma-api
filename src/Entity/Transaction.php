@@ -2,13 +2,24 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
 use App\Repository\TransactionRepository;
+use App\State\Transaction\CheckTransactionProvider;
 use App\Trait\Datable;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
 
 #[ORM\Entity(repositoryClass: TransactionRepository::class)]
+#[ApiResource(
+    operations: [
+        new Get(
+            uriTemplate: 'transactions/{id}/check',
+            provider: CheckTransactionProvider::class,
+        )
+    ]
+)]
 class Transaction
 {
     use Datable {

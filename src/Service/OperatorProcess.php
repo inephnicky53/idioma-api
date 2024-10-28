@@ -34,4 +34,17 @@ class OperatorProcess
 
         throw new PaymentException("La méthode de paiement n'existe pas");
     }
+
+    /**
+     * @throws \Exception
+     */
+    public function check(Transaction $transaction): mixed
+    {
+        foreach ($this->gateways as $gateway) {
+            if (in_array($transaction->getOperator(), $gateway->support()))
+                return $gateway->check($transaction);
+        }
+
+        throw new \Exception("La méthode de paiement n'existe pas");
+    }
 }

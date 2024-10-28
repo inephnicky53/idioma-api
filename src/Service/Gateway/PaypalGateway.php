@@ -79,4 +79,9 @@ class PaypalGateway implements GatewayInterface
             TransactionEntity::OPERATOR_PAYPAL
         ];
     }
+
+    public function check(TransactionEntity $transaction)
+    {
+        // TODO: Implement check() method.
+    }
 }

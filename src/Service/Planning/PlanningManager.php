@@ -7,16 +7,18 @@ use App\Entity\Planning;
 use App\Entity\User;
 use App\Entity\UserTeacher;
 use App\Event\PlanningCreatedEvent;
+//use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 
-class PlanningManager
+readonly class PlanningManager
 {
     public function __construct(
-        private readonly Security                 $security,
-        private readonly EventDispatcherInterface $dispatcher,
-        private readonly EntityManagerInterface   $em
+        private Security                 $security,
+        private EventDispatcherInterface $dispatcher,
+        private EntityManagerInterface   $em,
+        //private NotificationService $notificationService,
     )
     {
     }
@@ -104,6 +106,8 @@ class PlanningManager
 
             $this->em->flush();
             $this->em->commit();
+
+            //$this->notificationService->notifyUser($user, "Booking d'heure", 'Vous venez de booker une heure');
 
             return $user;
         } catch (\Exception $e) {
