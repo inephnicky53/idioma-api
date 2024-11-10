@@ -10,7 +10,6 @@ class FormationModel
         public ?string $certificate = null,
         public ?string $yearStart = null,
         public ?string $yearEnd = null,
-        public bool    $hasCertificate = false
     )
     {
     }
