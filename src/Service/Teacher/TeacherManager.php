@@ -77,14 +77,10 @@ class TeacherManager
         }
 
         foreach ($model->certifications as $item) {
-            $lang = $this->languageRepository->findOneBy(['locale' => $item->language]);
-            if (is_null($lang))
-                throw new Exception("La langue sélectionnée n'existe pas");
-
             $teacher->addTeacherCertification(
                 (new TeacherCertification())
                     ->setCertification($item->certification)
-                    ->addLanguage($language)
+                    ->addLanguage($item->language)
                     ->setYearStart($item->yearStart)
                     ->setYearEnd($item->yearEnd)
             );
