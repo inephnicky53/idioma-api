@@ -13,13 +13,13 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 
-class TeacherSubscriber implements EventSubscriberInterface
+readonly class TeacherSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly MailerInterface $mailer,
-        private readonly SmsService      $smsService,
-        private readonly KernelInterface $kernel,
-        private readonly RequestStack    $request
+        private MailerInterface $mailer,
+        private SmsService      $smsService,
+        private KernelInterface $kernel,
+        private RequestStack    $request
     )
     {
     }

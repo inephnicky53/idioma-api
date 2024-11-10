@@ -10,11 +10,11 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 
-class PlanningSubscriber implements EventSubscriberInterface
+readonly class PlanningSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly MailerInterface     $mailer,
-        private readonly NotificationService $notificationService,
+        private MailerInterface     $mailer,
+        private NotificationService $notificationService,
     )
     {
     }

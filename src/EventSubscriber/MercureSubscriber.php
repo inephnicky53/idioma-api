@@ -9,7 +9,7 @@ use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Mercure\Update;
 use Symfony\Component\Serializer\SerializerInterface;
 
-class MercureSubscriber implements EventSubscriberInterface
+readonly class MercureSubscriber implements EventSubscriberInterface
 {
     public function __construct(private SerializerInterface $serializer, private HubInterface $hub)
     {

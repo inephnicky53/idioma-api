@@ -19,9 +19,6 @@ readonly class NotificationService
     {
     }
 
-    /**
-     * Envoie une notification à un utilisateur.
-     */
     public function notifyUser(User $user, string $title, string $message): Notification
     {
         $notification = (new Notification())

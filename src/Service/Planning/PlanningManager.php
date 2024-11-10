@@ -6,6 +6,7 @@ use App\Dto\BookPlanningInput;
 use App\Entity\Planning;
 use App\Entity\User;
 use App\Entity\UserTeacher;
+use App\Event\PlanningBookedEvent;
 use App\Event\PlanningCreatedEvent;
 //use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -102,12 +103,13 @@ readonly class PlanningManager
 
                 $planning->addParticipant($user);
                 $this->em->persist($planning);
+
+                $this->dispatcher->dispatch(new PlanningBookedEvent($planning));
             }
 
             $this->em->flush();
             $this->em->commit();
 
-            //$this->notificationService->notifyUser($user, "Booking d'heure", 'Vous venez de booker une heure');
 
             return $user;
         } catch (\Exception $e) {

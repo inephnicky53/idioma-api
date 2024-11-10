@@ -22,15 +22,10 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-class UserSubscriber implements EventSubscriberInterface
+readonly class UserSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly MailerInterface             $mailer,
-        private readonly SmsService                  $smsService,
-        private readonly UserPasswordHasherInterface $userPasswordHasher,
-        private readonly EntityManagerInterface      $em,
-        private readonly RequestStack                $request,
-        private readonly KernelInterface             $kernel
+        private MailerInterface $mailer,
     )
     {
     }

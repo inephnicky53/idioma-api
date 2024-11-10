@@ -10,10 +10,9 @@ use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
-class LocaleSubscriber implements EventSubscriberInterface
+readonly class LocaleSubscriber implements EventSubscriberInterface
 {
-
-    public function __construct(private readonly TokenStorageInterface $storage)
+    public function __construct(private TokenStorageInterface $storage)
     {
     }
 
