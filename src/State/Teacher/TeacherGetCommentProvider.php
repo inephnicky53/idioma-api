@@ -8,11 +8,11 @@ use App\Entity\Rating;
 use App\Entity\Teacher;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
-class TeacherGetCommentProvider implements ProviderInterface
+readonly class TeacherGetCommentProvider implements ProviderInterface
 {
     public function __construct(
         #[Autowire(service: 'api_platform.doctrine.orm.state.item_provider')]
-        private readonly ProviderInterface $inner,
+        private ProviderInterface $inner,
     )
     {
     }

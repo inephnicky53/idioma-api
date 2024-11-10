@@ -7,7 +7,7 @@ use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Planning;
 use App\Service\Planning\PlanningManager;
 
-class PlanningCreateProcessor implements ProcessorInterface
+readonly class PlanningCreateProcessor implements ProcessorInterface
 {
     public function __construct(private PlanningManager $manager)
     {

@@ -7,7 +7,7 @@ use ApiPlatform\State\ProviderInterface;
 use App\Entity\User;
 use Symfony\Bundle\SecurityBundle\Security;
 
-class UserPlanningProvider implements ProviderInterface
+readonly class UserPlanningProvider implements ProviderInterface
 {
     public function __construct(private Security $security)
     {
@@ -19,9 +19,9 @@ class UserPlanningProvider implements ProviderInterface
         $user = $this->security->getUser();
 
         $userPlanning = $user->getPlannings()->toArray();
-        if ($teacher = $user->getTeacher()){
+        if ($teacher = $user->getTeacher())
             $userPlanning = array_merge($userPlanning, $teacher->getPlannings()->toArray());
-        }
+
         return $userPlanning;
     }
 }

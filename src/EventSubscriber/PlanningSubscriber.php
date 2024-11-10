@@ -23,7 +23,7 @@ readonly class PlanningSubscriber implements EventSubscriberInterface
     {
         $planning = $event->getPlanning();
         $subject = "Nouveau booking";
-        //$this->notificationService->notifyUser($planning->getTeacher()->getUser(), $subject, "Un planning vient d'être enregistré");
+        $this->notificationService->notifyUser($planning->getTeacher()->getUser(), $subject, "Un planning vient d'être enregistré");
 
         try {
             $email = (new TemplatedEmail())

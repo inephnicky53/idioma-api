@@ -9,9 +9,9 @@ use App\Entity\Teacher;
 use App\Model\CreateTeacherModel;
 use App\Service\Teacher\TeacherManager;
 
-class CreateTeacherProcessor implements ProcessorInterface
+readonly class CreateTeacherProcessor implements ProcessorInterface
 {
-    public function __construct(private readonly TeacherManager $manager)
+    public function __construct(private TeacherManager $manager)
     {
     }
 

@@ -5,16 +5,13 @@ namespace App\State\Teacher;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
 use App\Entity\User;
-use App\Repository\ArticleRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
-class TeacherCheckProvider implements ProviderInterface
+readonly class TeacherCheckProvider implements ProviderInterface
 {
     public function __construct(
-        private readonly Security $security
+        private Security $security
     )
     {
     }

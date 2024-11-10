@@ -30,7 +30,7 @@ readonly class NotificationService
         $this->em->persist($notification);
         $this->em->flush();
 
-        $this->dispatcher->dispatch(new NotificationCreatedEvent($notification));
+        //$this->dispatcher->dispatch(new NotificationCreatedEvent($notification));
 
         return $notification;
     }

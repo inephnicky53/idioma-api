@@ -12,8 +12,8 @@ class EmailSender
     const EMAIL = "EMAIL";
 
     public function __construct(
-        private MailerInterface $mailer,
-        private LoggerInterface $logger
+        private readonly MailerInterface $mailer,
+        private readonly LoggerInterface $logger
     )
     {
     }

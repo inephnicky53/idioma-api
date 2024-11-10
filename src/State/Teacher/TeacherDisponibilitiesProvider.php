@@ -11,10 +11,10 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-class TeacherDisponibilitiesProvider implements ProviderInterface
+readonly class TeacherDisponibilitiesProvider implements ProviderInterface
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager
+        private EntityManagerInterface $entityManager
     )
     {
     }
@@ -22,8 +22,6 @@ class TeacherDisponibilitiesProvider implements ProviderInterface
     public function provide(Operation $operation, array $uriVariables = [], array $context = []): object|array|null
     {
         $teacherRepository = $this->entityManager->getRepository(Teacher::class);
-        $teacher = $teacherRepository->find($uriVariables['id']);
-
-        return $teacher;
+        return $teacherRepository->find($uriVariables['id']);
     }
 }
