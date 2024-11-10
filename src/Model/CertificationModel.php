@@ -2,13 +2,15 @@
 
 namespace App\Model;
 
+use App\Entity\Language;
+
 class CertificationModel
 {
-    public string $certification;
+    public ?string $certification = null;
 
-    public string $language;
+    public ?Language $language = null;
 
-    public string $yearStart;
+    public ?\DateTimeImmutable $yearStart = null;
 
-    public string $yearEnd;
+    public ?\DateTimeImmutable $yearEnd = null;
 }

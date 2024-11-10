@@ -22,11 +22,11 @@ use Symfony\Bundle\SecurityBundle\Security;
 class TeacherManager
 {
     public function __construct(
-        private readonly EntityManagerInterface  $em,
-        private readonly LanguageRepository      $languageRepository,
-        private readonly CurrencyRepository      $currencyRepository,
-        private readonly UserTeacherRepository $userTeacherRepository,
-        private readonly Security                $security,
+        private readonly EntityManagerInterface   $em,
+        private readonly LanguageRepository       $languageRepository,
+        private readonly CurrencyRepository       $currencyRepository,
+        private readonly UserTeacherRepository    $userTeacherRepository,
+        private readonly Security                 $security,
         private readonly EventDispatcherInterface $dispatcher
     )
     {
@@ -83,8 +83,8 @@ class TeacherManager
 
             $teacher->addTeacherCertification(
                 (new TeacherCertification())
-                    ->addLanguage($language)
                     ->setCertification($item->certification)
+                    ->addLanguage($language)
                     ->setYearStart($item->yearStart)
                     ->setYearEnd($item->yearEnd)
             );
@@ -96,7 +96,6 @@ class TeacherManager
                     ->setCertificate($item->certificate)
                     ->setUniversity($item->university)
                     ->setSpeciality($item->speciality)
-                    ->setType($item->type)
                     ->setYearStart($item->yearStart)
                     ->setYearEnd($item->yearEnd)
             );

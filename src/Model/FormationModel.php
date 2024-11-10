@@ -5,13 +5,12 @@ namespace App\Model;
 class FormationModel
 {
     public function __construct(
-        public string $university,
-        public string $speciality,
-        public string $certificate,
-        public string $type,
-        public string $yearStart,
-        public string $yearEnd,
-        public bool   $hasCertificate
+        public ?string $university = null,
+        public ?string $speciality = null,
+        public ?string $certificate = null,
+        public ?string $yearStart = null,
+        public ?string $yearEnd = null,
+        public bool    $hasCertificate = false
     )
     {
     }

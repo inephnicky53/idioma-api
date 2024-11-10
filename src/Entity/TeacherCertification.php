@@ -4,7 +4,6 @@ namespace App\Entity;
 
 use App\Repository\TeacherCertificationRepository;
 use App\Trait\Datable;
-use App\Trait\Deletable;
 use App\Trait\Verifiable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -36,11 +35,11 @@ class TeacherCertification
 
     #[ORM\Column]
     #[Groups(['teacher:show', 'teacher:certifications'])]
-    private ?int $yearStart = null;
+    private ?\DateTimeImmutable $yearStart = null;
 
     #[ORM\Column]
     #[Groups(['teacher:show', 'teacher:certifications'])]
-    private ?int $yearEnd = null;
+    private ?\DateTimeImmutable $yearEnd = null;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
     private ?Attachment $file = null;
@@ -67,7 +66,7 @@ class TeacherCertification
         return $this;
     }
 
-    public function getCertification(): ?Certification
+    public function getCertification(): ?string
     {
         return $this->certification;
     }
@@ -103,24 +102,24 @@ class TeacherCertification
         return $this;
     }
 
-    public function getYearStart(): ?int
+    public function getYearStart(): ?\DateTimeImmutable
     {
         return $this->yearStart;
     }
 
-    public function setYearStart(int $start): static
+    public function setYearStart(?\DateTimeImmutable $start): static
     {
         $this->yearStart = $start;
 
         return $this;
     }
 
-    public function getYearEnd(): ?int
+    public function getYearEnd(): ?\DateTimeImmutable
     {
         return $this->yearEnd;
     }
 
-    public function setYearEnd(int $end): static
+    public function setYearEnd(?\DateTimeImmutable $end): static
     {
         $this->yearEnd = $end;
 

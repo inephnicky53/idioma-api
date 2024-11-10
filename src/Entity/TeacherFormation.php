@@ -26,10 +26,6 @@ class TeacherFormation
     #[Groups(['teacher:show', 'teacher:certifications'])]
     private ?string $certificate = null;
 
-    #[ORM\Column(length: 255)]
-    #[Groups(['teacher:show', 'teacher:certifications'])]
-    private ?string $type = null;
-
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['teacher:show', 'teacher:certifications'])]
     private ?string $speciality = null;
@@ -83,18 +79,6 @@ class TeacherFormation
     public function setCertificate(string $certificate): static
     {
         $this->certificate = $certificate;
-
-        return $this;
-    }
-
-    public function getType(): ?string
-    {
-        return $this->type;
-    }
-
-    public function setType(string $type): static
-    {
-        $this->type = $type;
 
         return $this;
     }
