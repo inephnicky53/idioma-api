@@ -21,7 +21,6 @@ use App\Repository\TeacherRepository;
 use App\State\Teacher\CreateTeacherProcessor;
 use App\State\Teacher\SaveTeacherProcessor;
 use App\State\Teacher\TeacherDisponibilitiesProvider;
-use App\State\Teacher\TeacherCertificationsProcessor;
 use App\State\Teacher\TeacherCollectionProvider;
 use App\State\Teacher\TeacherCheckProvider;
 use App\State\Teacher\TeacherGetProvider;
@@ -86,12 +85,6 @@ use Symfony\Component\Serializer\Annotation\Groups;
             uriTemplate: "teacher/{id}/pricing",
             denormalizationContext: ['groups' => ['teacher:pricing']],
             security: "is_granted('ROLE_USER')",
-        ),
-        new Patch(
-            uriTemplate: "teacher/{id}/certifications",
-            denormalizationContext: ['groups' => ['teacher:certifications']],
-            security: "is_granted('ROLE_USER')",
-            processor: TeacherCertificationsProcessor::class
         ),
         new Post(
             uriTemplate: 'teacher/media',

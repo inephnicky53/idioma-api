@@ -33,16 +33,7 @@ services:
     tags:
       - { name: kernel.event_listener, event: lexik_jwt_authentication.on_authentication_success, method: onAuthenticationSuccess }
 
-
-  App\State\Teacher\TeacherDisponibilitiesProcessor:
-    bind:
-      $processor: '@api_platform.doctrine.orm.state.persist_processor'
-
   App\State\Teacher\TeacherPricingProcessor:
-    bind:
-      $processor: '@api_platform.doctrine.orm.state.persist_processor'
-
-  App\State\Teacher\TeacherCertificationsProcessor:
     bind:
       $processor: '@api_platform.doctrine.orm.state.persist_processor'
 
