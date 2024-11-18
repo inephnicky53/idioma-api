@@ -6,7 +6,6 @@ use App\Dto\CreateOrderInput;
 use App\Entity\Order;
 use App\Entity\OrderProduct;
 use App\Entity\Transaction;
-use App\Entity\User;
 use App\Entity\UserTeacher;
 use App\Exception\PaymentException;
 use App\Idioma;
@@ -110,12 +109,11 @@ readonly class TransactionManager
 
     public function confirmTransaction(Transaction $transaction): void
     {
-        /** @var User $user */
-        $user = $this->security->getUser();
         $order = $transaction->getCommand();
+        $user = $order->getUser();
+
         foreach ($order->getProducts() as $product) {
-            $userTeacher = $this->em->getRepository(UserTeacher::class)
-                ->findOneBy(['user' => $user, 'teacher' => $product->getTeacher()]);
+            $userTeacher = $this->em->getRepository(UserTeacher::class)->findOneBy(['user' => $user, 'teacher' => $product->getTeacher()]);
             if (is_null($userTeacher)) {
                 $userTeacher = (new UserTeacher())
                     ->setTeacher($product->getTeacher())
@@ -125,6 +123,7 @@ readonly class TransactionManager
             $userTeacher->setBuyedAt(new \DateTimeImmutable());
             $this->em->persist($userTeacher);
         }
+
         $this->em->flush();
     }
 }
