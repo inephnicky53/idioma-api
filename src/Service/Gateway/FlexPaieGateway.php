@@ -14,12 +14,12 @@ class FlexPaieGateway implements GatewayInterface
 {
     private array $options = [
         'currency' => 'USD',
-        'merchant_phone' => '243899536100',
-        'merchant_name' => 'ECOSYS',
+        'merchant_phone' => '243823474128',
+        'merchant_name' => 'JOYCII',
         'type' => 1,
     ];
 
-    private string $flexPayToken = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJcL2xvZ2luIiwicm9sZXMiOlsiTUVSQ0hBTlQiXSwiZXhwIjoxNzg2Mjc5MDc0LCJzdWIiOiI2MTkxMjlhOTA3YjBhZjE2N2MwMjFhOGMwMTc1M2U3MyJ9.wQ4tcSWouxxMaysWN9_M3Ifzs7z3pdzN_jtXjrj1bzA';
+    private string $flexPayToken = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJcL2xvZ2luIiwicm9sZXMiOlsiTUVSQ0hBTlQiXSwiZXhwIjoxNzYwMTAxNjk0LCJzdWIiOiIyZjMxNGM2YjBlMDAwMGE4NGIyOGM3MWQxMzk5ZThjMCJ9.7FIdd7ykv1O_G5imi6qX0XYwkwpHtZFzrKBCuPTRJSE';
 
     public function __construct(
         private EntityManagerInterface $manager,
