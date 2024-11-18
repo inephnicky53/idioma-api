@@ -2,12 +2,10 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Api\UrlGeneratorInterface;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
-use App\Controller\Api\Inbox\UserThreadController;
 use App\Repository\InboxThreadRepository;
 use App\State\Inbox\CreateInboxThreadProcessor;
 use App\Trait\Datable;
@@ -32,8 +30,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
             denormalizationContext: ['groups' => ['inbox:new']],
             processor: CreateInboxThreadProcessor::class,
         ),
-    ],
-    mercure: 'object.getMercureOptions()',
+    ]
 )]
 class InboxThread
 {
@@ -162,16 +159,6 @@ class InboxThread
         usort($messages, fn($a, $b) => $a->getCreatedAt() <=> $b->getCreatedAt());
 
         return end($messages) ?: null;
-    }
-
-    public function getMercureOptions(): array
-    {
-        $topic = '@=iri(object, ' . UrlGeneratorInterface::ABS_PATH . ')';
-
-        return [
-            'private' => true,
-            'topics' => [$topic],
-        ];
     }
 
     public function __toString(): string

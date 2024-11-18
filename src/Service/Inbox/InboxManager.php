@@ -8,11 +8,11 @@ use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 
-class InboxManager
+readonly class InboxManager
 {
     public function __construct(
         private EntityManagerInterface $em,
-        private Security $security,
+        private Security               $security,
     )
     {
     }

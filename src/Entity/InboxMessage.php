@@ -40,8 +40,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
         ),
         new Patch(name: 'update')
     ],
-    normalizationContext: ['groups' => ['inbox:get']],
-    mercure: true,
+    normalizationContext: ['groups' => ['inbox:get']]
 )]
 class InboxMessage
 {

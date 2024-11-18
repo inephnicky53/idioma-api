@@ -7,9 +7,9 @@ use ApiPlatform\State\ProcessorInterface;
 use App\Entity\InboxThread;
 use App\Service\Inbox\InboxManager;
 
-class CreateInboxThreadProcessor implements ProcessorInterface
+readonly class CreateInboxThreadProcessor implements ProcessorInterface
 {
-    public function __construct(private readonly InboxManager $manager)
+    public function __construct(private InboxManager $manager)
     {
     }
 
