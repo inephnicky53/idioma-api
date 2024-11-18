@@ -25,6 +25,7 @@ class Idioma
     const STATUS_PROCESS = 3;
     const STATUS_FAILED = 4;
     const STATUS_WAIT= 5;
+
     const WAITING_TIME = '-30 seconds';
 
     const LEVEL_A1 = "A1";

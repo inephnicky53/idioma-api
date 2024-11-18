@@ -91,9 +91,10 @@ readonly class TransactionManager
         $response = $this->process->check($transaction);
 
         if ($response['code'] === "0") {
-            if ($response['transaction']['status'] === "0")
+            if ($response['transaction']['status'] === "0") {
+                $transaction->setStatus(Idioma::STATUS_SUCCESS);
                 $this->confirmTransaction($transaction);
-            else if ($response['transaction']['status'] === "1") {
+            } else if ($response['transaction']['status'] === "1") {
                 $transaction->setStatus(Idioma::STATUS_FAILED);
             } else {
                 $transaction->setStatus(Idioma::STATUS_PROCESS);
@@ -125,7 +126,5 @@ readonly class TransactionManager
             $this->em->persist($userTeacher);
         }
         $this->em->flush();
-
-
     }
 }
