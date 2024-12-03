@@ -7,9 +7,9 @@ use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Teacher;
 use App\Service\Teacher\TeacherManager;
 
-class SaveTeacherProcessor implements ProcessorInterface
+readonly class SaveTeacherProcessor implements ProcessorInterface
 {
-    public function __construct(private readonly TeacherManager $manager)
+    public function __construct(private TeacherManager $manager)
     {
     }
 

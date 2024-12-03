@@ -6,6 +6,7 @@ use App\Dto\CreateOrderInput;
 use App\Entity\Order;
 use App\Entity\OrderProduct;
 use App\Entity\Transaction;
+use App\Entity\User;
 use App\Entity\UserTeacher;
 use App\Exception\PaymentException;
 use App\Idioma;
@@ -25,11 +26,17 @@ readonly class TransactionManager
     }
 
     /**
+     * Crée une commande et une transaction associée.
+     *
      * @throws PaymentException
      */
-    public function create(CreateOrderInput $dto): mixed
+    public function create(CreateOrderInput $dto): JsonResponse
     {
+        /** @var User $user */
         $user = $this->security->getUser();
+        if (!$user) {
+            throw new PaymentException('User not authenticated.');
+        }
 
         $amount = 0;
         $operator = $dto->operator;
@@ -37,7 +44,7 @@ readonly class TransactionManager
         $status = Idioma::STATUS_CREATED;
 
         $order = (new Order())
-            ->setReference(uniqid("cm-"))
+            ->setReference(uniqid('cm-', true))
             ->setOperator($operator)
             ->setCurrency($currency)
             ->setStatus($status)
@@ -46,13 +53,19 @@ readonly class TransactionManager
         foreach ($dto->products as $p) {
             $teacher = $p->teacher;
             $package = $p->package;
+
+            if (!$teacher || !$package) {
+                throw new PaymentException('Invalid product data.');
+            }
+
             $amount += ($teacher->getPrice() * $package->getHours()) * (1 - $package->getDiscount() / 100);
 
             $product = (new OrderProduct())
                 ->setTeacher($teacher)
-                ->setPackage($package);
-            $this->em->persist($product);
+                ->setPackage($package)
+                ->setAmount($amount);
 
+            $this->em->persist($product);
             $order->addProduct($product);
         }
 
@@ -73,57 +86,91 @@ readonly class TransactionManager
         $this->em->persist($transaction);
         $this->em->flush();
 
-        $this->process->process($order->getTransaction());
+        $this->process->process($transaction);
 
-        return new JsonResponse([]);
+        return new JsonResponse(['message' => 'Transaction created successfully.']);
     }
 
     /**
+     * Vérifie l'état d'une transaction.
+     *
      * @throws \Exception
      */
-    public function check($transactionId)
+    public function check(int $transactionId): Transaction
     {
         $transaction = $this->em->getRepository(Transaction::class)->find($transactionId);
-        if (is_null($transaction))
-            throw new \Exception("Transaction not found");
+        if (!$transaction)
+            throw new \Exception('Transaction not found.');
 
         $response = $this->process->check($transaction);
 
-        if ($response['code'] === "0") {
-            if ($response['transaction']['status'] === "0") {
-                $transaction->setStatus(Idioma::STATUS_SUCCESS);
-                $this->confirmTransaction($transaction);
-            } else if ($response['transaction']['status'] === "1") {
-                $transaction->setStatus(Idioma::STATUS_FAILED);
-            } else {
-                $transaction->setStatus(Idioma::STATUS_PROCESS);
+        if ($response['code'] === '0') {
+            switch ($response['transaction']['status']) {
+                case '0':
+                    $transaction->setStatus(Idioma::STATUS_SUCCESS);
+                    $this->confirmTransaction($transaction);
+                    break;
+                case '1':
+                    $transaction->setStatus(Idioma::STATUS_FAILED);
+                    break;
+                default:
+                    $transaction->setStatus(Idioma::STATUS_PROCESS);
+                    break;
             }
             $this->em->persist($transaction);
             $this->em->flush();
         } else {
-            throw new \Exception("Transaction not found on provider");
+            throw new \Exception('Transaction not found on provider.');
         }
 
         return $transaction;
     }
 
+    /**
+     * Confirme une transaction et met à jour les données associées.
+     * @throws \Exception
+     */
     public function confirmTransaction(Transaction $transaction): void
     {
         $order = $transaction->getCommand();
+        if (!$order)
+            throw new \Exception('Order not found for transaction.');
+
+        /** @var User $user */
         $user = $order->getUser();
+        if (!$user)
+            throw new \Exception('User not found for order.');
 
         foreach ($order->getProducts() as $product) {
-            $userTeacher = $this->em->getRepository(UserTeacher::class)->findOneBy(['user' => $user, 'teacher' => $product->getTeacher()]);
-            if (is_null($userTeacher)) {
-                $userTeacher = (new UserTeacher())
-                    ->setTeacher($product->getTeacher())
-                    ->setUser($user);
-            }
-            $userTeacher->setHours($product->getPackage()->getHours());
-            $userTeacher->setBuyedAt(new \DateTimeImmutable());
-            $this->em->persist($userTeacher);
+            $this->updateUserTeacherData($user, $product, $transaction);
+            $this->updateTeacherWallet($product, $transaction);
         }
 
         $this->em->flush();
+    }
+
+    private function updateUserTeacherData(User $user, OrderProduct $product, Transaction $transaction): void
+    {
+        $teacher = $product->getTeacher();
+        $userTeacher = $this->em->getRepository(UserTeacher::class)
+            ->findOneBy(['user' => $user, 'teacher' => $teacher]);
+
+        if (!$userTeacher)
+            $userTeacher = (new UserTeacher())
+                ->setTeacher($teacher)
+                ->setUser($user);
+
+        $userTeacher->setHours($product->getPackage()->getHours());
+        $userTeacher->setBuyedAt(new \DateTimeImmutable());
+
+        $this->em->persist($userTeacher);
+    }
+
+    private function updateTeacherWallet(OrderProduct $product, Transaction $transaction): void
+    {
+        $teacher = $product->getTeacher();
+        $teacher->addToWallet($product->getAmount(), $transaction->getCurrency()->getMin());
+
+        $this->em->persist($teacher);
     }
 }

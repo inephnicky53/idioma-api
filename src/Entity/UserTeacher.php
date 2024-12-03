@@ -2,11 +2,31 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
 use App\Repository\UserTeacherRepository;
+use App\State\User\UserStudentProvider;
+use App\State\User\UserTeacherProvider;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: UserTeacherRepository::class)]
+#[ApiResource(
+    operations: [
+        new GetCollection(
+            uriTemplate: 'user/teachers',
+            normalizationContext: ['groups' => ['user:teachers']],
+            security: "is_granted('ROLE_USER')",
+            provider: UserTeacherProvider::class
+        ),
+        new GetCollection(
+            uriTemplate: "user/students",
+            normalizationContext: ['groups' => ['user:student']],
+            security: "is_granted('ROLE_USER')",
+            provider: UserStudentProvider::class,
+        ),
+    ]
+)]
 class UserTeacher
 {
     #[ORM\Id]

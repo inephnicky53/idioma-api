@@ -10,7 +10,6 @@ use ApiPlatform\Metadata\Post;
 use App\Controller\Api\ApiRegisterController;
 use App\Controller\Api\User\ApiPhoneVerifyController;
 use App\Controller\Api\User\ApiUserCoursesController;
-use App\Controller\Api\User\ApiUserMeController;
 use App\Dto\ResetPasswordInput;
 use App\Dto\ResetRequestedInput;
 use App\Dto\VerifyOTPInput;
@@ -19,7 +18,7 @@ use App\Service\GeoIP;
 use App\State\User\OTPVerificationProcessor;
 use App\State\User\ResetPasswordProcessor;
 use App\State\User\ResetRequestedProcessor;
-use App\State\User\UserMeProcessor;
+use App\State\User\UserMeProvider;
 use App\State\User\UserPasswordHasher;
 use App\Trait\Datable;
 use DateTime;
@@ -52,25 +51,9 @@ use function Symfony\Component\String\u;
     ),
     new Get(
         uriTemplate: "user/me",
-        controller: ApiUserMeController::class,
         normalizationContext: ['groups' => ['user:me', 'user:show']],
-        read: false
-    ),
-    new Post(
-        uriTemplate: "user/language",
-        normalizationContext: ['groups' => ['user:me', 'user:show']],
-        denormalizationContext: ['groups' => ['user:me:language']],
         security: "is_granted('ROLE_USER')",
-        read: false,
-        processor: UserMeProcessor::class
-    ),
-    new Post(
-        uriTemplate: "user/currency",
-        normalizationContext: ['groups' => ['user:me', 'user:show']],
-        denormalizationContext: ['groups' => ['user:me:currency']],
-        security: "is_granted('ROLE_USER')",
-        read: false,
-        processor: UserMeProcessor::class
+        provider: UserMeProvider::class,
     ),
     new Get(
         uriTemplate: 'user/phone/verify',
@@ -78,13 +61,6 @@ use function Symfony\Component\String\u;
         normalizationContext: ['groups' => ['user:phone:verify']],
         security: "is_granted('ROLE_USER')",
         read: false
-    ),
-    new Get(
-        uriTemplate: 'user/teachers',
-        controller: ApiUserMeController::class,
-        normalizationContext: ['groups' => ['user:teachers', 'user:teachers:fullname']],
-        security: "is_granted('ROLE_USER')",
-        read: false,
     ),
     new Post(
         uriTemplate: 'users/otp/verification',

@@ -29,6 +29,9 @@ class OrderProduct
     #[ORM\JoinColumn(nullable: false)]
     private ?Order $command = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?float $amount = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -66,6 +69,18 @@ class OrderProduct
     public function setCommand(?Order $command): static
     {
         $this->command = $command;
+
+        return $this;
+    }
+
+    public function getAmount(): ?float
+    {
+        return $this->amount;
+    }
+
+    public function setAmount(?float $amount): static
+    {
+        $this->amount = $amount;
 
         return $this;
     }

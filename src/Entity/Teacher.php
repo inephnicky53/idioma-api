@@ -24,11 +24,13 @@ use App\State\Teacher\TeacherDisponibilitiesProvider;
 use App\State\Teacher\TeacherCollectionProvider;
 use App\State\Teacher\TeacherCheckProvider;
 use App\State\Teacher\TeacherGetProvider;
+use App\State\Teacher\TeacherWalletProvider;
 use App\State\Teacher\UnsavedTeacherProcessor;
 use App\Trait\Activable;
 use App\Trait\Datable;
 use App\Trait\Ratingable;
 use App\Trait\Verifiable;
+use App\Trait\WalletTrait;
 use DateInterval;
 use DatePeriod;
 use DateTimeImmutable;
@@ -53,6 +55,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
             provider: TeacherCheckProvider::class
         ),
         new Get(
+            uriTemplate: "teacher/wallet",
+            normalizationContext: ['groups' => ['teacher:wallet']],
+            security: "is_granted('ROLE_USER')",
+            provider: TeacherWalletProvider::class,
+        ),
+        new Get(
             uriTemplate: "teachers/{id}/courses",
             controller: TeacherGetCoursesController::class,
         ),
@@ -60,6 +68,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
             uriTemplate: "teachers/{id}/disponibilities",
             normalizationContext: ['groups' => ['teacher:disponibilities:list']],
             provider: TeacherDisponibilitiesProvider::class
+        ),
+        new Post(
+            uriTemplate: "teachers/become",
+            security: "is_granted('ROLE_USER')",
+            input: CreateTeacherInput::class,
+            processor: CreateTeacherProcessor::class,
         ),
         new Post(
             uriTemplate: "teachers/{id}/favorite",
@@ -70,12 +84,6 @@ use Symfony\Component\Serializer\Annotation\Groups;
             uriTemplate: "teachers/{id}/favorite",
             security: "is_granted('ROLE_USER')",
             processor: UnsavedTeacherProcessor::class,
-        ),
-        new Post(
-            uriTemplate: "teachers/become",
-            security: "is_granted('ROLE_USER')",
-            input: CreateTeacherInput::class,
-            processor: CreateTeacherProcessor::class,
         ),
         new Patch(
             denormalizationContext: ['groups' => ['teacher:update']],
@@ -149,6 +157,7 @@ class Teacher
         Ratingable::__construct as private ratingableConstructor;
     }
     use Verifiable;
+    use WalletTrait;
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -258,6 +267,12 @@ class Teacher
 
     #[ORM\Column(length: 255, options: ['default' => self::STATUS_WAITING])]
     private ?string $status = null;
+
+    #[Groups(['teacher:list'])]
+    private bool $canTrial = false;
+
+    #[Groups(['teacher:list'])]
+    private ?float $hours = 0;
 
     public function __construct()
     {
@@ -869,6 +884,7 @@ class Teacher
     {
         return $this->status;
     }
+
     public static function getStatusList(): array
     {
         return [
@@ -901,5 +917,25 @@ class Teacher
         $this->status = $status;
 
         return $this;
+    }
+
+    public function isCanTrial(): bool
+    {
+        return $this->canTrial;
+    }
+
+    public function setCanTrial(bool $canTrial): void
+    {
+        $this->canTrial = $canTrial;
+    }
+
+    public function getHours(): ?float
+    {
+        return $this->hours;
+    }
+
+    public function setHours(?float $hours): void
+    {
+        $this->hours = $hours;
     }
 }

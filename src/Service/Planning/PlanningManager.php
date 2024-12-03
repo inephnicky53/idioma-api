@@ -2,14 +2,16 @@
 
 namespace App\Service\Planning;
 
-use App\Dto\BookPlanningInput;
+use App\Entity\Disponibility;
 use App\Entity\Planning;
 use App\Entity\User;
 use App\Entity\UserTeacher;
-use App\Event\PlanningBookedEvent;
 use App\Event\PlanningCreatedEvent;
-//use App\Service\NotificationService;
+use App\Exception\InsufficientHoursException;
+use App\Exception\OverlappingBookingException;
+use App\Repository\PlanningRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use InvalidArgumentException;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 
@@ -19,102 +21,146 @@ readonly class PlanningManager
         private Security                 $security,
         private EventDispatcherInterface $dispatcher,
         private EntityManagerInterface   $em,
-        //private NotificationService $notificationService,
+        private PlanningRepository       $planningRepository
     )
     {
     }
 
+    /**
+     * @throws \Exception
+     */
     public function create(Planning $data): Planning
-    {
-        /** @var User $user */
-        $user = $this->security->getUser();
-        if ($data->isTrial()) {
-            $user?->getTeachers()->map(function (UserTeacher $userTeacher) use (&$data, &$canTrial) {
-                if ($userTeacher->getTeacher()->getId() === $data->getTeacher()->getId())
-                    if ($userTeacher->getBuyedAt() === null)
-                        $canTrial = true;
-            });
-
-            if ($data->getEnd() === null)
-                $data->setEnd($data->getStart()->modify('+25 minutes'));
-        } else {
-            $user->getTeachers()->map(function (UserTeacher $teacher) use (&$hours, $data) {
-                if ($teacher->getTeacher() === $data->getTeacher())
-                    $hours += $teacher->getHours();
-            });
-
-            if ($hours < 1)
-                throw new \Exception("Vous n'avez pas d'heure pour ce professeur");
-
-            if ($data->getEnd() === null)
-                $data->setEnd($data->getStart()->modify('+50 minutes'));
-
-            $time = $data->getStart()->diff($data->getEnd());
-
-            if ($time->invert != 0)
-                throw new \Exception("L'heure de fin ne doit pas être inférieure à l'heure du début");
-
-            if ($time->days > 0 || $time->h > 5)
-                throw new \Exception("Vous ne pouvez pas réserver plus de 5 heures de formation d'affilé");
-
-            if ($time->h > $hours)
-                throw new \Exception("Vous n'avez pas suffisamment d'heure pour ce planning, veuillez rajouter des heures");
-        }
-
-        $data->addParticipant($user);
-
-        $this->em->persist($data);
-        $this->em->flush();
-
-        $this->dispatcher->dispatch(new PlanningCreatedEvent($data));
-
-        return $data;
-    }
-
-    public function book(BookPlanningInput $dto): User
     {
         /** @var User $user */
         $user = $this->security->getUser();
 
         $this->em->beginTransaction();
         try {
-            foreach ($dto->plannings as $input) {
-                $planning = $this->em->getRepository(Planning::class)->find($input->id);
-                if (!$planning)
-                    throw new \Exception("This planning doesn't exist");
+            $this->validateBooking($data, $user);
 
-                /** @var UserTeacher $userTeacher */
-                $userTeacher = $user->getTeachers()->filter(fn(UserTeacher $userTeacher) => $userTeacher->getTeacher() === $planning->getTeacher())[0];
-                if (!$userTeacher)
-                    throw new \Exception("You don't have any hours for this teacher");
+            $data->addParticipant($user);
+            $this->em->persist($data);
 
-                if ($userTeacher->getHours() < 1)
-                    throw new \Exception("You don't have enough available hours to book all selected plannings.");
-
-                if (!$planning->isFree())
-                    throw new \Exception("The planning with ID {$planning->getId()} is not available for booking.");
-
-                if ($planning->getParticipants()->contains($user))
-                    throw new \Exception("You have already booked the planning with ID {$planning->getId()}.");
-
-
-                $userTeacher->setHours($userTeacher->getHours() - 1);
-                $this->em->persist($userTeacher);
-
-                $planning->addParticipant($user);
-                $this->em->persist($planning);
-
-                $this->dispatcher->dispatch(new PlanningBookedEvent($planning));
-            }
+            $this->dispatcher->dispatch(new PlanningCreatedEvent($data));
 
             $this->em->flush();
             $this->em->commit();
 
-
-            return $user;
+            return $data;
         } catch (\Exception $e) {
             $this->em->rollback();
             throw $e;
         }
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function start(Planning $planning): Planning
+    {
+        $planning->setStatus(Planning::STATUS_CREATED);
+
+        $this->em->persist($planning);
+        $this->em->flush();
+
+        return $planning;
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function cancel(Planning $planning): Planning
+    {
+        if ($planning->getStart() >= new \DateTimeImmutable())
+            throw new \Exception("Date cannot be less than start date");
+
+        // don't know what to do
+        $planning->setStatus(Planning::STATUS_CANCELED);
+
+        $this->em->persist($planning);
+        $this->em->flush();
+
+        return $planning;
+    }
+
+    /**
+     * @throws \Exception
+     */
+    private function validateBooking(Planning $data, User $user): void
+    {
+        $userTeacher = $this->em->getRepository(UserTeacher::class)->findOneBy(['user' => $user, 'teacher' => $data->getTeacher()]);
+        $hours = $userTeacher ? $userTeacher->getHours() : 0;
+
+        if (!$data->isTrial() && $hours < 1) {
+            throw new InsufficientHoursException();
+        }
+
+        if ($data->getEnd() === null) {
+            $data->setEnd($data->getStart()->modify($data->isTrial() ? '+25 minutes' : '+50 minutes'));
+        }
+
+        $time = $data->getStart()->diff($data->getEnd());
+
+        if ($time->invert != 0) {
+            throw new \Exception("L'heure de fin ne peut pas être avant l'heure de début.");
+        }
+
+        if ($time->days > 0 || $time->h > 5) {
+            throw new \Exception("Vous ne pouvez pas réserver plus de 5 heures de formation d'affilée.");
+        }
+
+        if (!$data->isTrial() && $time->h > $hours) {
+            throw new InsufficientHoursException();
+        }
+
+        $this->checkOverlappingBookings($data, $user);
+        $this->checkTeacherAvailability($data);
+
+        if (!$data->isTrial()) {
+            $userTeacher->setHours($hours - 1);
+            $this->em->persist($userTeacher);
+        }
+
+        $data->setStatus(Planning::STATUS_CREATED);
+    }
+
+    /**
+     * @throws \Exception
+     */
+    private function checkOverlappingBookings(Planning $data, User $user): void
+    {
+        $existingPlannings = $this->planningRepository->findByParticipant($data->getTeacher(), $user);
+
+        foreach ($existingPlannings as $existingPlanning) {
+            if ($this->isOverlapping($data->getStart(), $data->getEnd(), $existingPlanning->getStart(), $existingPlanning->getEnd()))
+                throw new OverlappingBookingException();
+        }
+    }
+
+    /**
+     * @throws \Exception
+     */
+    private function checkTeacherAvailability(Planning $data): void
+    {
+        $teacherAvailabilities = $data->getTeacher()->getDisponibilities()->toArray();
+        $currentYear = date('Y');
+
+        /** @var Disponibility $availability */
+        foreach ($teacherAvailabilities as $availability) {
+            $day = $availability->getDay();
+            $start = \DateTimeImmutable::createFromFormat('Y-m-d H:i', "$currentYear-" . date('W', strtotime($day)) . '-1 ' . $availability->getStart());
+            $end = \DateTimeImmutable::createFromFormat('Y-m-d H:i', "$currentYear-" . date('W', strtotime($day)) . '-1 ' . $availability->getEnd());
+
+            if ($availability->isIsActive() && $this->isOverlapping($data->getStart(), $data->getEnd(), $start, $end))
+                throw new \Exception("Le professeur n'est pas disponible à ce créneau.");
+        }
+    }
+
+    private function isOverlapping(?\DateTimeImmutable $start1, ?\DateTimeImmutable $end1, ?\DateTimeImmutable $start2, ?\DateTimeImmutable $end2): bool
+    {
+        if (!$start1 || !$end1 || !$start2 || !$end2)
+            throw new InvalidArgumentException('Invalid dates provided for overlap check.');
+
+        return $start1 < $end2 && $start2 < $end1;
     }
 }

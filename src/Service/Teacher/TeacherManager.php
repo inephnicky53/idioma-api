@@ -19,15 +19,15 @@ use Exception;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 
-class TeacherManager
+readonly class TeacherManager
 {
     public function __construct(
-        private readonly EntityManagerInterface   $em,
-        private readonly LanguageRepository       $languageRepository,
-        private readonly CurrencyRepository       $currencyRepository,
-        private readonly UserTeacherRepository    $userTeacherRepository,
-        private readonly Security                 $security,
-        private readonly EventDispatcherInterface $dispatcher
+        private EntityManagerInterface   $em,
+        private LanguageRepository       $languageRepository,
+        private CurrencyRepository       $currencyRepository,
+        private UserTeacherRepository    $userTeacherRepository,
+        private Security                 $security,
+        private EventDispatcherInterface $dispatcher
     )
     {
     }
@@ -109,6 +109,7 @@ class TeacherManager
             }, $item->programs);
         }
 
+
         $this->em->persist($teacher);
         $this->em->flush();
 
@@ -147,6 +148,9 @@ class TeacherManager
         return $teacher;
     }
 
+    /**
+     * @throws Exception
+     */
     public function save(Teacher $teacher): Teacher
     {
         $user = $this->security->getUser();
@@ -165,6 +169,9 @@ class TeacherManager
         return $teacher;
     }
 
+    /**
+     * @throws Exception
+     */
     public function unsaved(Teacher $data): Teacher
     {
         $user = $this->security->getUser();

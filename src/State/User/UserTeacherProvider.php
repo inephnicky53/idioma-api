@@ -1,13 +1,13 @@
 <?php
 
-namespace App\State\Planning;
+namespace App\State\User;
 
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
 use App\Entity\User;
 use Symfony\Bundle\SecurityBundle\Security;
 
-readonly class UserPlanningProvider implements ProviderInterface
+readonly class UserTeacherProvider implements ProviderInterface
 {
     public function __construct(
         private Security $security
@@ -19,7 +19,7 @@ readonly class UserPlanningProvider implements ProviderInterface
     {
         /** @var User $user */
         $user = $this->security->getUser();
-
-        return $user->getPlannings()->toArray();
+        
+        return $user->getTeachers();
     }
 }

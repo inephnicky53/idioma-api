@@ -8,7 +8,6 @@ class Idioma
 {
     public const LOGIN_ATTEMPTS = 5;
 
-    // État
     public const ACTIVE = 1;
     public const INACTIVE = 0;
 
@@ -24,7 +23,7 @@ class Idioma
     const STATUS_CREATED = 2;
     const STATUS_PROCESS = 3;
     const STATUS_FAILED = 4;
-    const STATUS_WAIT= 5;
+    const STATUS_WAIT = 5;
 
     const WAITING_TIME = '-30 seconds';
 
@@ -43,6 +42,9 @@ class Idioma
     const FRIDAY = 'friday';
     const SATURDAY = 'saturday';
     const SUNDAY = 'sunday';
+
+    const CURRENCY_DEFAULT = 'USD';
+    const CURRENCY_SUPPORTS = ['USD', 'CDF'];
 
     public static function getStatusList(): array
     {

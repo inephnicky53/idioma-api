@@ -9,12 +9,12 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
-class TeacherNormalizer implements NormalizerInterface
+readonly class TeacherNormalizer implements NormalizerInterface
 {
     public function __construct(
         #[Autowire(service: 'serializer.normalizer.object')]
-        private readonly NormalizerInterface $normalizer,
-        private readonly Security $security
+        private NormalizerInterface $normalizer,
+        private Security            $security
     )
     {
     }
@@ -25,14 +25,13 @@ class TeacherNormalizer implements NormalizerInterface
      */
     public function normalize($object, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
     {
-
         /** @var User $user */
         $user = $this->security->getUser();
-        if ($user && $user->getTeachers()->count() > 0) {
-            foreach ($user->getTeachers() as $userTeacher) {
-                if ($object === $userTeacher->getTeacher()) {
-                }
-            }
+
+        if ($user) {
+            $userTeacher = $user->getTeachers()->filter(fn(Teacher $t) => $t->getId() === $object->getId())[0];
+            $object->setCanTrial(!$userTeacher);
+            $object->setHours($userTeacher?->getHours() ?? 0);
         }
 
         return $this->normalizer->normalize($object, $format, $context);

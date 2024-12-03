@@ -37,10 +37,6 @@ services:
     bind:
       $processor: '@api_platform.doctrine.orm.state.persist_processor'
 
-  App\State\User\UserMeProcessor:
-    bind:
-      $processor: '@api_platform.doctrine.orm.state.persist_processor'
-
   App\State\User\UserPasswordHasher:
     bind:
       $processor: '@api_platform.doctrine.orm.state.persist_processor'

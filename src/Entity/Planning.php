@@ -2,12 +2,16 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use App\Dto\BookPlanningInput;
 use App\Repository\PlanningRepository;
 use App\State\Planning\PlanningBookProcessor;
+use App\State\Planning\PlanningCancelProcessor;
 use App\State\Planning\PlanningCreateProcessor;
 use App\State\Planning\UserPlanningProvider;
 use DateTimeImmutable;
@@ -28,6 +32,11 @@ use Symfony\Component\Serializer\Annotation\Groups;
             security: "is_granted('ROLE_USER')",
             processor: PlanningCreateProcessor::class
         ),
+        new Delete(
+            uriTemplate: "plannings/{id}/cancel",
+            security: "is_granted('ROLE_USER')",
+            processor: PlanningCancelProcessor::class
+        ),
         new Post(
             uriTemplate: "plannings/book",
             security: "is_granted('ROLE_USER')",
@@ -37,6 +46,10 @@ use Symfony\Component\Serializer\Annotation\Groups;
     ],
     normalizationContext: ['groups' => ['planning:show']],
 )]
+#[ApiFilter(SearchFilter::class, properties: [
+    'id' => 'exact',
+    'status' => 'exact'
+])]
 #[ORM\Entity(repositoryClass: PlanningRepository::class)]
 class Planning
 {
@@ -103,7 +116,6 @@ class Planning
             $this->createdAt = new DateTimeImmutable();
         $this->start = (new DateTimeImmutable())->modify('60 minutes');
         $this->participants = new ArrayCollection();
-        $this->status = self::STATUS_CREATED;
     }
 
     public function getId(): ?int
