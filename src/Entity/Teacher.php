@@ -227,7 +227,7 @@ class Teacher
     private ?string $link = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['teacher:show', 'teacher:media'])]
+    #[Groups(['teacher:list', 'teacher:show', 'teacher:media'])]
     private ?string $video = null;
 
     #[ORM\Column(length: 255, nullable: true)]
