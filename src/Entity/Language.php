@@ -17,13 +17,10 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Entity(repositoryClass: LanguageRepository::class)]
 #[ApiResource(
     operations: [
-        new GetCollection(
-            normalizationContext: ['groups' => ['language:list']]
-        ),
-        new Get(
-            normalizationContext: ['groups' => ['language:list']]
-        ),
-    ]
+        new GetCollection(),
+        new Get(),
+    ],
+    normalizationContext: ['groups' => ['language:list']]
 )]
 #[ApiFilter(OrderFilter::class, properties: ['name' => 'DESC'])]
 #[ApiFilter(BooleanFilter::class, properties: ['isActive'])]

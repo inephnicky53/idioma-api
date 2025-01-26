@@ -96,35 +96,10 @@ use Symfony\Component\Serializer\Annotation\Groups;
         ),
         new Post(
             uriTemplate: 'teacher/media',
+            inputFormats: ['multipart' => ['multipart/form-data']],
             controller: TeacherMediaController::class,
-            openapi: new Model\Operation(
-                requestBody: new Model\RequestBody(
-                    content: new \ArrayObject([
-                        'multipart/form-data' => [
-                            'schema' => [
-                                'type' => 'object',
-                                'properties' => [
-                                    'profile' => [
-                                        'type' => 'string',
-                                        'format' => 'binary'
-                                    ],
-                                    'video' => [
-                                        'type' => 'string',
-                                        'format' => 'binary'
-                                    ],
-                                    'link' => [
-                                        'type' => 'string'
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ])
-                )
-            ),
-            normalizationContext: ['groups' => ['teacher:list', 'teacher:view']],
+            denormalizationContext: ['groups' => ['teacher:media']],
             security: "is_granted('ROLE_USER')",
-            validationContext: ['groups' => ['teacher:media']],
-            deserialize: false
         )
     ],
     normalizationContext: ['groups' => ['teacher:list', 'teacher:show']],
@@ -177,11 +152,11 @@ class Teacher
     #[Groups(['teacher:show'])]
     private Collection $categories;
 
-    #[ORM\OneToMany(mappedBy: 'teacher', targetEntity: Planning::class)]
+    #[ORM\OneToMany(targetEntity: Planning::class, mappedBy: 'teacher')]
     #[Groups(['teacher:show'])]
     private Collection $plannings;
 
-    #[ORM\OneToMany(mappedBy: 'teacher', targetEntity: Course::class)]
+    #[ORM\OneToMany(targetEntity: Course::class, mappedBy: 'teacher')]
     private Collection $courses;
 
     #[ORM\Column(type: Types::TEXT)]
@@ -203,14 +178,14 @@ class Teacher
     #[Groups(['teacher:list', 'teacher:pricing', 'teacher:disponibilities', 'user:teachers'])]
     private ?Currency $currency = null;
 
-    #[ORM\OneToMany(mappedBy: 'teacher', targetEntity: UserTeacher::class)]
+    #[ORM\OneToMany(targetEntity: UserTeacher::class, mappedBy: 'teacher')]
     private Collection $students;
 
     #[ORM\Column(length: 255)]
     #[Groups(['teacher:list', 'teacher:become', 'teacher:update'])]
     private ?string $shortDescription = null;
 
-    #[ORM\OneToMany(mappedBy: 'teacher', targetEntity: SpokenLanguage::class, cascade: ["persist"])]
+    #[ORM\OneToMany(targetEntity: SpokenLanguage::class, mappedBy: 'teacher', cascade: ["persist"])]
     #[Groups(['teacher:list', 'teacher:become', 'teacher:update'])]
     private Collection $spokenLanguages;
 
@@ -234,7 +209,7 @@ class Teacher
     #[Groups(['teacher:show', 'teacher:disponibilities', 'teacher:update'])]
     private ?string $timezone = null;
 
-    #[ORM\OneToMany(mappedBy: 'teacher', targetEntity: Disponibility::class, cascade: ["persist"])]
+    #[ORM\OneToMany(targetEntity: Disponibility::class, mappedBy: 'teacher', cascade: ["persist"])]
     #[Groups(['teacher:show', 'teacher:disponibilities'])]
     private Collection $disponibilities;
 
@@ -249,15 +224,15 @@ class Teacher
     #[Groups(['teacher:show'])]
     private ?int $step = 1;
 
-    #[ORM\OneToMany(mappedBy: 'teacher', targetEntity: TeacherCertification::class, cascade: ["persist"])]
+    #[ORM\OneToMany(targetEntity: TeacherCertification::class, mappedBy: 'teacher', cascade: ["persist"])]
     #[Groups(['teacher:show', 'teacher:certifications'])]
     private Collection $teacherCertifications;
 
-    #[ORM\OneToMany(mappedBy: 'teacher', targetEntity: TeacherFormation::class, cascade: ["persist"])]
+    #[ORM\OneToMany(targetEntity: TeacherFormation::class, mappedBy: 'teacher', cascade: ["persist"])]
     #[Groups(['teacher:show', 'teacher:certifications'])]
     private Collection $teacherFormations;
 
-    #[ORM\OneToMany(mappedBy: 'teacher', targetEntity: TeachingLanguage::class, cascade: ["persist"], orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: TeachingLanguage::class, mappedBy: 'teacher', cascade: ["persist"], orphanRemoval: true)]
     #[Groups(['teacher:show', 'teacher:become'])]
     private Collection $teachingLanguages;
 

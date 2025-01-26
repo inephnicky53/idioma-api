@@ -3,6 +3,7 @@
 namespace App\Service\Transaction;
 
 use App\Dto\CreateOrderInput;
+use App\Entity\Fee;
 use App\Entity\Order;
 use App\Entity\OrderProduct;
 use App\Entity\Transaction;
@@ -11,6 +12,7 @@ use App\Entity\UserTeacher;
 use App\Exception\PaymentException;
 use App\Idioma;
 use App\Service\OperatorProcess;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -34,9 +36,8 @@ readonly class TransactionManager
     {
         /** @var User $user */
         $user = $this->security->getUser();
-        if (!$user) {
+        if (!$user)
             throw new PaymentException('User not authenticated.');
-        }
 
         $amount = 0;
         $operator = $dto->operator;
@@ -82,6 +83,22 @@ readonly class TransactionManager
             ->setStatus($status)
             ->setUser($user)
             ->setCommand($order);
+
+        $feeTypes = [Fee::FEE_TRANSACTION_MOBILE, Fee::FEE_SERVICE];
+        $amountFee = 0;
+
+        foreach ($feeTypes as $feeType) {
+            $fees = $this->em->getRepository(Fee::class)->findBy(['type' => $feeType, 'status' => Idioma::ACTIVE]);
+
+            foreach ($fees as $fee) {
+                if ($fee->isWithinRange($transaction->getAmount())) {
+                    $transaction->addFee($fee);
+                    $amountFee += ($transaction->getAmount() * $fee->getValue()) / 100;
+                }
+            }
+        }
+
+        $transaction->setFee($amountFee);
 
         $this->em->persist($transaction);
         $this->em->flush();
@@ -169,7 +186,7 @@ readonly class TransactionManager
     private function updateTeacherWallet(OrderProduct $product, Transaction $transaction): void
     {
         $teacher = $product->getTeacher();
-        $teacher->addToWallet($product->getAmount(), $transaction->getCurrency()->getMin());
+        $teacher->addToWallet($transaction->getAmount() - $transaction->getFee(), $transaction->getCurrency()->getMin());
 
         $this->em->persist($teacher);
     }

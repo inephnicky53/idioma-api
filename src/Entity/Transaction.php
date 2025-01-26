@@ -7,6 +7,8 @@ use ApiPlatform\Metadata\Get;
 use App\Repository\TransactionRepository;
 use App\State\Transaction\CheckTransactionProvider;
 use App\Trait\Datable;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
@@ -71,10 +73,21 @@ class Transaction
     #[ORM\OneToOne(mappedBy: 'transaction', cascade: ['persist', 'remove'])]
     private ?Order $command = null;
 
+    /**
+     * @var Collection<int, Fee>
+     */
+    #[ORM\ManyToMany(targetEntity: Fee::class)]
+    private Collection $fees;
+
+    #[ORM\Column(nullable: true)]
+    private ?float $fee = 0;
+
     public function __construct()
     {
         $this->dateConstructor();
-        $this->reference = uniqid();
+        if (!($this->reference))
+            $this->reference = uniqid();
+        $this->fees = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -229,6 +242,42 @@ class Transaction
         }
 
         $this->command = $command;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Fee>
+     */
+    public function getFees(): Collection
+    {
+        return $this->fees;
+    }
+
+    public function addFee(Fee $fee): static
+    {
+        if (!$this->fees->contains($fee)) {
+            $this->fees->add($fee);
+        }
+
+        return $this;
+    }
+
+    public function removeFee(Fee $fee): static
+    {
+        $this->fees->removeElement($fee);
+
+        return $this;
+    }
+
+    public function getFee(): ?float
+    {
+        return $this->fee;
+    }
+
+    public function setFee(?float $fee): static
+    {
+        $this->fee = $fee;
 
         return $this;
     }

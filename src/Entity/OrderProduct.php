@@ -78,6 +78,11 @@ class OrderProduct
         return $this->amount;
     }
 
+    public function getAmountToPay(): ?float
+    {
+        return $this->getAmount();
+    }
+
     public function setAmount(?float $amount): static
     {
         $this->amount = $amount;

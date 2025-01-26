@@ -4,8 +4,8 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
-use App\Controller\Api\Rate\ApiGetRatesController;
 use App\Repository\RateRepository;
+use App\State\Rate\GetRatesProvider;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
@@ -13,8 +13,8 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ApiResource(
     operations: [
         new GetCollection(
-            controller: ApiGetRatesController::class,
-            normalizationContext: ['groups' => ['rate:list']]
+            normalizationContext: ['groups' => ['rate:list']],
+            provider: GetRatesProvider::class
         ),
     ]
 )]
@@ -45,11 +45,6 @@ class Rate
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
-    }
-
-    public function __toString(): string
-    {
-        return $this->value;
     }
 
     public function getId(): ?int
@@ -103,5 +98,10 @@ class Rate
         $this->createdAt = $createdAt;
 
         return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->value;
     }
 }

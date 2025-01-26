@@ -16,8 +16,8 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Entity(repositoryClass: CertificationRepository::class)]
 #[ApiResource(
     operations: [
-        new GetCollection,
-        new Post
+        new GetCollection(),
+        new Post()
     ],
     normalizationContext: ['groups' => 'certification:get']
 )]

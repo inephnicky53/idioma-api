@@ -6,6 +6,7 @@ use App\Entity\Disponibility;
 use App\Entity\Planning;
 use App\Entity\User;
 use App\Entity\UserTeacher;
+use App\Event\PlanningBookedEvent;
 use App\Event\PlanningCreatedEvent;
 use App\Exception\InsufficientHoursException;
 use App\Exception\OverlappingBookingException;
@@ -39,6 +40,7 @@ readonly class PlanningManager
             $this->validateBooking($data, $user);
 
             $data->addParticipant($user);
+
             $this->em->persist($data);
 
             $this->dispatcher->dispatch(new PlanningCreatedEvent($data));
@@ -58,7 +60,10 @@ readonly class PlanningManager
      */
     public function start(Planning $planning): Planning
     {
-        $planning->setStatus(Planning::STATUS_CREATED);
+        if ($planning->getEnd() >= (new \DateTimeImmutable())->modify('-30 minutes'))
+            throw new \Exception("Date cannot be less than end date");
+
+        $planning->setStatus(Planning::STATUS_STARTED);
 
         $this->em->persist($planning);
         $this->em->flush();
@@ -74,7 +79,6 @@ readonly class PlanningManager
         if ($planning->getStart() >= new \DateTimeImmutable())
             throw new \Exception("Date cannot be less than start date");
 
-        // don't know what to do
         $planning->setStatus(Planning::STATUS_CANCELED);
 
         $this->em->persist($planning);
@@ -88,38 +92,38 @@ readonly class PlanningManager
      */
     private function validateBooking(Planning $data, User $user): void
     {
-        $userTeacher = $this->em->getRepository(UserTeacher::class)->findOneBy(['user' => $user, 'teacher' => $data->getTeacher()]);
+        $teacher = $data->getTeacher();
+        $userTeacher = $this->em->getRepository(UserTeacher::class)->findOneBy(['user' => $user, 'teacher' => $teacher]);
+        $isTrial = !$this->em->getRepository(Planning::class)->findOneBy(['user' => $user, 'teacher' => $teacher, 'isTrial' => true]);
         $hours = $userTeacher ? $userTeacher->getHours() : 0;
 
-        if (!$data->isTrial() && $hours < 1) {
+        if (!$isTrial && $hours < 1)
             throw new InsufficientHoursException();
-        }
 
-        if ($data->getEnd() === null) {
-            $data->setEnd($data->getStart()->modify($data->isTrial() ? '+25 minutes' : '+50 minutes'));
-        }
+        if ($data->getEnd() === null)
+            $data->setEnd($data->getStart()->modify($isTrial ? '+25 minutes' : '+50 minutes'));
 
         $time = $data->getStart()->diff($data->getEnd());
 
-        if ($time->invert != 0) {
+        if ($time->invert != 0)
             throw new \Exception("L'heure de fin ne peut pas être avant l'heure de début.");
-        }
 
-        if ($time->days > 0 || $time->h > 5) {
+        if ($time->days > 0 || $time->h > 5)
             throw new \Exception("Vous ne pouvez pas réserver plus de 5 heures de formation d'affilée.");
-        }
 
-        if (!$data->isTrial() && $time->h > $hours) {
+        if (!$isTrial && $time->h > $hours)
             throw new InsufficientHoursException();
-        }
 
         $this->checkOverlappingBookings($data, $user);
         $this->checkTeacherAvailability($data);
 
-        if (!$data->isTrial()) {
+        if ($userTeacher) {
             $userTeacher->setHours($hours - 1);
             $this->em->persist($userTeacher);
         }
+
+        if ($isTrial)
+            $data->setIsTrial(true);
 
         $data->setStatus(Planning::STATUS_CREATED);
     }
@@ -162,5 +166,33 @@ readonly class PlanningManager
             throw new InvalidArgumentException('Invalid dates provided for overlap check.');
 
         return $start1 < $end2 && $start2 < $end1;
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function book(Planning $data): Planning
+    {
+        /** @var User $user */
+        $user = $this->security->getUser();
+
+        $this->em->beginTransaction();
+        try {
+            $this->validateBooking($data, $user);
+
+            $data->addParticipant($user);
+
+            $this->em->persist($data);
+
+            $this->dispatcher->dispatch(new PlanningBookedEvent($data));
+
+            $this->em->flush();
+            $this->em->commit();
+
+            return $data;
+        } catch (\Exception $e) {
+            $this->em->rollback();
+            throw $e;
+        }
     }
 }

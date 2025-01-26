@@ -7,12 +7,14 @@ use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use App\Dto\BookPlanningInput;
 use App\Repository\PlanningRepository;
 use App\State\Planning\PlanningBookProcessor;
 use App\State\Planning\PlanningCancelProcessor;
 use App\State\Planning\PlanningCreateProcessor;
+use App\State\Planning\StartPlanningProcessor;
 use App\State\Planning\UserPlanningProvider;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -32,16 +34,22 @@ use Symfony\Component\Serializer\Annotation\Groups;
             security: "is_granted('ROLE_USER')",
             processor: PlanningCreateProcessor::class
         ),
+        new Post(
+            uriTemplate: "plannings/book",
+            denormalizationContext: ['groups' => ['planning:create']],
+            security: "is_granted('ROLE_USER')",
+            processor: PlanningBookProcessor::class
+        ),
+        new Patch(
+            uriTemplate: "plannings/{id}/start",
+            denormalizationContext: ['groups' => ['planning:start']],
+            security: "is_granted('ROLE_USER')",
+            processor: StartPlanningProcessor::class
+        ),
         new Delete(
             uriTemplate: "plannings/{id}/cancel",
             security: "is_granted('ROLE_USER')",
             processor: PlanningCancelProcessor::class
-        ),
-        new Post(
-            uriTemplate: "plannings/book",
-            security: "is_granted('ROLE_USER')",
-            input: BookPlanningInput::class,
-            processor: PlanningBookProcessor::class
         ),
     ],
     normalizationContext: ['groups' => ['planning:show']],
@@ -54,6 +62,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 class Planning
 {
     const STATUS_CREATED = "planning.status.created";
+    const STATUS_STARTED = "planning.status.started";
     const STATUS_PENDING = "planning.status.pending";
     const STATUS_PAUSED = "planning.status.paused";
     const STATUS_REJECTED = "planning.status.rejected";
@@ -78,18 +87,17 @@ class Planning
     private ?Teacher $teacher = null;
 
     #[ORM\ManyToOne(inversedBy: 'plannings')]
-    #[Groups(['planning:show', 'planning:create'])]
+    #[Groups(['planning:show'])]
     private ?Course $course = null;
 
     #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'plannings')]
     #[Groups(['planning:show'])]
     private Collection $participants;
 
-    #[Groups(['planning:create'])]
     private bool $isTrial = false;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['planning:show', 'planning:create'])]
+    #[Groups(['planning:show'])]
     private ?string $meetingLink = null;
 
     #[ORM\Column(length: 255)]

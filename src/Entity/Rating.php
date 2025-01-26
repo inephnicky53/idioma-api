@@ -3,13 +3,11 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Post;
-use App\Controller\Api\Rating\ApiPostRatingController;
 use App\Repository\RatingRepository;
-use App\State\Teacher\TeacherGetCommentProvider;
+use App\State\Teacher\TeacherRatingProcessor;
 use App\Trait\Datable;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -25,10 +23,10 @@ use function Symfony\Component\Translation\t;
             ],
         ),
         new Post(
-            controller: ApiPostRatingController::class,
-            denormalizationContext: ['groups' => ['rating:new']],
+            denormalizationContext: ['groups' => ['rating:create']],
             security: "is_granted('ROLE_USER')",
-        ),
+            provider: TeacherRatingProcessor::class,
+        )
     ],
     normalizationContext: ['groups' => ['rating:list']]
 )]
@@ -43,15 +41,15 @@ class Rating
     private ?int $id = null;
 
     #[ORM\Column]
-    #[Groups(['rating:list', 'rating:new'])]
+    #[Groups(['rating:list', 'rating:create'])]
     private ?float $stars = null;
 
     #[ORM\ManyToOne(inversedBy: 'ratings')]
-    #[Groups(['rating:list', 'rating:new'])]
+    #[Groups(['rating:list', 'rating:create'])]
     private ?Teacher $teacher = null;
 
     #[ORM\ManyToOne(inversedBy: 'ratings')]
-    #[Groups(['rating:list', 'rating:new'])]
+    #[Groups(['rating:list', 'rating:create'])]
     private ?Course $course = null;
 
     #[ORM\ManyToOne(inversedBy: 'ratings')]
@@ -60,7 +58,7 @@ class Rating
     private ?User $user = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['rating:list', 'rating:new'])]
+    #[Groups(['rating:list', 'rating:create'])]
     private ?string $comment = null;
 
     public function __construct()

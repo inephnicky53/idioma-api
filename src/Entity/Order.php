@@ -15,7 +15,9 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Table(name: '`order`')]
 #[ApiResource(
     operations: [
-        new GetCollection(security: 'is_granted("ROLE_USER")')
+        new GetCollection(
+            security: 'is_granted("ROLE_USER")'
+        )
     ],
     normalizationContext: ['groups' => ['order:list']]
 )]

@@ -3,13 +3,11 @@
 namespace App\Entity;
 
 use ApiPlatform\Doctrine\Odm\Filter\OrderFilter;
-use ApiPlatform\Doctrine\Odm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
-use App\Controller\Api\Course\ApiCreateTransactionController;
 use App\Repository\CourseRepository;
 use App\Trait\Datable;
 use App\Trait\Deletable;
@@ -18,7 +16,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use EasyCorp\Bundle\EasyAdminBundle\Filter\BooleanFilter;
 use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: CourseRepository::class)]
@@ -33,13 +30,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
         new Post(
             normalizationContext: ['groups' => ['course:list', 'course:view']],
             security: "is_granted('ROLE_USER')",
-        ),
-        new Post(
-            uriTemplate: "courses/{id}/buy",
-            controller: ApiCreateTransactionController::class,
-            normalizationContext: ['groups' => ['course:list', 'course:view']],
-            security: "is_granted('ROLE_USER')",
-        ),
+        )
     ]
 )]
 #[ApiFilter(OrderFilter::class, properties: ['id' => 'DESC'])]

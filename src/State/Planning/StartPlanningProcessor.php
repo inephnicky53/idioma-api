@@ -4,11 +4,10 @@ namespace App\State\Planning;
 
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
-use App\Dto\BookPlanningInput;
 use App\Entity\Planning;
 use App\Service\Planning\PlanningManager;
 
-readonly class PlanningBookProcessor implements ProcessorInterface
+readonly class StartPlanningProcessor implements ProcessorInterface
 {
     public function __construct(private PlanningManager $manager)
     {
@@ -16,10 +15,10 @@ readonly class PlanningBookProcessor implements ProcessorInterface
 
     /**
      * @throws \Exception
-     * @var BookPlanningInput $data
+     * @var Planning $data
      */
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): Planning
     {
-        return $this->manager->book($data);
+        return $this->manager->start($data);
     }
 }

@@ -7,10 +7,10 @@ use App\Entity\User;
 use App\Repository\OTPRepository;
 use App\Service\SmsService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class ApiPhoneVerifyController extends AbstractController
 {
-
     public function __construct(
         private readonly OTPRepository $OTPRepository
     )
@@ -19,7 +19,7 @@ class ApiPhoneVerifyController extends AbstractController
 
     public function __invoke(
         SmsService $smsService
-    )
+    ): JsonResponse
     {
         /** @var User $data */
         $data = $this->getUser();

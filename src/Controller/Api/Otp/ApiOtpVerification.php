@@ -12,7 +12,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class ApiOtpVerification extends AbstractController
 {
-
     public function __invoke(
         OTPVerifyResource $data,
         OTPRepository $OTPRepository,

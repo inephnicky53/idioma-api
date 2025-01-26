@@ -11,10 +11,12 @@ use App\Entity\Certification;
 use App\Entity\Contact;
 use App\Entity\Course;
 use App\Entity\Currency;
+use App\Entity\Fee;
 use App\Entity\InboxThread;
 use App\Entity\Language;
 use App\Entity\Order;
 use App\Entity\Package;
+use App\Entity\Payment;
 use App\Entity\Planning;
 use App\Entity\Rate;
 use App\Entity\Teacher;
@@ -159,9 +161,24 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkToCrud("Contacts", "fas fa-users", Contact::class);
 
         yield MenuItem::section('Comptabilité');
+        yield MenuItem::subMenu("Paiements", "fas fa-users")->setSubItems([
+            MenuItem::linkToUrl('Liste', 'fas fa-list', $this->adminUrlGenerator
+                ->setController(PaymentCrudController::class)
+                ->setAction(Crud::PAGE_INDEX)),
+            MenuItem::linkToUrl("En attente", 'fas fa-list', $this->adminUrlGenerator
+                ->setController(OnWaitingPaymentCrudController::class)
+                ->setAction(Crud::PAGE_INDEX)),
+            MenuItem::linkToUrl("Désactivés", 'fas fa-list', $this->adminUrlGenerator
+                ->setController(DeactivateCrudController::class)
+                ->setAction(Crud::PAGE_INDEX)),
+            MenuItem::linkToUrl("Effectuer un paiement", 'fas fa-plus', $this->adminUrlGenerator
+                ->setController(PaymentCrudController::class)
+                ->setAction(Crud::PAGE_NEW)),
+        ]);
         yield MenuItem::subMenu("Comptabilité", "fas fa-book")->setSubItems([
             MenuItem::linkToCrud("Commandes", "fas fa-list", Order::class),
             MenuItem::linkToCrud("Transactions", "fas fa-list", Transaction::class),
+            MenuItem::linkToCrud("Commissions", "fas fa-list", Fee::class),
             MenuItem::linkToCrud("Devises", "fas fa-list", Currency::class),
             MenuItem::linkToCrud("Taux", "fas fa-plus", Rate::class),
             MenuItem::linkToCrud("Packages", "fas fa-plus", Package::class)

@@ -21,7 +21,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ApiResource(
     operations: [
         new Get(
-            security: "is_granted('MESSAGE_READ',object)"
+            security: "is_granted('MESSAGE_READ', object)"
         ),
         new GetCollection(
             security: "is_granted('ROLE_USER')"
@@ -38,7 +38,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
             normalizationContext: ['groups' => ['inbox:chat:send']],
             denormalizationContext: ['groups' => ['inbox:chat:send']],
         ),
-        new Patch(name: 'update')
+        new Patch()
     ],
     normalizationContext: ['groups' => ['inbox:get']]
 )]
