@@ -8,12 +8,12 @@ use App\Entity\User;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-final class UserPasswordHasher implements ProcessorInterface
+final readonly class UserPasswordHasher implements ProcessorInterface
 {
     public function __construct(
-        private readonly RequestStack                $requestStack,
-        private readonly ProcessorInterface          $processor,
-        private readonly UserPasswordHasherInterface $passwordHasher,
+        private RequestStack                $requestStack,
+        private ProcessorInterface          $processor,
+        private UserPasswordHasherInterface $passwordHasher,
     )
     {
     }

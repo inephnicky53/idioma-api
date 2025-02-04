@@ -237,7 +237,7 @@ class Teacher
     private Collection $teachingLanguages;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['teacher:list', 'user:inbox', 'teacher:update'])]
+    #[Groups(['teacher:list', 'teacher:show', 'user:inbox', 'teacher:update'])]
     private ?string $profile = null;
 
     #[ORM\Column(length: 255, options: ['default' => self::STATUS_WAITING])]
