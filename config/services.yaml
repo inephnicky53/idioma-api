@@ -43,8 +43,6 @@ services:
 
   App\Service\Gateway\FlexPaieGateway:
     tags: [ 'app.payment_gateway' ]
-    bind:
-      $secret: '%env(resolve:FLEXPAY)%'
 
   App\Service\OperatorProcess:
     arguments:

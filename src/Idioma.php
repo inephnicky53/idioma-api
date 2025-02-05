@@ -73,12 +73,12 @@ class Idioma
     public static function getStatusBadge(): array
     {
         return [
-            'danger',
-            'success',
+            'primary',
             'info',
             'warning',
+            'success',
             'secondary',
-            'primary',
+            'danger',
         ];
     }
 

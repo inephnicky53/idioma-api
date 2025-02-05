@@ -3,6 +3,8 @@
 namespace App\Controller\Admin;
 
 use App\ApiResource\StatsRessource;
+use App\Controller\Admin\Payment\OnWaitingPaymentCrudController;
+use App\Controller\Admin\Payment\PaymentCrudController;
 use App\Controller\Admin\Teacher\DeactivateCrudController;
 use App\Controller\Admin\Teacher\OnWaitingTeacherCrudController;
 use App\Controller\Admin\Teacher\TeacherCrudController;
@@ -16,7 +18,6 @@ use App\Entity\InboxThread;
 use App\Entity\Language;
 use App\Entity\Order;
 use App\Entity\Package;
-use App\Entity\Payment;
 use App\Entity\Planning;
 use App\Entity\Rate;
 use App\Entity\Teacher;
@@ -89,7 +90,7 @@ class DashboardController extends AbstractDashboardController
         $stats->total['users'] = count($users);
         $stats->total['teachers'] = [
             'value' => $teachers->count(),
-            'waiting' => $teachers->filter(fn (Teacher $teacher) => $teacher->getStatus() === Teacher::STATUS_WAITING)->count()
+            'waiting' => $teachers->filter(fn(Teacher $teacher) => $teacher->getStatus() === Teacher::STATUS_WAITING)->count()
         ];
         $stats->total['students'] = $students->count();
         $stats->total['courses'] = count($userCourses);
@@ -164,12 +165,6 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::subMenu("Paiements", "fas fa-users")->setSubItems([
             MenuItem::linkToUrl('Liste', 'fas fa-list', $this->adminUrlGenerator
                 ->setController(PaymentCrudController::class)
-                ->setAction(Crud::PAGE_INDEX)),
-            MenuItem::linkToUrl("En attente", 'fas fa-list', $this->adminUrlGenerator
-                ->setController(OnWaitingPaymentCrudController::class)
-                ->setAction(Crud::PAGE_INDEX)),
-            MenuItem::linkToUrl("Désactivés", 'fas fa-list', $this->adminUrlGenerator
-                ->setController(DeactivateCrudController::class)
                 ->setAction(Crud::PAGE_INDEX)),
             MenuItem::linkToUrl("Effectuer un paiement", 'fas fa-plus', $this->adminUrlGenerator
                 ->setController(PaymentCrudController::class)

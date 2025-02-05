@@ -111,11 +111,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:show', 'teacher:list', 'user:courses', 'user:teachers', 'user:inbox', 'planning:show', 'rating:list'])]
+    #[Groups(['user:show', 'teacher:list', 'user:courses', 'user:teacher:get', 'user:inbox', 'planning:show', 'rating:list', 'payment:get'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
-    #[Groups(['user:show', 'user:register', 'course:list', 'user:inbox', 'planning:show'])]
+    #[Groups(['user:show', 'user:register', 'course:list', 'user:inbox', 'planning:show', 'payment:get'])]
     private ?string $email = null;
 
     #[ORM\Column]
@@ -230,8 +230,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:me', 'user:me:language'])]
     private ?string $language;
 
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: UserTeacher::class, orphanRemoval: true)]
-    #[Groups(['user:teachers'])]
+    #[ORM\OneToMany(targetEntity: UserTeacher::class, mappedBy: 'user', orphanRemoval: true)]
     private Collection $teachers;
 
     #[ORM\Column(length: 3, options: ["default" => "USD"])]
@@ -319,7 +318,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return (string)$this->email;
     }
 
-    #[Groups(['teacher:list', 'course:list', 'user:teachers:fullname', 'user:inbox', 'rating:list'])]
+    #[Groups(['teacher:list', 'course:list', 'user:teacher:get', 'user:inbox', 'rating:list', 'payment:get'])]
     public function getFullname(): ?string
     {
         $fullname = $this->firstname;

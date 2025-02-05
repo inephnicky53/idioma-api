@@ -24,15 +24,15 @@ class Currency
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['currency:list', 'rate:list', 'course:list', 'teacher:list', 'order:list'])]
+    #[Groups(['currency:list', 'rate:list', 'course:list', 'teacher:list', 'order:list', 'payment:get'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['currency:list', 'rate:list', 'order:list'])]
+    #[Groups(['currency:list', 'rate:list', 'order:list', 'payment:get'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 3)]
-    #[Groups(['currency:list', 'rate:list', 'course:list', 'teacher:list', 'order:list'])]
+    #[Groups(['currency:list', 'rate:list', 'course:list', 'teacher:list', 'order:list', 'payment:get'])]
     private ?string $min = null;
 
     #[ORM\OneToMany(targetEntity: Rate::class, mappedBy: 'currency', orphanRemoval: true)]

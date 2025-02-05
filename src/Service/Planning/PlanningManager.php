@@ -60,10 +60,30 @@ readonly class PlanningManager
      */
     public function start(Planning $planning): Planning
     {
-        if ($planning->getEnd() >= (new \DateTimeImmutable())->modify('-30 minutes'))
-            throw new \Exception("Date cannot be less than end date");
+        $now = new \DateTimeImmutable('now');
+
+        if ($planning->getEnd() <= $now->modify('-30 minutes')) {
+            throw new \Exception("La date de fin du planning ({$planning->getEnd()->format('Y-m-d H:i:s')}) ne peut pas être inférieure à l'heure actuelle moins 30 minutes.");
+        }
 
         $planning->setStatus(Planning::STATUS_STARTED);
+
+        foreach ($planning->getParticipants() as $participant) {
+            $userTeacher = $this->em->getRepository(UserTeacher::class)->findOneBy([
+                'teacher' => $participant->getTeacher()->getId(),
+                'user' => $this->security->getUser()
+            ]);
+
+            if (!$userTeacher)
+                throw new \Exception("Impossible de trouver l'association UserTeacher pour l'utilisateur et l'enseignant ID {$participant->getTeacher()->getId()}.");
+
+            $newHours = $userTeacher->getHours() - 1;
+            if ($newHours < 0)
+                throw new \Exception("L'utilisateur n'a pas assez d'heures disponibles.");
+
+            $userTeacher->setHours($newHours);
+            $this->em->persist($userTeacher);
+        }
 
         $this->em->persist($planning);
         $this->em->flush();
@@ -71,9 +91,26 @@ readonly class PlanningManager
         return $planning;
     }
 
+
     /**
      * @throws \Exception
      */
+    public function end(Planning $planning): Planning
+    {
+        if ($planning->getEnd() >= new \DateTimeImmutable())
+            throw new \Exception("Date cannot be less than end date");
+
+        if ($planning->getStatus() !== Planning::STATUS_STARTED)
+            throw new \Exception("Planning is not started");
+
+        $planning->setStatus(Planning::STATUS_FINISHED);
+
+        $this->em->persist($planning);
+        $this->em->flush();
+
+        return $planning;
+    }
+
     public function cancel(Planning $planning): Planning
     {
         if ($planning->getStart() >= new \DateTimeImmutable())

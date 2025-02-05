@@ -9,7 +9,6 @@ use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
-use App\Dto\BookPlanningInput;
 use App\Repository\PlanningRepository;
 use App\State\Planning\PlanningBookProcessor;
 use App\State\Planning\PlanningCancelProcessor;
@@ -67,6 +66,7 @@ class Planning
     const STATUS_PAUSED = "planning.status.paused";
     const STATUS_REJECTED = "planning.status.rejected";
     const STATUS_CANCELED = "planning.status.canceled";
+    const STATUS_FINISHED = "planning.status.finished";
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -106,17 +106,6 @@ class Planning
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
-
-    public static function getStatusList(): array
-    {
-        return [
-            self::STATUS_CREATED,
-            self::STATUS_PENDING,
-            self::STATUS_PAUSED,
-            self::STATUS_CANCELED,
-            self::STATUS_REJECTED
-        ];
-    }
 
     public function __construct()
     {
@@ -236,6 +225,18 @@ class Planning
     public function getStatus(): ?string
     {
         return $this->status;
+    }
+
+    public static function getStatusList(): array
+    {
+        return [
+            self::STATUS_CREATED,
+            self::STATUS_PENDING,
+            self::STATUS_PAUSED,
+            self::STATUS_CANCELED,
+            self::STATUS_REJECTED,
+            self::STATUS_FINISHED,
+        ];
     }
 
     public function setStatus(string $status): static

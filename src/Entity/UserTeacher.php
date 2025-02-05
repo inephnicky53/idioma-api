@@ -15,43 +15,45 @@ use Symfony\Component\Serializer\Annotation\Groups;
     operations: [
         new GetCollection(
             uriTemplate: 'user/teachers',
-            normalizationContext: ['groups' => ['user:teachers']],
             security: "is_granted('ROLE_USER')",
             provider: UserTeacherProvider::class
         ),
         new GetCollection(
             uriTemplate: "user/students",
-            normalizationContext: ['groups' => ['user:student']],
             security: "is_granted('ROLE_USER')",
             provider: UserStudentProvider::class,
         ),
-    ]
+    ],
+    normalizationContext: ['groups' => ['user:teacher:get']],
 )]
 class UserTeacher
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:teachers'])]
+    #[Groups(['user:teacher:get'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'teachers')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['user:teacher:get'])]
     private ?User $user = null;
 
     #[ORM\ManyToOne(inversedBy: 'students')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['user:teachers'])]
+    #[Groups(['user:teacher:get'])]
     private ?Teacher $teacher = null;
 
     #[ORM\Column]
+    #[Groups(['user:teacher:get'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
-    #[Groups(['user:teachers'])]
+    #[Groups(['user:teacher:get'])]
     private ?float $hours = 0;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['user:teacher:get'])]
     private ?\DateTimeImmutable $buyedAt = null;
 
     public function __construct()

@@ -2,9 +2,10 @@
 
 namespace App\EventSubscriber;
 
+use App\Entity\Payment;
 use App\Entity\User;
+use App\Idioma;
 use DateTimeImmutable;
-use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeCrudActionEvent;
 use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeEntityPersistedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -23,9 +24,12 @@ class EasyAdminSubscriber implements EventSubscriberInterface
         if ($entity instanceof User) {
             $entity->setUpdatedAt(new DateTimeImmutable());
         }
-    }
 
-    public function beforeCrud(BeforeCrudActionEvent $event)
-    {
+        /** @var Payment $entity */
+        if ($entity instanceof Payment) {
+            ($entity)
+                ->setReference(uniqid("PY-{$entity->getType()}-"))
+                ->setStatus(Idioma::STATUS_CREATED);
+        }
     }
 }

@@ -137,15 +137,15 @@ class Teacher
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['teacher:list', 'course:list', 'user:courses', 'user:teachers', 'planning:show', 'user:inbox', 'order:list'])]
+    #[Groups(['teacher:list', 'course:list', 'user:courses', 'user:teacher:get', 'planning:show', 'user:inbox', 'order:list'])]
     private ?int $id = null;
 
     #[ORM\OneToOne(inversedBy: 'teacher', cascade: ['persist', 'remove'])]
-    #[Groups(['teacher:list', 'course:list', 'user:courses', 'user:teachers', 'planning:show', 'user:inbox'])]
+    #[Groups(['teacher:list', 'course:list', 'user:courses', 'user:teacher:get', 'planning:show', 'user:inbox'])]
     private ?User $user = null;
 
     #[ORM\ManyToMany(targetEntity: Language::class, inversedBy: 'teachers')]
-    #[Groups(['teacher:list', 'user:teachers'])]
+    #[Groups(['teacher:list'])]
     private Collection $languages;
 
     #[ORM\ManyToMany(targetEntity: Category::class, inversedBy: 'teachers')]
@@ -171,11 +171,11 @@ class Teacher
     private Collection $ratings;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['teacher:list', 'teacher:pricing', 'teacher:disponibilities', 'user:teachers', 'teacher:update'])]
+    #[Groups(['teacher:list', 'teacher:pricing', 'teacher:disponibilities', 'teacher:update'])]
     private ?float $price = null;
 
     #[ORM\ManyToOne(inversedBy: 'teachers')]
-    #[Groups(['teacher:list', 'teacher:pricing', 'teacher:disponibilities', 'user:teachers'])]
+    #[Groups(['teacher:list', 'teacher:pricing', 'teacher:disponibilities'])]
     private ?Currency $currency = null;
 
     #[ORM\OneToMany(targetEntity: UserTeacher::class, mappedBy: 'teacher')]
@@ -477,19 +477,6 @@ class Teacher
     {
         return $this->students;
     }
-
-    //#[Groups(['teacher:list'])]
-    /*public function getStudentsCount(): int
-    {
-        $stutents = [];
-        $courses = $this->courses;
-
-        $courses->map(function (Course $course) use (&$stutents) {
-            //$stutents[] = $course->get
-        });
-
-        return count($stutents);
-    }*/
 
     #[Groups(['teacher:list'])]
     public function getStudentsCount()

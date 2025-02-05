@@ -4,14 +4,20 @@ namespace App\Model\Wallet;
 
 use App\Model\Initiable;
 use App\Trait\ArrayableTrait;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 class Wallet
 {
     use Initiable;
     use ArrayableTrait;
 
+    #[Groups(['teacher:wallet'])]
     private string $currency;
+
+    #[Groups(['teacher:wallet'])]
     private float $balance;
+
+    #[Groups(['teacher:wallet'])]
     private bool $isActive;
 
     /**
