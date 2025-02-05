@@ -4,6 +4,7 @@ namespace App\Controller\Admin\Transaction;
 
 use App\Entity\Fee;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\NumberField;
@@ -25,5 +26,6 @@ class FeeCrudController extends AbstractCrudController
         yield NumberField::new('value', 'Valeur (%)');
         yield NumberField::new('min', 'Montant minimum');
         yield NumberField::new('max', 'Montant maximum');
+        yield BooleanField::new('isActive', 'Est actif')->renderAsSwitch();
     }
 }

@@ -88,7 +88,7 @@ readonly class TransactionManager
         $amountFee = 0;
 
         foreach ($feeTypes as $feeType) {
-            $fees = $this->em->getRepository(Fee::class)->findBy(['type' => $feeType, 'status' => Idioma::ACTIVE]);
+            $fees = $this->em->getRepository(Fee::class)->findBy(['type' => $feeType, 'isActive' => true]);
 
             foreach ($fees as $fee) {
                 if ($fee->isWithinRange($transaction->getAmount())) {

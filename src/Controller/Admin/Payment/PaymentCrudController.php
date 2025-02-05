@@ -49,13 +49,13 @@ class PaymentCrudController extends AbstractCrudController
             ->setIcon('fas fa-check')
             ->setCssClass('btn btn-success')
             ->linkToCrudAction('validate')
-            ->displayIf(fn(Payment $payment) => $payment->getStatus() === Idioma::STATUS_CREATED);
+            ->displayIf(fn(Payment $payment) => $payment->getStatus() == Idioma::STATUS_CREATED);
 
         $decline = Action::new('decline', 'Refuser le paiement')
             ->setIcon('fas fa-xmark')
             ->setCssClass('btn btn-danger')
             ->linkToCrudAction('decline')
-            ->displayIf(fn(Payment $payment) => $payment->getStatus() === Idioma::STATUS_CREATED);
+            ->displayIf(fn(Payment $payment) => $payment->getStatus() == Idioma::STATUS_CREATED);
 
         return $actions
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
