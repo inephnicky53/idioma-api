@@ -19,7 +19,7 @@ class FlexPaieGateway implements GatewayInterface
         'type' => 1,
     ];
 
-    private string $flexPayToken = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJcL2xvZ2luIiwicm9sZXMiOlsiTUVSQ0hBTlQiXSwiZXhwIjoxNzk2Mzk1NTQwLCJzdWIiOiJhMjc0ZjkwNzAwYjM3ZWMyNDhhNGIwOGQ1NTZlY2NkMyJ9.TTjErhzq3FqzJPR65cZ0pTTK3Hepw6qDGt-f780VuTo';
+    private string $flexPayToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJcL2xvZ2luIiwicm9sZXMiOlsiTUVSQ0hBTlQiXSwiZXhwIjoxNzk2Mzk1NTQwLCJzdWIiOiJhMjc0ZjkwNzAwYjM3ZWMyNDhhNGIwOGQ1NTZlY2NkMyJ9.TTjErhzq3FqzJPR65cZ0pTTK3Hepw6qDGt-f780VuTo";
 
     public function __construct(
         private readonly EntityManagerInterface $manager,
