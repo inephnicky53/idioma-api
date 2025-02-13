@@ -131,16 +131,16 @@ readonly class PlanningManager
     {
         $teacher = $data->getTeacher();
         $userTeacher = $this->em->getRepository(UserTeacher::class)->findOneBy(['user' => $user, 'teacher' => $teacher]);
-        $isTrial = $user->getPlannings()->exists(function ($key, Planning $planning) use ($teacher) {
+        $canTrial = $user->getPlannings()->exists(function ($key, Planning $planning) use ($teacher) {
             return $planning->getTeacher()->getId() === $teacher->getId();
         });
         $hours = $userTeacher ? $userTeacher->getHours() : 0;
 
-        if (!$isTrial && $hours < 1)
+        if (!$canTrial && $hours < 1)
             throw new InsufficientHoursException();
 
         if ($data->getEnd() === null)
-            $data->setEnd($data->getStart()->modify($isTrial ? '+25 minutes' : '+50 minutes'));
+            $data->setEnd($data->getStart()->modify($canTrial ? '+25 minutes' : '+50 minutes'));
 
         $time = $data->getStart()->diff($data->getEnd());
 
@@ -150,7 +150,7 @@ readonly class PlanningManager
         if ($time->days > 0 || $time->h > 5)
             throw new \Exception("Vous ne pouvez pas réserver plus de 5 heures de formation d'affilée.");
 
-        if (!$isTrial && $time->h > $hours)
+        if (!$canTrial && $time->h > $hours)
             throw new InsufficientHoursException();
 
         $this->checkOverlappingBookings($data, $user);
@@ -161,7 +161,7 @@ readonly class PlanningManager
             $this->em->persist($userTeacher);
         }
 
-        if ($isTrial)
+        if ($canTrial)
             $data->setIsTrial(true);
 
         $data->setStatus(Planning::STATUS_CREATED);

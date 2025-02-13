@@ -2,6 +2,7 @@
 
 namespace App\Serializer\Normalizer;
 
+use App\Entity\Planning;
 use App\Entity\Teacher;
 use App\Entity\User;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -29,8 +30,11 @@ readonly class TeacherNormalizer implements NormalizerInterface
         $user = $this->security->getUser();
 
         if ($user) {
+            $canTrial = $user->getPlannings()->exists(function ($key, Planning $planning) use ($object) {
+                return $planning->getTeacher()->getId() === $object->getId();
+            });
+            $object->setCanTrial($canTrial);
             $userTeacher = $user->getTeachers()->filter(fn(Teacher $t) => $t->getId() === $object->getId())[0];
-            $object->setCanTrial(!$userTeacher);
             $object->setHours($userTeacher?->getHours() ?? 0);
         }
 
