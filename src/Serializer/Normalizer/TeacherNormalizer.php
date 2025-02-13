@@ -33,7 +33,7 @@ readonly class TeacherNormalizer implements NormalizerInterface
             $canTrial = $user->getPlannings()->exists(function ($key, Planning $planning) use ($object) {
                 return $planning->getTeacher()->getId() === $object->getId();
             });
-            $object->setCanTrial($canTrial);
+            $object->setCanTrial(!$canTrial);
             $userTeacher = $user->getTeachers()->filter(fn(Teacher $t) => $t->getId() === $object->getId())[0];
             $object->setHours($userTeacher?->getHours() ?? 0);
         }
