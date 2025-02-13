@@ -131,7 +131,7 @@ readonly class PlanningManager
     {
         $teacher = $data->getTeacher();
         $userTeacher = $this->em->getRepository(UserTeacher::class)->findOneBy(['user' => $user, 'teacher' => $teacher]);
-        $isTrial = !$user->getPlannings()->exists(function (Planning $planning) use ($teacher) {
+        $isTrial = $user->getPlannings()->exists(function ($key, Planning $planning) use ($teacher) {
             return $planning->getTeacher()->getId() === $teacher->getId();
         });
         $hours = $userTeacher ? $userTeacher->getHours() : 0;
