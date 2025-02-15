@@ -2,7 +2,7 @@
 
 namespace App\ApiResource;
 
-class StatsRessource
+class StatsResource
 {
     public const DESCRIPTION = "Rapport statistique";
 

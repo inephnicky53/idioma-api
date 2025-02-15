@@ -2,7 +2,7 @@
 
 namespace App\Controller\Admin;
 
-use App\ApiResource\StatsRessource;
+use App\ApiResource\StatsResource;
 use App\Controller\Admin\Payment\OnWaitingPaymentCrudController;
 use App\Controller\Admin\Payment\PaymentCrudController;
 use App\Controller\Admin\Teacher\DeactivateCrudController;
@@ -62,7 +62,7 @@ class DashboardController extends AbstractDashboardController
     ): Response
     {
         $chart = $chartBuilder->createChart(Chart::TYPE_LINE);
-        $stats = new StatsRessource();
+        $stats = new StatsResource();
 
         $users = new ArrayCollection();
         $teachers = new ArrayCollection();

@@ -96,9 +96,15 @@ readonly class TransactionManager
                     $amountFee += ($transaction->getAmount() * $fee->getValue()) / 100;
                 }
             }
+            if ($feeType === Fee::FEE_TRANSACTION_MOBILE) {
+                $amount = $amount - $amountFee;
+                $amount = round($amount, 2);
+            }
         }
 
-        $transaction->setFee($amountFee);
+        ($transaction)
+            ->setAmount($amount)
+            ->setFee($amountFee);
 
         $this->em->persist($transaction);
         $this->em->flush();

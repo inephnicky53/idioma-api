@@ -39,6 +39,7 @@ class JWTCreatedListener
         $payload['phone'] = $user->getPhone();
         $payload['email'] = $user->getEmail();
         $payload['isTeacher'] = (bool)$user->getTeacher();
+        $payload['teacher_id'] = $user->getTeacher()?->getId();
         $payload['teacher_profile'] = $user->getTeacher()?->getProfile();
         $payload['host'] = $schemeAndHttpHost;
         $payload['isActive'] = $user->isIsActive();
