@@ -20,6 +20,16 @@ readonly class UserPlanningProvider implements ProviderInterface
         /** @var User $user */
         $user = $this->security->getUser();
 
-        return $user->getPlannings()->toArray();
+        $plannings = [];
+        foreach ($user->getPlannings() as $planning) {
+            $plannings[] = $planning;
+        }
+        if ($user->getTeacher()) {
+            foreach ($user->getTeacher()->getPlannings() as $planning) {
+                $plannings[] = $planning;
+            }
+        }
+
+        return $plannings;
     }
 }
