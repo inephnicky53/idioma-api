@@ -97,7 +97,7 @@ class Planning
     private bool $isTrial = false;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['planning:show'])]
+    #[Groups(['planning:show', 'planning:create'])]
     private ?string $meetingLink = null;
 
     #[ORM\Column(length: 255)]
