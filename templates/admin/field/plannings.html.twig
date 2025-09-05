@@ -1,16 +1,126 @@
 {% if field.value is not empty %}
-    <ol>
-        {% for value in field.value %}
-            <li>
-                <b>{{ value.course }}</b><br>
-                {{ value.start|date > "now"|date ? 'aura' : 'a eu' }} lieu de <b>{{ value.start|date('Y-m-d H:i') }}</b>
-                à <b>{{ value.end|date('Y-m-d H:i') }}</b><br> avec
-                {% for participant in value.participants %}
-                    {{ participant }}, &nbsp;
-                {% endfor %}
-            </li>
+    <div class="plannings-list">
+        {% for planning in field.value %}
+            <div class="planning-item {{ planning.start|date > "now"|date ? 'future' : 'past' }}">
+                <div class="planning-header">
+                    {% if planning.course %}
+                        <h6 class="course-title">
+                            <i class="fas fa-graduation-cap"></i>
+                            {{ planning.course }}
+                        </h6>
+                    {% else %}
+                        <h6 class="course-title text-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {{ "planning.no_course"|trans }}
+                        </h6>
+                    {% endif %}
+                </div>
+                
+                <div class="planning-details">
+                    <div class="time-info">
+                        <i class="fas fa-clock"></i>
+                        <span class="time-label">
+                            {{ planning.start|date > "now"|date ? 'Aura lieu' : 'A eu lieu' }}
+                        </span>
+                        <strong>{{ planning.start|date('d/m/Y à H:i') }}</strong>
+                        à
+                        <strong>{{ planning.end|date('d/m/Y à H:i') }}</strong>
+                    </div>
+                    
+                    {% if planning.participants|length > 0 %}
+                        <div class="participants-info">
+                            <i class="fas fa-users"></i>
+                            <span>Participants :</span>
+                            {% for participant in planning.participants %}
+                                <span class="participant-name">{{ participant }}</span>{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
         {% endfor %}
-    </ol>
+    </div>
 {% else %}
-    Pas de planning
+    <div class="alert alert-info">
+        <i class="fas fa-calendar-times"></i>
+        Aucun planning disponible
+    </div>
 {% endif %}
+
+<style>
+:root {
+    --planning-bg: #ffffff;
+    --planning-border: #dee2e6;
+    --planning-text: #212529;
+    --planning-muted: #6c757d;
+    --planning-future: #28a745;
+    --planning-past: #6c757d;
+    --planning-participant: #0d6efd;
+}
+
+[data-bs-theme="dark"] {
+    --planning-bg: #2d3748;
+    --planning-border: #4a5568;
+    --planning-text: #e2e8f0;
+    --planning-muted: #a0aec0;
+    --planning-future: #48bb78;
+    --planning-past: #718096;
+    --planning-participant: #63b3ed;
+}
+
+.plannings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.planning-item {
+    padding: 16px;
+    border: 1px solid var(--planning-border);
+    border-radius: 8px;
+    background: var(--planning-bg);
+    color: var(--planning-text);
+    transition: all 0.2s ease;
+}
+
+.planning-item.future {
+    border-left: 4px solid var(--planning-future);
+}
+
+.planning-item.past {
+    border-left: 4px solid var(--planning-past);
+    opacity: 0.8;
+}
+
+.course-title {
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--planning-text);
+}
+
+.planning-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.time-info, .participants-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: var(--planning-text);
+    flex-wrap: wrap;
+}
+
+.time-label {
+    color: var(--planning-muted);
+}
+
+.participant-name {
+    font-weight: 500;
+    color: var(--planning-participant);
+}
+</style>

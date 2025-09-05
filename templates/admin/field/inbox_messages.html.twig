@@ -1,167 +1,186 @@
-{% if field|length > 0 %}
-    <div class="chat">
-        <div class="messages-chat">
-            {% set messagePrev %}{% endset %}
-            {% set displayPhoto = true %}
-            {% set prevSameDayThanCurrent %}{% endset %}
-            {% set prevIsMoreThan5Minutes %}{% endset %}
-            {% set prevAuthorEqualCurrentAuthor %}{% endset %}
-
-            {% for value in field.value %}
-                {% dump(value) %}
-                {% set prevSameDayThanCurrent = messagePrev is not empty and messagePrev.createdAt|date('Ymd') == value.createdAt|date('Ymd') %}
-                {% set isAuthor = value.thread.teacher.user.id == value.author.id %}
-                {% set prevAuthorEqualCurrentAuthor = messagePrev is not empty and messagePrev.author.id == value.author.id %}
-                {% set displayDate = prevSameDayThanCurrent == false %}
-                {% set displayPhoto = displayDate or not prevAuthorEqualCurrentAuthor %}
-
-                {% if displayPhoto and not isAuthor %}
-                    <div class="message {{ isAuthor ? 'response' }}">
-                        <div class="photo"
-                             title="{{ value.author }}"
-                             style="background-image: url({{ value.author.thumbnail ? vich_uploader_asset(value.author.thumbnail, 'file') }});">
-                            <div class="online"></div>
-                        </div>
-                        <div>
-                            {% if value.tagMessage %}
-                                <div class="message-tag">
-                                    <p class="text">{{ value.tagMessage.body|raw }}</p>
-                                </div>
-                            {% endif %}
-                            <p class="text">{{ value.body|raw }}</p>
-                        </div>
-                    </div>
-                {% else %}
-                    <div class="message {{ isAuthor ? 'response' }} text-only">
-                        <div>
-                            {% if value.tagMessage %}
-                                <div class="message-tag">
-                                    <p class="text">{{ value.tagMessage.body|raw }}</p>
-                                </div>
-                            {% endif %}
-                            <p class="text">{{ value.body|raw }}</p>
-                        </div>
+{% if field.value is not empty %}
+    <div class="chat-container">
+        <div class="messages-list">
+            {% set previousMessage = null %}
+            {% for message in field.value %}
+                {% set isAuthor = message.thread.teacher.user.id == message.author.id %}
+                {% set showAvatar = previousMessage is null or previousMessage.author.id != message.author.id %}
+                {% set showDate = previousMessage is null or previousMessage.createdAt|date('Ymd') != message.createdAt|date('Ymd') %}
+                
+                {% if showDate %}
+                    <div class="date-separator">
+                        <span>{{ message.createdAt|date('d/m/Y') }}</span>
                     </div>
                 {% endif %}
-                {% if displayDate|default(true) %}
-                    <p class="time {{ isAuthor ? 'response-time' }}">{{ value.createdAt|format_datetime }}</p>
-                {% endif %}
-                {% set messagePrev = value %}
-
+                
+                <div class="message-wrapper {{ isAuthor ? 'author' : 'participant' }}">
+                    {% if showAvatar and not isAuthor %}
+                        <div class="avatar">
+                            {% if message.author.thumbnail %}
+                                <img src="{{ vich_uploader_asset(message.author.thumbnail, 'file') }}" 
+                                     alt="{{ message.author }}" 
+                                     class="avatar-img">
+                            {% else %}
+                                <div class="avatar-placeholder">
+                                    {{ message.author|first|upper }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="message-content">
+                        {% if message.tagMessage %}
+                            <div class="tagged-message">
+                                <i class="fas fa-reply"></i>
+                                {{ message.tagMessage.body|striptags|truncate(50) }}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="message-body">
+                            {{ message.body|nl2br }}
+                        </div>
+                        
+                        <div class="message-time">
+                            {{ message.createdAt|date('H:i') }}
+                        </div>
+                    </div>
+                </div>
+                
+                {% set previousMessage = message %}
             {% endfor %}
         </div>
     </div>
 {% else %}
-    <div class="chat">
-        <div class="messages-chat">
-            <div class="message text-only">
-                <div class="response">
-                    <p class="text">Pas de conversation</p>
-                </div>
-            </div>
-        </div>
+    <div class="alert alert-info">
+        <i class="fas fa-comments"></i>
+        Aucun message dans cette conversation
     </div>
 {% endif %}
 
 <style>
-    .online {
-        position: relative;
-        top: 30px;
-        left: 35px;
-        width: 13px;
-        height: 13px;
-        background-color: #8BC34A;
-        border-radius: 13px;
-        border: 3px solid #FAFAFA;
-    }
+:root {
+    --chat-bg: #f8f9fa;
+    --chat-border: #dee2e6;
+    --message-bg: #ffffff;
+    --message-author-bg: #0d6efd;
+    --message-text: #212529;
+    --message-author-text: #ffffff;
+    --date-separator-bg: #6c757d;
+    --date-separator-text: #ffffff;
+    --avatar-bg: #6c757d;
+    --tagged-bg: rgba(0,0,0,0.1);
+}
 
-    .timer {
-        margin-left: 15%;
-        font-family: 'Open Sans', sans-serif;
-        font-size: 11px;
-        padding: 3px 8px;
-        color: #BBB;
-        background-color: #FFF;
-        border: 1px solid #E5E5E5;
-        border-radius: 15px;
-    }
+[data-bs-theme="dark"] {
+    --chat-bg: #1a202c;
+    --chat-border: #2d3748;
+    --message-bg: #2d3748;
+    --message-author-bg: #4299e1;
+    --message-text: #e2e8f0;
+    --message-author-text: #ffffff;
+    --date-separator-bg: #4a5568;
+    --date-separator-text: #e2e8f0;
+    --avatar-bg: #4a5568;
+    --tagged-bg: rgba(255,255,255,0.1);
+}
 
-    .chat {
-        width: calc(65% - 85px);
-    }
+.chat-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--chat-border);
+    border-radius: 8px;
+    background: var(--chat-bg);
+}
 
-    .chat .messages-chat {
-        padding: 25px 35px;
-    }
+.messages-list {
+    padding: 16px;
+}
 
-    .chat .messages-chat .message {
-        display: flex;
-        align-items: center;
-        margin-bottom: 8px;
-        clear: both;
-    }
+.date-separator {
+    text-align: center;
+    margin: 16px 0;
+}
 
-    .chat .messages-chat .message-tag {
-        display: flex;
-        align-items: center;
-        clear: both;
-    }
+.date-separator span {
+    background: var(--date-separator-bg);
+    color: var(--date-separator-text);
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+}
 
-    .chat .messages-chat .message .photo {
-        display: block;
-        width: 45px;
-        height: 45px;
-        background: #E6E7ED;
-        -moz-border-radius: 50px;
-        -webkit-border-radius: 50px;
-        background-position: center;
-        background-size: cover;
-        background-repeat: no-repeat;
-    }
+.message-wrapper {
+    display: flex;
+    margin-bottom: 12px;
+    gap: 8px;
+}
 
-    .messages-chat .text {
-        margin: 0 35px;
-        background-color: #f6f6f6;
-        padding: 10px;
-        border-radius: 12px;
-        color: black;
-    }
+.message-wrapper.author {
+    justify-content: flex-end;
+}
 
-    .messages-chat .message-tag .text{
-        margin: 0 35px 0;
-        background-color: rgba(20, 200, 245, 0.8);
-        padding: 9px;
-        border-radius: 12px;
-        color: black;
-        font-size: small;
-    }
+.avatar {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+}
 
-    .text-only {
-        margin-left: 45px;
-    }
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
 
-    .time {
-        font-size: 10px;
-        color: lightgrey;
-        margin-bottom: 10px;
-        margin-left: 85px;
-        clear: both;
-    }
+.avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--avatar-bg);
+    color: var(--date-separator-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
 
-    .response-time {
-        float: right;
-        margin-right: 40px !important;
-        clear: both;
-    }
+.message-content {
+    max-width: 70%;
+    background: var(--message-bg);
+    color: var(--message-text);
+    padding: 12px;
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}
 
-    .response {
-        float: right;
-        margin-right: 0px !important;
-        margin-left: auto; /* flexbox alignment rule */
-        clear: both;
-    }
+.author .message-content {
+    background: var(--message-author-bg);
+    color: var(--message-author-text);
+}
 
-    .response .text {
-        background-color: #e3effd !important;
+.tagged-message {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    margin-bottom: 8px;
+    padding: 4px 8px;
+    background: var(--tagged-bg);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    opacity: 0.7;
+    margin-top: 4px;
+    text-align: right;
+}
+
+@media (max-width: 768px) {
+    .message-content {
+        max-width: 85%;
     }
+}
 </style>

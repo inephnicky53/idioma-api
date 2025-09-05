@@ -5,6 +5,7 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use App\Repository\UserTeacherRepository;
+use App\State\Teacher\TeacherStudentsProvider;
 use App\State\User\UserStudentProvider;
 use App\State\User\UserTeacherProvider;
 use Doctrine\ORM\Mapping as ORM;
@@ -22,6 +23,11 @@ use Symfony\Component\Serializer\Annotation\Groups;
             uriTemplate: "user/students",
             security: "is_granted('ROLE_USER')",
             provider: UserStudentProvider::class,
+        ),
+        new GetCollection(
+            uriTemplate: "teacher/students",
+            security: "is_granted('ROLE_USER')",
+            provider: TeacherStudentsProvider::class,
         ),
     ],
     normalizationContext: ['groups' => ['user:teacher:get']],

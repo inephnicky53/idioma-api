@@ -23,8 +23,8 @@ class TeacherDisponibilityCrudController extends AbstractCrudController
             ->hideOnForm();
 
         yield ChoiceField::new('day', "Jour disponible")
-        ->setTranslatableChoices(Idioma::getDaysList())
-        ->setColumns(6);
+            ->setTranslatableChoices(Idioma::getDaysList())
+            ->setColumns(6);
 
         yield TextField::new('start', "Heure de début")
             ->setColumns(6);
@@ -33,7 +33,6 @@ class TeacherDisponibilityCrudController extends AbstractCrudController
             ->setColumns(6);
 
         yield BooleanField::new('isActive', "Si actif")
-
             ->setColumns(6);
     }
 }

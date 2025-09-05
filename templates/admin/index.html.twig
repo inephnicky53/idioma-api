@@ -1,4 +1,4 @@
-{# templates/admin/my-custom-page.html.twig #}
+{# templates/admin/index.html.twig #}
 {% extends '@EasyAdmin/page/content.html.twig' %}
 
 {% block page_title "Tableau de bord" %}
@@ -6,52 +6,525 @@
 {% block content_title "Tableau de bord" %}
 
 {% block page_actions %}
-    <a class="btn" href="{{ path('admin') }}">Actualiser</a>
+    <a class="btn btn-outline-primary btn-sm" href="{{ path('admin') }}">
+        <i class="fas fa-sync-alt me-1"></i> Actualiser
+    </a>
 {% endblock %}
 
 {% block main %}
     {{ encore_entry_link_tags('app') }}
-    <div class="row gap-y-4">
-        <div class="col-md-4">
-            <div class="border p-3 rounded-2xl border-gray-400">
-                <div class="flex justify-between items-center w-full p-2">
-                    <div class="flex justify-center align-items-center bg-[#e3be62] rounded-2xl w-[90px] h-[90px]">
-                        <i class="fas fa-graduation-cap text-4xl text-white"></i>
-                    </div>
-                    <div class="text-right space-y-2">
-                        <h5 class="font-semibold">Total d'élèves actifs</h5>
-                        <h4 class="text-2xl font-bold">{{ stats.total['students'] }}</h4>
-                        <small class="">{{ stats.total['teachers']['waiting'] }} inscrits</small>
+    
+    {% if stats %}
+        {# En-tête avec titre et sous-titre #}
+        <div class="dashboard-header mb-4">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h2 class="dashboard-title mb-1">Vue d'ensemble</h2>
+                    <p class="dashboard-subtitle mb-0">Statistiques et actions rapides de votre plateforme</p>
+                </div>
+                <div class="col-auto">
+                    <div class="dashboard-date">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        {{ "now"|date("d/m/Y") }}
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="border p-3 rounded-2xl border-gray-400">
-                <div class="flex justify-between items-center w-full p-2">
-                    <div class="flex justify-center align-items-center bg-[#e3be62] rounded-2xl w-[90px] h-[90px]">
-                        <i class="fas fa-user-tie text-4xl text-white"></i>
+        
+        {# Cartes de statistiques avec design moderne #}
+        <div class="row g-4 mb-5">
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card stat-primary">
+                    <div class="stat-card-body">
+                        <div class="stat-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">{{ stats.total['students'] }}</div>
+                            <div class="stat-label">Étudiants actifs</div>
+                            <div class="stat-trend positive">
+                                <i class="fas fa-chart-line"></i> En apprentissage
+                            </div>
+                        </div>
                     </div>
-                    <div class="text-right space-y-2">
-                        <h5 class="font-semibold">Professeurs validés</h5>
-                        <h4 class="text-2xl font-bold">{{ stats.total['teachers']['value'] }}</h4>
-                        <small class="">{{ stats.total['teachers']['waiting'] }} en attente</small>
+                    <div class="stat-card-footer">
+                        <a href="{{ ea_url().setController('App\\Controller\\Admin\\UserCrudController').setAction('index').set('filter', 'students') }}" class="stat-link">
+                            Voir tous les étudiants <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card stat-success">
+                    <div class="stat-card-body">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">{{ stats.total['teachers']['value'] }}</div>
+                            <div class="stat-label">Professeurs validés</div>
+                            {% if stats.total['teachers']['waiting'] > 0 %}
+                                <div class="stat-trend warning">
+                                    <i class="fas fa-clock"></i> {{ stats.total['teachers']['waiting'] }} en attente
+                                </div>
+                            {% else %}
+                                <div class="stat-trend positive">
+                                    <i class="fas fa-check"></i> Tous validés
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="stat-card-footer">
+                        <a href="{{ ea_url().setController('App\\Controller\\Admin\\Teacher\\TeacherCrudController').setAction('index') }}" class="stat-link">
+                            Gérer les professeurs <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card stat-info">
+                    <div class="stat-card-body">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">{{ stats.total['users'] }}</div>
+                            <div class="stat-label">Utilisateurs totaux</div>
+                            <div class="stat-trend positive">
+                                <i class="fas fa-user-plus"></i> inscrits
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card-footer">
+                        <a href="{{ ea_url().setController('App\\Controller\\Admin\\UserCrudController').setAction('index') }}" class="stat-link">
+                            Tous les utilisateurs <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card stat-warning">
+                    <div class="stat-card-body">
+                        <div class="stat-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">{{ stats.total['courses'] }}</div>
+                            <div class="stat-label">Cours actifs</div>
+                            <div class="stat-trend neutral">
+                                <i class="fas fa-clock"></i> {{ stats.total['hours_courses'] }}h dispensées
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card-footer">
+                        <a href="{{ ea_url().setController('App\\Controller\\Admin\\CourseCrudController').setAction('index') }}" class="stat-link">
+                            Gérer les cours <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="border p-3 rounded-2xl border-gray-400">
-                <div class="flex justify-between items-center w-full p-2">
-                    <div class="flex justify-center align-items-center bg-[#e3be62] rounded-2xl w-[90px] h-[90px]">
-                        <i class="fas fa-users text-4xl text-white"></i>
+        
+        {# Section principale avec graphique et actions #}
+        <div class="row g-4">
+            {# Graphique principal #}
+            {% if chart is defined %}
+                <div class="col-lg-8">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <h5 class="mb-0">Évolution mensuelle</h5>
+                                <p class="text-muted mb-0">Croissance des utilisateurs et cours</p>
+                            </div>
+                            <div class="chart-actions">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-secondary active">6M</button>
+                                    <button type="button" class="btn btn-outline-secondary">1A</button>
+                                    <button type="button" class="btn btn-outline-secondary">Tout</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chart-body">
+                            {{ render_chart(chart) }}
+                        </div>
                     </div>
-                    <div class="text-right space-y-2">
-                        <h5 class="font-semibold">Utilisateurs</h5>
-                        <h4 class="text-2xl font-bold">{{ stats.total['users'] }}</h4>
+                </div>
+            {% endif %}
+            
+            {# Panel d'actions rapides #}
+            <div class="col-lg-4">
+                <div class="actions-panel">
+                    <div class="actions-header">
+                        <h5 class="mb-0">Actions rapides</h5>
+                        <p class="text-muted mb-0">Raccourcis vers les fonctions principales</p>
+                    </div>
+                    
+                    <div class="actions-grid my-4">
+                        <a href="{{ ea_url().setController('App\\Controller\\Admin\\UserCrudController').setAction('new') }}" class="action-card action-primary">
+                            <div class="action-icon">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <div class="action-content">
+                                <div class="action-title">Nouvel utilisateur</div>
+                                <div class="action-desc">Créer un compte utilisateur</div>
+                            </div>
+                            <div class="action-arrow">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </a>
+                        
+                        <a href="{{ ea_url().setController('App\\Controller\\Admin\\Teacher\\TeacherCrudController').setAction('new') }}" class="action-card action-success">
+                            <div class="action-icon">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                            </div>
+                            <div class="action-content">
+                                <div class="action-title">Nouveau professeur</div>
+                                <div class="action-desc">Ajouter un enseignant</div>
+                            </div>
+                            <div class="action-arrow">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </a>
+                        
+                        <a href="{{ ea_url().setController('App\\Controller\\Admin\\CourseCrudController').setAction('new') }}" class="action-card action-info">
+                            <div class="action-icon">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <div class="action-content">
+                                <div class="action-title">Nouveau cours</div>
+                                <div class="action-desc">Créer un cours</div>
+                            </div>
+                            <div class="action-arrow">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </a>
+                        
+                        {% if stats.total['teachers']['waiting'] > 0 %}
+                            <a href="{{ ea_url().setController('App\\Controller\\Admin\\Teacher\\OnWaitingTeacherCrudController').setAction('index') }}" class="action-card action-warning">
+                                <div class="action-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="action-content">
+                                    <div class="action-title">Validations en attente</div>
+                                    <div class="action-desc">{{ stats.total['teachers']['waiting'] }} professeur(s)</div>
+                                </div>
+                                <div class="action-arrow">
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                            </a>
+                        {% endif %}
+                        
+                        <a href="{{ ea_url().setController('App\\Controller\\Admin\\Payment\\PaymentCrudController').setAction('index') }}" class="action-card action-secondary">
+                            <div class="action-icon">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <div class="action-content">
+                                <div class="action-title">Paiements</div>
+                                <div class="action-desc">Gérer les transactions</div>
+                            </div>
+                            <div class="action-arrow">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </a>
+                        
+                        <a href="{{ ea_url().setController('App\\Controller\\Admin\\TransactionCrudController').setAction('index') }}" class="action-card action-secondary">
+                            <div class="action-icon">
+                                <i class="fas fa-exchange-alt"></i>
+                            </div>
+                            <div class="action-content">
+                                <div class="action-title">Transactions</div>
+                                <div class="action-desc">Historique financier</div>
+                            </div>
+                            <div class="action-arrow">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+        
+    {% else %}
+        <div class="error-state">
+            <div class="error-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="error-content">
+                <h4>Erreur de chargement</h4>
+                <p>Impossible de charger les statistiques du tableau de bord.</p>
+                <button type="button" class="btn btn-primary" onclick="location.reload()">
+                    <i class="fas fa-redo me-1"></i> Réessayer
+                </button>
+            </div>
+        </div>
+    {% endif %}
+    
+    <style>
+        /* Variables CSS pour la cohérence avec EasyAdmin */
+        :root {
+            --primary-color: #4f46e5;
+            --success-color: #10b981;
+            --info-color: #06b6d4;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --secondary-color: #6b7280;
+            --border-radius: 12px;
+            --border-radius-sm: 8px;
+        }
+        
+        /* En-tête du dashboard */
+        .dashboard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            color: white;
+            margin-bottom: 2rem;
+        }
+        
+        .dashboard-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .dashboard-subtitle {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .dashboard-date {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius-sm);
+            font-weight: 500;
+        }
+        
+        /* Cartes de statistiques */
+        .stat-card {
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .stat-card-body {
+            padding: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            flex-shrink: 0;
+        }
+        
+        .stat-primary .stat-icon { background: var(--primary-color); }
+        .stat-success .stat-icon { background: var(--success-color); }
+        .stat-info .stat-icon { background: var(--info-color); }
+        .stat-warning .stat-icon { background: var(--warning-color); }
+        
+        .stat-content {
+            flex: 1;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            opacity: 0.8;
+        }
+        
+        .stat-trend {
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .stat-trend.positive { color: var(--success-color); }
+        .stat-trend.warning { color: var(--warning-color); }
+        .stat-trend.neutral { color: var(--secondary-color); }
+        
+        .stat-card-footer {
+            padding: 0.75rem 1.5rem;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            background: rgba(0,0,0,0.02);
+        }
+        
+        .stat-link {
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: color 0.3s ease;
+            opacity: 0.8;
+        }
+        
+        .stat-link:hover {
+            color: var(--primary-color);
+            opacity: 1;
+        }
+        
+        /* Carte graphique */
+        .chart-card {
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .chart-header {
+            padding: 1.5rem 1.5rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .chart-title h5 {
+            font-weight: 600;
+        }
+        
+        .chart-body {
+            padding: 1.5rem;
+            height: 400px;
+        }
+        
+        /* Panel d'actions */
+        .actions-panel {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .action-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            margin: 10px 0;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: var(--border-radius-sm);
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s ease;
+            background: rgba(0,0,0,0.02);
+        }
+        
+        .action-card:hover {
+            transform: translateX(4px);
+            text-decoration: none;
+            color: inherit;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: rgba(0,0,0,0.05);
+        }
+        
+        .action-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.125rem;
+            flex-shrink: 0;
+        }
+        
+        .action-primary .action-icon { background: var(--primary-color); }
+        .action-success .action-icon { background: var(--success-color); }
+        .action-info .action-icon { background: var(--info-color); }
+        .action-warning .action-icon { background: var(--warning-color); }
+        .action-secondary .action-icon { background: var(--secondary-color); }
+        
+        .action-content {
+            flex: 1;
+        }
+        
+        .action-title {
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 0.125rem;
+        }
+        
+        .action-desc {
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
+        
+        .action-arrow {
+            opacity: 0.5;
+            transition: opacity 0.2s ease;
+        }
+        
+        .action-card:hover .action-arrow {
+            opacity: 0.8;
+        }
+        
+        /* État d'erreur */
+        .error-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .error-icon {
+            font-size: 4rem;
+            color: var(--danger-color);
+            margin-bottom: 1.5rem;
+        }
+        
+        .error-content h4 {
+            margin-bottom: 1rem;
+        }
+        
+        .error-content p {
+            margin-bottom: 2rem;
+            opacity: 0.7;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard-header {
+                padding: 1.5rem;
+            }
+            
+            .dashboard-title {
+                font-size: 1.5rem;
+            }
+            
+            .stat-value {
+                font-size: 2rem;
+            }
+            
+            .chart-body {
+                height: 300px;
+            }
+        }
+    </style>
 {% endblock %}

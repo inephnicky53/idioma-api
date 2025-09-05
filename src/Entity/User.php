@@ -38,65 +38,67 @@ use function Symfony\Component\String\u;
 #[ORM\Table(name: '`user`')]
 #[UniqueEntity(fields: ['email'], message: "Cet email {{ value }} est déjà utilisé par un autre compte")]
 #[UniqueEntity(fields: ['phone'], message: "Ce numéro {{ value }} est déjà utilisé pour un autre compte")]
-#[ApiResource(operations: [
-    new GetCollection(
-        uriTemplate: 'user/courses',
-        controller: ApiUserCoursesController::class,
-        normalizationContext: ['groups' => ['user:courses']],
-        security: "is_granted('ROLE_USER')",
-        read: false
-    ),
-    new Get(
-        normalizationContext: ['groups' => ['user:show']],
-    ),
-    new Get(
-        uriTemplate: "user/me",
-        normalizationContext: ['groups' => ['user:me', 'user:show']],
-        security: "is_granted('ROLE_USER')",
-        provider: UserMeProvider::class,
-    ),
-    new Get(
-        uriTemplate: 'user/phone/verify',
-        controller: ApiPhoneVerifyController::class,
-        normalizationContext: ['groups' => ['user:phone:verify']],
-        security: "is_granted('ROLE_USER')",
-        read: false
-    ),
-    new Post(
-        uriTemplate: 'users/otp/verification',
-        input: VerifyOTPInput::class,
-        processor: OTPVerificationProcessor::class,
-    ),
-    new Post(
-        uriTemplate: '/register',
-        controller: ApiRegisterController::class,
-        denormalizationContext: ['groups' => ['user:register']],
-        write: false
-    ),
-    new Post(
-        uriTemplate: '/users/reset-requested',
-        input: ResetRequestedInput::class,
-        processor: ResetRequestedProcessor::class,
-    ),
-    new Post(
-        uriTemplate: '/users/reset-password',
-        input: ResetPasswordInput::class,
-        processor: ResetPasswordProcessor::class
-    ),
-    new Patch(
-        uriTemplate: '/users/{id}',
-        normalizationContext: ['groups' => ['user:me']],
-        denormalizationContext: ['groups' => ['user:update']],
-        security: "is_granted('ROLE_USER')",
-    ),
-    new Patch(
-        normalizationContext: ['groups' => ['user:me']],
-        denormalizationContext: ['groups' => ['user:update']],
-        security: "is_granted('ROLE_ADMIN') or is_granted('USER_EDIT', object)",
-        securityMessage: "Désolé, vous n'avez pas le droit de modifier cet utilisateur.",
-        processor: UserPasswordHasher::class
-    ),
-])]
+#[ApiResource(
+    operations: [
+        new GetCollection(
+            uriTemplate: 'user/courses',
+            controller: ApiUserCoursesController::class,
+            normalizationContext: ['groups' => ['user:courses']],
+            security: "is_granted('ROLE_USER')",
+            read: false
+        ),
+        new Get(
+            normalizationContext: ['groups' => ['user:show']],
+        ),
+        new Get(
+            uriTemplate: "user/me",
+            normalizationContext: ['groups' => ['user:me', 'user:show']],
+            security: "is_granted('ROLE_USER')",
+            provider: UserMeProvider::class,
+        ),
+        new Get(
+            uriTemplate: 'user/phone/verify',
+            controller: ApiPhoneVerifyController::class,
+            normalizationContext: ['groups' => ['user:phone:verify']],
+            security: "is_granted('ROLE_USER')",
+            read: false
+        ),
+        new Post(
+            uriTemplate: 'users/otp/verification',
+            input: VerifyOTPInput::class,
+            processor: OTPVerificationProcessor::class,
+        ),
+        new Post(
+            uriTemplate: '/register',
+            controller: ApiRegisterController::class,
+            denormalizationContext: ['groups' => ['user:register']],
+            write: false
+        ),
+        new Post(
+            uriTemplate: '/users/reset-requested',
+            input: ResetRequestedInput::class,
+            processor: ResetRequestedProcessor::class,
+        ),
+        new Post(
+            uriTemplate: '/users/reset-password',
+            input: ResetPasswordInput::class,
+            processor: ResetPasswordProcessor::class
+        ),
+        new Patch(
+            uriTemplate: '/users/{id}',
+            normalizationContext: ['groups' => ['user:me']],
+            denormalizationContext: ['groups' => ['user:update']],
+            security: "is_granted('ROLE_USER')",
+        ),
+        new Patch(
+            normalizationContext: ['groups' => ['user:me']],
+            denormalizationContext: ['groups' => ['user:update']],
+            security: "is_granted('ROLE_ADMIN') or is_granted('USER_EDIT', object)",
+            securityMessage: "Désolé, vous n'avez pas le droit de modifier cet utilisateur.",
+            processor: UserPasswordHasher::class
+        ),
+    ]
+)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     use Datable {
@@ -209,21 +211,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:phone:verify'])]
     private ?bool $isPhoneVerified;
 
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Attachment::class, cascade: ["persist"])]
+    #[ORM\OneToMany(targetEntity: Attachment::class, mappedBy: 'user', cascade: ["persist"])]
     #[Groups(['course:list', 'user:courses', 'teacher:list', 'user:inbox'])]
     private Collection $thumbnails;
 
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: UserCourse::class, orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: UserCourse::class, mappedBy: 'user', orphanRemoval: true)]
     #[Groups(['course:list'])]
     private Collection $courses;
 
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Transaction::class)]
+    #[ORM\OneToMany(targetEntity: Transaction::class, mappedBy: 'user')]
     private Collection $transactions;
 
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Order::class)]
+    #[ORM\OneToMany(targetEntity: Order::class, mappedBy: 'user')]
     private Collection $orders;
 
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Rating::class, orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Rating::class, mappedBy: 'user', orphanRemoval: true)]
     private Collection $ratings;
 
     #[ORM\Column(length: 5, options: ["default" => "fr"])]
@@ -243,7 +245,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\ManyToMany(targetEntity: Planning::class, mappedBy: 'participants')]
     private Collection $plannings;
 
-    #[ORM\OneToMany(mappedBy: 'author', targetEntity: InboxMessage::class)]
+    #[ORM\OneToMany(targetEntity: InboxMessage::class, mappedBy: 'author')]
     private Collection $inboxMessages;
 
     #[ORM\ManyToMany(targetEntity: InboxThread::class, mappedBy: 'participants')]
@@ -379,7 +381,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function eraseCredentials(): void
     {
         // If you store any temporary, sensitive data on the user, clear it here
-        // $this->plainPassword = null;
+        $this->plainPassword = null;
     }
 
     public function isVerified(): bool

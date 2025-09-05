@@ -2,9 +2,6 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Post;
-use App\Controller\Api\Otp\ApiOtpVerification;
 use App\Repository\OTPRepository;
 use App\Utils\Generator;
 use DateTimeImmutable;

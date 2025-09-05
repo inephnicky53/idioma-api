@@ -6,34 +6,42 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use App\Repository\NotificationRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: NotificationRepository::class)]
 #[ApiResource(
     operations: [
         new GetCollection()
-    ]
+    ],
+    normalizationContext: ['groups' => ['notification:get']]
 )]
 class Notification
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['notification:get'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['notification:get'])]
     private ?string $subject = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['notification:get'])]
     private ?string $content = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['notification:get'])]
     private ?\DateTimeImmutable $readAt = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
+
     private ?User $user = null;
 
     #[ORM\Column]
+    #[Groups(['notification:get'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     public function getId(): ?int

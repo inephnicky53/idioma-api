@@ -7,25 +7,26 @@ use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Doctrine\Orm\Filter\RangeFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
-use ApiPlatform\OpenApi\Model;
 use App\Controller\Api\Teacher\TeacherMediaController;
 use App\Controller\Api\Teacher\TeacherGetCoursesController;
 use App\Dto\CreateTeacherInput;
+use App\Dto\UpdateDisponibilitiesInput;
+use App\Dto\Wallet\WithdrawalRequestInput;
 use App\Idioma;
 use App\Repository\TeacherRepository;
 use App\State\Teacher\CreateTeacherProcessor;
-use App\State\Teacher\SaveTeacherProcessor;
 use App\State\Teacher\TeacherDisponibilitiesProvider;
 use App\State\Teacher\TeacherCollectionProvider;
 use App\State\Teacher\TeacherCheckProvider;
 use App\State\Teacher\TeacherGetProvider;
+use App\State\Teacher\TeacherSelfDisponibilitiesProvider;
 use App\State\Teacher\TeacherWalletProvider;
-use App\State\Teacher\UnsavedTeacherProcessor;
+use App\State\Teacher\UpdateDisponibilitiesProcessor;
+use App\State\Wallet\WithdrawalRequestProcessor;
 use App\Trait\Activable;
 use App\Trait\Datable;
 use App\Trait\Ratingable;
@@ -61,6 +62,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
             provider: TeacherWalletProvider::class,
         ),
         new Get(
+            uriTemplate: '/teacher/disponibilities',
+            normalizationContext: ['groups' => ['teacher:disponibilities:list']],
+            security: "is_granted('ROLE_USER')",
+            provider: TeacherSelfDisponibilitiesProvider::class
+        ),
+        new Get(
             uriTemplate: "teachers/{id}/courses",
             controller: TeacherGetCoursesController::class,
         ),
@@ -76,14 +83,17 @@ use Symfony\Component\Serializer\Annotation\Groups;
             processor: CreateTeacherProcessor::class,
         ),
         new Post(
-            uriTemplate: "teachers/{id}/favorite",
+            uriTemplate: 'teacher/media',
+            inputFormats: ['multipart' => ['multipart/form-data']],
+            controller: TeacherMediaController::class,
+            denormalizationContext: ['groups' => ['teacher:media']],
             security: "is_granted('ROLE_USER')",
-            processor: SaveTeacherProcessor::class
         ),
-        new Delete(
-            uriTemplate: "teachers/{id}/favorite",
+        new Post(
+            uriTemplate: 'teacher/wallet/withdraw',
             security: "is_granted('ROLE_USER')",
-            processor: UnsavedTeacherProcessor::class,
+            input: WithdrawalRequestInput::class,
+            processor: WithdrawalRequestProcessor::class
         ),
         new Patch(
             denormalizationContext: ['groups' => ['teacher:update']],
@@ -94,13 +104,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
             denormalizationContext: ['groups' => ['teacher:pricing']],
             security: "is_granted('ROLE_USER')",
         ),
-        new Post(
-            uriTemplate: 'teacher/media',
-            inputFormats: ['multipart' => ['multipart/form-data']],
-            controller: TeacherMediaController::class,
-            denormalizationContext: ['groups' => ['teacher:media']],
+        new Patch(
+            uriTemplate: '/teacher/disponibilities',
             security: "is_granted('ROLE_USER')",
-        )
+            input: UpdateDisponibilitiesInput::class,
+            processor: UpdateDisponibilitiesProcessor::class
+        ),
     ],
     normalizationContext: ['groups' => ['teacher:list', 'teacher:show']],
 )]
@@ -209,7 +218,7 @@ class Teacher
     #[Groups(['teacher:show', 'teacher:disponibilities', 'teacher:update'])]
     private ?string $timezone = null;
 
-    #[ORM\OneToMany(targetEntity: Disponibility::class, mappedBy: 'teacher', cascade: ["persist"])]
+    #[ORM\OneToMany(targetEntity: Disponibility::class, mappedBy: 'teacher', cascade: ["persist"], orphanRemoval: true)]
     #[Groups(['teacher:show', 'teacher:disponibilities'])]
     private Collection $disponibilities;
 

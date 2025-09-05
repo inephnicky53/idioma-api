@@ -36,19 +36,15 @@ class InboxThreadCrudController extends AbstractCrudController
                 if ($thread && !$thread->getCourse() && $thread?->getParticipants())
                     $label .= "et {$thread->getParticipants()->first()}";
                 return 'edit' === $pageName ? $label : 'la discussion';
-            })
-            ;
+            });
     }
 
     public function configureActions(Actions $actions): Actions
     {
         return $actions
-            // ...
-
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
             ->setPermission(Action::NEW, 'ROLE_ADMIN')
             ->setPermission(Action::DELETE, 'ROLE_SUPER_ADMIN')//->reorder(Crud::PAGE_INDEX, [Action::DETAIL, Action::DELETE, Action::EDIT])
-
             ;
     }
 

@@ -2,11 +2,11 @@
 {# This template checks for 'ea' variable existence because it can
    be used in a EasyAdmin Dashboard controller, where 'ea' is defined
    or from any other Symfony controller, where 'ea' is not defined #}
-{% extends ea is defined ? ea.templatePath('layout') : '@EasyAdmin/page/login_minimal.html.twig' %}
-{% trans_default_domain ea is defined ? ea.i18n.translationDomain : (translation_domain is defined ? translation_domain ?? 'messages') %}
+{% extends '@EasyAdmin/page/login_minimal.html.twig' %}
+{% trans_default_domain translation_domain is defined ? translation_domain : 'messages' %}
 
-{% block body_class 'page-login' %}
-{% block page_title %}{{ page_title is defined ? page_title|raw : (ea is defined ? ea.dashboardTitle|raw : '') }}{% endblock %}
+{% block body_class 'page-login modern-login' %}
+{% block page_title %}{{ page_title is defined ? page_title|raw : 'Connexion' }}{% endblock %}
 
 {% block head_favicon %}
     {% if favicon_path|default(false) %}
@@ -18,90 +18,360 @@
 
 {% block wrapper_wrapper %}
     {% set page_title = block('page_title') %}
-    {% set _username_label = username_label is defined ? username_label|trans : 'login_page.username'|trans({}, 'EasyAdminBundle') %}
-    {% set _password_label = password_label is defined ? password_label|trans : 'login_page.password'|trans({}, 'EasyAdminBundle') %}
-    {% set _forgot_password_label = forgot_password_label is defined ? forgot_password_label|trans : 'login_page.forgot_password'|trans({}, 'EasyAdminBundle') %}
-    {% set _remember_me_label = remember_me_label is defined ? remember_me_label|trans : 'login_page.remember_me'|trans({}, 'EasyAdminBundle') %}
-    {% set _sign_in_label = sign_in_label is defined ? sign_in_label|trans : 'login_page.sign_in'|trans({}, 'EasyAdminBundle') %}
+    {% set _username_label = username_label is defined ? username_label|trans : 'Email'|trans %}
+    {% set _password_label = password_label is defined ? password_label|trans : 'Mot de passe'|trans %}
+    {% set _forgot_password_label = forgot_password_label is defined ? forgot_password_label|trans : 'Mot de passe oublié ?'|trans %}
+    {% set _remember_me_label = remember_me_label is defined ? remember_me_label|trans : 'Se souvenir de moi'|trans %}
+    {% set _sign_in_label = sign_in_label is defined ? sign_in_label|trans : 'Se connecter'|trans %}
 
-    {% include '@EasyAdmin/flash_messages.html.twig' %}
+    <style>
+        :root {
+            --primary-color: #3D165B;
+            --primary-light: #5a2485;
+            --primary-dark: #2a0f40;
+            --secondary-color: #f8f9fa;
+            --accent-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --border-radius: 12px;
+            --shadow-light: 0 2px 10px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 4px 20px rgba(0, 0, 0, 0.15);
+            --shadow-heavy: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        body.modern-login {
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-heavy);
+            overflow: hidden;
+            width: 100%;
+            position: relative;
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            padding: 40px 30px 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .login-header .logo {
+            margin-bottom: 20px;
+        }
+
+        .login-header .logo img {
+            max-width: 120px;
+            height: auto;
+            filter: brightness(0) invert(1);
+        }
+
+        .login-title {
+            font-size: 28px;
+            font-weight: 300;
+            margin: 0;
+            letter-spacing: 1px;
+        }
+
+        .login-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+            margin: 8px 0 0;
+            font-weight: 300;
+        }
+
+        .login-body {
+            padding: 40px 30px;
+        }
+
+        .alert {
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 25px;
+            border: none;
+            font-size: 14px;
+        }
+
+        .alert-danger {
+            background-color: #fee;
+            color: var(--danger-color);
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-control-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark-color);
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px 18px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: #fafafa;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(61, 22, 91, 0.1);
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .form-check-input {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-color);
+        }
+
+        .form-check-label {
+            font-size: 14px;
+            color: var(--accent-color);
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            box-shadow: var(--shadow-medium);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
+            box-shadow: var(--shadow-heavy);
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        .form-text {
+            margin-top: 10px;
+        }
+
+        .form-text a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-text a:hover {
+            text-decoration: underline;
+        }
+
+        .social-login {
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .social-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--accent-color);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .social-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-social {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            background: white;
+            color: var(--dark-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .btn-social:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .btn-google {
+            color: #db4437;
+        }
+
+        .btn-google:hover {
+            border-color: #db4437;
+            color: #db4437;
+        }
+
+        .btn-facebook {
+            color: #4267B2;
+        }
+
+        .btn-facebook:hover {
+            border-color: #4267B2;
+            color: #4267B2;
+        }
+
+        @media (max-width: 480px) {
+            .login-wrapper {
+                padding: 10px;
+            }
+
+            .login-header {
+                padding: 30px 20px 25px;
+            }
+
+            .login-body {
+                padding: 30px 20px;
+            }
+
+            .login-title {
+                font-size: 24px;
+            }
+
+            .social-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
 
     <div class="login-wrapper">
-        <header class="main-header">
-            <div id="header-logo">
+        <div class="login-container">
+            <div class="login-header">
                 {% block header_logo %}
-                    {% if page_title %}
-                        {% if ea is defined %}
-                            <a class="logo {{ page_title|length > 14 ? 'logo-long' }}"
-                               title="{{ page_title|striptags }}" href="{{ path(ea.dashboardRouteName) }}">
-                                {{ logo|raw }}
-                            </a>
-                        {% else %}
-                            <div class="logo {{ page_title|length > 14 ? 'logo-long' }}">
-                                {{ logo|raw }}
-                            </div>
-                        {% endif %}
-                    {% endif %}
-                {% endblock header_logo %}
-            </div>
-        </header>
-
-        <section class="content">
-
-            {% if error|default(false) %}
-                <div class="w-100 alert alert-danger rounded mb-3">
-                    <i class="fas fa-times-circle mr-1"></i>
-                    {{ error.messageKey|trans(error.messageData, 'security') }}
-                </div>
-            {% endif %}
-
-            <form method="post" action="{{ action|default('') }}">
-                {% if csrf_token_intention|default(false) %}
-                    <input type="hidden" name="_csrf_token" value="{{ csrf_token(csrf_token_intention) }}">
-                {% endif %}
-
-                <input type="hidden" name="{{ target_path_parameter|default('_target_path') }}"
-                       value="{{ target_path|default(ea is defined ? path(ea.dashboardRouteName) : '/') }}"/>
-
-                <div class="form-group">
-                    <label class="form-control-label required" for="username">{{ _username_label }}</label>
-                    <div class="form-widget">
-                        <input type="text" id="username" name="{{ username_parameter|default('_username') }}"
-                               class="form-control" value="{{ last_username|default('') }}" required autofocus
-                               autocomplete="username">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-control-label required" for="password">{{ _password_label }}</label>
-                    <div class="form-widget">
-                        <input type="password" id="password" name="{{ password_parameter|default('_password') }}"
-                               class="form-control" required autocomplete="current-password">
-                    </div>
-
-                    {% if forgot_password_enabled|default(false) %}
-                        <div class="form-text">
-                            <a href="{{ forgot_password_path|default('#') }}">{{ _forgot_password_label }}</a>
+                    {% if logo|default(false) %}
+                        <div class="logo">
+                            {{ logo|raw }}
                         </div>
                     {% endif %}
-                </div>
+                {% endblock header_logo %}
+                <h1 class="login-title">{{ page_title|default('Connexion') }}</h1>
+                <p class="login-subtitle">Accédez à votre espace personnel</p>
+            </div>
 
-                {% if remember_me_enabled|default(false) %}
-                    <div class="form-group">
-                        <input class="form-check-input" type="checkbox" id="remember_me"
-                               name="{{ remember_me_parameter|default('_remember_me') }}" {{ remember_me_checked|default(false) ? 'checked' }}>
-                        <label class="form-check-label" for="remember_me">
-                            {{ _remember_me_label }}
-                        </label>
+            <div class="login-body">
+                {% if error|default(false) %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        {{ error.messageKey|trans(error.messageData, 'security') }}
                     </div>
                 {% endif %}
 
-                <div class="form-group">
-                    <button type="submit" class="btn btn-primary btn-lg btn-block" style="background-color: #3D165B">{{ _sign_in_label }}</button>
-                </div>
-            </form>
+                <form method="post" action="{{ action|default('') }}">
+                    {% if csrf_token_intention|default(false) %}
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token(csrf_token_intention) }}">
+                    {% endif %}
 
-            <script src="{{ asset('login.js', constant('EasyCorp\\Bundle\\EasyAdminBundle\\Asset\\AssetPackage::PACKAGE_NAME')) }}"></script>
-        </section>
+                    <input type="hidden" name="{{ target_path_parameter|default('_target_path') }}"
+                           value="{{ target_path|default('/admin') }}"/>
+
+                    <div class="form-group">
+                        <label class="form-control-label required" for="username">{{ _username_label }}</label>
+                        <input type="email" id="username" name="{{ username_parameter|default('_username') }}"
+                               class="form-control" value="{{ last_username|default('') }}" required autofocus
+                               autocomplete="username" placeholder="votre@email.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-control-label required" for="password">{{ _password_label }}</label>
+                        <input type="password" id="password" name="{{ password_parameter|default('_password') }}"
+                               class="form-control" required autocomplete="current-password" placeholder="••••••••">
+
+                        {% if forgot_password_enabled|default(false) %}
+                            <div class="form-text">
+                                <a href="{{ forgot_password_path|default('#') }}">{{ _forgot_password_label }}</a>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {% if remember_me_enabled|default(false) %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="remember_me"
+                                   name="{{ remember_me_parameter|default('_remember_me') }}" {{ remember_me_checked|default(false) ? 'checked' }}>
+                            <label class="form-check-label" for="remember_me">
+                                {{ _remember_me_label }}
+                            </label>
+                        </div>
+                    {% endif %}
+
+                    <button type="submit" class="btn btn-primary">{{ _sign_in_label }}</button>
+                </form>
+
+                <div class="social-login">
+                    <div class="social-title">Ou connectez-vous avec</div>
+                    <div class="social-buttons">
+                        <a href="{{ path('connect_google_start') }}" class="btn-social btn-google">
+                            <svg width="18" height="18" viewBox="0 0 24 24" style="margin-right: 8px;">
+                                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                            Google
+                        </a>
+                        <a href="{{ path('connect_facebook_start') }}" class="btn-social btn-facebook">
+                            <svg width="18" height="18" viewBox="0 0 24 24" style="margin-right: 8px;">
+                                <path fill="currentColor" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                            </svg>
+                            Facebook
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}

@@ -1,18 +1,139 @@
 {% if field.value is not empty %}
-    <ol>
-        {% for value in field.value %}
+    <div class="ratings-container">
+        {% for rating in field.value %}
             {% set detailUrl = ea_url()
-                .setController('App\\Controller\\Admin\\UserCrudController')
+                .setController('App\\Controller\\Admin\\User\\UserCrudController')
                 .setAction(constant('EasyCorp\\Bundle\\EasyAdminBundle\\Config\\Action::DETAIL'))
-                .setEntityId(value.user.id) %}
-            <li>
-                <b>{{ value.stars }}</b> étoils
-                par <em><a href="{{ detailUrl }}">{{ value.user }}</a></em><br>
-                {{ value.comment ?? "Pas de commentaire" }} <br>
-                <hr>
-            </li>
+                .setEntityId(rating.user.id) %}
+            <div class="rating-item">
+                <div class="rating-header">
+                    <div class="stars-display">
+                        {% for i in 1..5 %}
+                            <i class="fa{{ i <= rating.stars ? 's' : 'r' }} fa-star {{ i <= rating.stars ? 'text-warning' : 'star-empty' }}"></i>
+                        {% endfor %}
+                        <span class="rating-value">({{ rating.stars }}/5)</span>
+                    </div>
+                    <div class="rating-author">
+                        <a href="{{ detailUrl }}" class="user-link">
+                            <i class="fas fa-user"></i>
+                            {{ rating.user }}
+                        </a>
+                    </div>
+                </div>
+                {% if rating.comment %}
+                    <div class="rating-comment">
+                        <i class="fas fa-quote-left"></i>
+                        {{ rating.comment|nl2br }}
+                    </div>
+                {% endif %}
+                {% if rating.createdAt %}
+                    <div class="rating-date">
+                        <i class="fas fa-calendar"></i>
+                        {{ rating.createdAt|date('d/m/Y à H:i') }}
+                    </div>
+                {% endif %}
+            </div>
         {% endfor %}
-    </ol>
+    </div>
 {% else %}
-    Pas de langues d'objectif
+    <div class="alert alert-info">
+        <i class="fas fa-star"></i>
+        Aucun avis disponible
+    </div>
 {% endif %}
+
+<style>
+:root {
+    --rating-bg: #ffffff;
+    --rating-border: #dee2e6;
+    --rating-text: #212529;
+    --rating-muted: #6c757d;
+    --rating-comment-bg: #f8f9fa;
+    --rating-comment-border: #0d6efd;
+    --rating-link: #0d6efd;
+    --star-empty: #6c757d;
+}
+
+[data-bs-theme="dark"] {
+    --rating-bg: #2d3748;
+    --rating-border: #4a5568;
+    --rating-text: #e2e8f0;
+    --rating-muted: #a0aec0;
+    --rating-comment-bg: #1a202c;
+    --rating-comment-border: #4299e1;
+    --rating-link: #63b3ed;
+    --star-empty: #718096;
+}
+
+.ratings-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.rating-item {
+    padding: 16px;
+    border: 1px solid var(--rating-border);
+    border-radius: 8px;
+    background: var(--rating-bg);
+    color: var(--rating-text);
+    transition: all 0.2s ease;
+}
+
+.rating-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.stars-display {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.star-empty {
+    color: var(--star-empty) !important;
+}
+
+.rating-value {
+    margin-left: 8px;
+    font-weight: 600;
+    color: var(--rating-muted);
+}
+
+.user-link {
+    text-decoration: none;
+    color: var(--rating-link);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: opacity 0.2s ease;
+}
+
+.user-link:hover {
+    text-decoration: underline;
+    opacity: 0.8;
+}
+
+.rating-comment {
+    margin: 12px 0;
+    padding: 12px;
+    background: var(--rating-comment-bg);
+    border-left: 4px solid var(--rating-comment-border);
+    border-radius: 4px;
+    font-style: italic;
+    color: var(--rating-text);
+}
+
+.rating-date {
+    font-size: 0.875rem;
+    color: var(--rating-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+</style>

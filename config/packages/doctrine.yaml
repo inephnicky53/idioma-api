@@ -22,6 +22,11 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Entity'
                 prefix: 'App\Entity'
                 alias: App
+        dql:
+            datetime_functions:
+                DATE_DIFF: DoctrineExtensions\Query\Mysql\DateDiff
+                YEAR: DoctrineExtensions\Query\Mysql\Year
+                MONTH: DoctrineExtensions\Query\Mysql\Month
         controller_resolver:
             auto_mapping: false
 

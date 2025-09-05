@@ -2,12 +2,17 @@
 {# @var field \EasyCorp\Bundle\EasyAdminBundle\Dto\FieldDto #}
 {# @var entity \EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto #}
 {% if ea.crud.currentAction == 'detail' %}
-    {{ field.value|raw }}
+    <div class="text-editor-content">
+        {{ field.value|raw }}
+    </div>
 {% else %}
     {% set html_id = 'ea-text-editor-' ~ field.uniqueId %}
-    <a href="#" data-bs-toggle="modal" data-bs-target="#{{ html_id }}">
-        <i class="far fa-file-alt"></i> {{ 'field.text_editor.view_content'|trans([], domain = 'EasyAdminBundle') }}
-    </a>
+    <div class="text-editor-preview">
+        <a href="#" class="preview-link" data-bs-toggle="modal" data-bs-target="#{{ html_id }}">
+            <i class="far fa-file-alt"></i> 
+            {{ 'field.text_editor.view_content'|trans([], domain = 'EasyAdminBundle') }}
+        </a>
+    </div>
 
     <div class="modal fade" id="{{ html_id }}" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
@@ -18,10 +23,162 @@
                             aria-label="{{ 'action.close'|trans([], domain = 'EasyAdminBundle') }}">
                     </button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body text-editor-modal-body">
                     {{ field.formattedValue|raw }}
                 </div>
             </div>
         </div>
     </div>
 {% endif %}
+
+<style>
+:root {
+    --text-editor-bg: #ffffff;
+    --text-editor-border: #dee2e6;
+    --text-editor-text: #212529;
+    --text-editor-link: #0d6efd;
+    --text-editor-hover: #f8f9fa;
+    --modal-bg: #ffffff;
+    --modal-text: #212529;
+}
+
+[data-bs-theme="dark"] {
+    --text-editor-bg: #2d3748;
+    --text-editor-border: #4a5568;
+    --text-editor-text: #e2e8f0;
+    --text-editor-link: #63b3ed;
+    --text-editor-hover: #1a202c;
+    --modal-bg: #2d3748;
+    --modal-text: #e2e8f0;
+}
+
+.text-editor-content {
+    background: var(--text-editor-bg);
+    color: var(--text-editor-text);
+    padding: 16px;
+    border: 1px solid var(--text-editor-border);
+    border-radius: 8px;
+    line-height: 1.6;
+}
+
+.text-editor-content h1,
+.text-editor-content h2,
+.text-editor-content h3,
+.text-editor-content h4,
+.text-editor-content h5,
+.text-editor-content h6 {
+    color: var(--text-editor-text);
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.text-editor-content p {
+    margin-bottom: 1rem;
+    color: var(--text-editor-text);
+}
+
+.text-editor-content ul,
+.text-editor-content ol {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+}
+
+.text-editor-content li {
+    margin-bottom: 0.25rem;
+    color: var(--text-editor-text);
+}
+
+.text-editor-content blockquote {
+    border-left: 4px solid var(--text-editor-link);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    font-style: italic;
+    color: var(--text-editor-text);
+    opacity: 0.8;
+}
+
+.text-editor-content code {
+    background: var(--text-editor-hover);
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9em;
+    color: var(--text-editor-text);
+}
+
+.text-editor-content pre {
+    background: var(--text-editor-hover);
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.text-editor-content pre code {
+    background: none;
+    padding: 0;
+}
+
+.text-editor-preview {
+    padding: 12px;
+    border: 1px solid var(--text-editor-border);
+    border-radius: 8px;
+    background: var(--text-editor-bg);
+    text-align: center;
+}
+
+.preview-link {
+    color: var(--text-editor-link);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.preview-link:hover {
+    background: var(--text-editor-hover);
+    color: var(--text-editor-link);
+    text-decoration: none;
+}
+
+.modal-content {
+    background: var(--modal-bg);
+    color: var(--modal-text);
+}
+
+.text-editor-modal-body {
+    max-height: 60vh;
+    overflow-y: auto;
+    line-height: 1.6;
+}
+
+.text-editor-modal-body h1,
+.text-editor-modal-body h2,
+.text-editor-modal-body h3,
+.text-editor-modal-body h4,
+.text-editor-modal-body h5,
+.text-editor-modal-body h6 {
+    color: var(--modal-text);
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.text-editor-modal-body p {
+    color: var(--modal-text);
+    margin-bottom: 1rem;
+}
+
+.text-editor-modal-body ul,
+.text-editor-modal-body ol {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+}
+
+.text-editor-modal-body li {
+    color: var(--modal-text);
+    margin-bottom: 0.25rem;
+}
+</style>

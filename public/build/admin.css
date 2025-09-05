@@ -1,0 +1,211 @@
+/* Personnalisation du menu admin EasyAdmin */
+
+/* Augmenter la largeur du sidebar */
+.ea-sidebar {
+    width: 280px !important; /* Largeur par défaut: 230px */
+    min-width: 280px !important;
+}
+
+/* Ajuster le contenu principal pour compenser la largeur du sidebar */
+.ea-content-wrapper {
+    margin-left: 280px !important;
+}
+
+/* Personnalisation des couleurs du menu */
+.ea-sidebar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Logo et header du sidebar */
+.ea-sidebar .ea-sidebar-header {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 1.5rem 1rem;
+}
+
+.ea-sidebar .ea-sidebar-header .ea-sidebar-title {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+/* Items du menu principal */
+.ea-sidebar .ea-menu-item {
+    margin: 0.25rem 0.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.ea-sidebar .ea-menu-item > .ea-menu-item-contents {
+    padding: 0.75rem 1rem;
+    color: rgba(255, 255, 255, 0.9) !important;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.ea-sidebar .ea-menu-item:hover > .ea-menu-item-contents,
+.ea-sidebar .ea-menu-item.ea-menu-item-active > .ea-menu-item-contents {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Icônes du menu */
+.ea-sidebar .ea-menu-item-icon {
+    color: rgba(255, 255, 255, 0.8) !important;
+    margin-right: 0.75rem;
+    width: 20px;
+    text-align: center;
+}
+
+.ea-sidebar .ea-menu-item:hover .ea-menu-item-icon,
+.ea-sidebar .ea-menu-item.ea-menu-item-active .ea-menu-item-icon {
+    color: #ffffff !important;
+}
+
+/* Sections du menu */
+.ea-sidebar .ea-menu-section {
+    margin: 1.5rem 0.5rem 0.5rem;
+    padding: 0.5rem 1rem;
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Sous-menus */
+.ea-sidebar .ea-submenu {
+    background: rgba(0, 0, 0, 0.1) !important;
+    border-radius: 8px;
+    margin: 0.25rem 0.5rem;
+    overflow: hidden;
+}
+
+.ea-sidebar .ea-submenu .ea-menu-item > .ea-menu-item-contents {
+    padding-left: 2.5rem;
+    font-size: 0.9rem;
+}
+
+.ea-sidebar .ea-submenu .ea-menu-item:hover > .ea-menu-item-contents {
+    background: rgba(255, 255, 255, 0.1) !important;
+    transform: translateX(3px);
+}
+
+/* Classes personnalisées pour les sections */
+.menu-section-config .ea-menu-section {
+    color: #ffd700 !important;
+}
+
+.menu-section-education .ea-menu-section {
+    color: #98fb98 !important;
+}
+
+.menu-section-teachers .ea-menu-section {
+    color: #87ceeb !important;
+}
+
+.menu-section-communication .ea-menu-section {
+    color: #dda0dd !important;
+}
+
+.menu-section-users .ea-menu-section {
+    color: #f0e68c !important;
+}
+
+.menu-section-accounting .ea-menu-section {
+    color: #90ee90 !important;
+}
+
+.menu-section-admin .ea-menu-section {
+    color: #ffa07a !important;
+}
+
+/* Actions d'ajout */
+.menu-action-add > .ea-menu-item-contents {
+    background: rgba(40, 167, 69, 0.2) !important;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.menu-action-add:hover > .ea-menu-item-contents {
+    background: rgba(40, 167, 69, 0.3) !important;
+    border-color: rgba(40, 167, 69, 0.5);
+}
+
+/* Responsive - réduire la largeur sur mobile */
+@media (max-width: 768px) {
+    .ea-sidebar {
+        width: 250px !important;
+        min-width: 250px !important;
+    }
+    
+    .ea-content-wrapper {
+        margin-left: 250px !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .ea-sidebar {
+        width: 100% !important;
+        min-width: 100% !important;
+        position: fixed;
+        z-index: 1050;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .ea-sidebar.show {
+        transform: translateX(0);
+    }
+    
+    .ea-content-wrapper {
+        margin-left: 0 !important;
+    }
+}
+
+/* Mode sombre */
+@media (prefers-color-scheme: dark) {
+    .ea-sidebar {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%) !important;
+    }
+    
+    .ea-sidebar .ea-sidebar-header {
+        background: rgba(0, 0, 0, 0.2) !important;
+    }
+}
+
+/* Animation d'entrée */
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.ea-sidebar {
+    animation: slideInLeft 0.5s ease-out;
+}
+
+/* Scrollbar personnalisée */
+.ea-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.ea-sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.ea-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.ea-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}

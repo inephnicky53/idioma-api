@@ -24,6 +24,8 @@ class Idioma
     const STATUS_PROCESS = 3;
     const STATUS_FAILED = 4;
     const STATUS_WAIT = 5;
+    const STATUS_VALIDATED = 6;
+    const STATUS_DECLINED = 7;
 
     const WAITING_TIME = '-30 seconds';
 

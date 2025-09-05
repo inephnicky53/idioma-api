@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use App\Repository\ContactRepository;
 use Doctrine\DBAL\Types\Types;
@@ -12,35 +13,39 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Entity(repositoryClass: ContactRepository::class)]
 #[ApiResource(
     operations: [
+        new GetCollection(),
         new Post(
             denormalizationContext: ['groups' => ['contact:create']],
         ),
-    ]
+    ],
+    normalizationContext: ['groups' => ['contact:get']]
 )]
 class Contact
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['contact:get'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['contact:create'])]
+    #[Groups(['contact:get', 'contact:create'])]
     private ?string $lastname = null;
 
     #[ORM\Column(length: 180)]
-    #[Groups(['contact:create'])]
+    #[Groups(['contact:get', 'contact:create'])]
     private ?string $email = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Groups(['contact:create'])]
+    #[Groups(['contact:get', 'contact:create'])]
     private ?string $content = null;
 
     #[ORM\Column(length: 15)]
-    #[Groups(['contact:create'])]
+    #[Groups(['contact:get', 'contact:create'])]
     private ?string $phone = null;
 
     #[ORM\Column]
+    #[Groups(['contact:get'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     public function __construct()

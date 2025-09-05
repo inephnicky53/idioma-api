@@ -2,8 +2,6 @@
 
 namespace App\Controller\Admin;
 
-use App\ApiResource\StatsResource;
-use App\Controller\Admin\Payment\OnWaitingPaymentCrudController;
 use App\Controller\Admin\Payment\PaymentCrudController;
 use App\Controller\Admin\Teacher\DeactivateCrudController;
 use App\Controller\Admin\Teacher\OnWaitingTeacherCrudController;
@@ -20,22 +18,20 @@ use App\Entity\Order;
 use App\Entity\Package;
 use App\Entity\Planning;
 use App\Entity\Rate;
-use App\Entity\Teacher;
 use App\Entity\Transaction;
 use App\Entity\User;
 use App\Entity\UserCourse;
 use App\Entity\UserTeacher;
-use App\Repository\PlanningRepository;
-use App\Repository\UserCourseRepository;
-use App\Repository\UserRepository;
-use Doctrine\Common\Collections\ArrayCollection;
+use App\Service\DashboardStatsService;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Config\UserMenu;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -46,146 +42,349 @@ use Vich\UploaderBundle\Templating\Helper\UploaderHelper;
 class DashboardController extends AbstractDashboardController
 {
     public function __construct(
-        private readonly UploaderHelper    $uploaderHelper,
-        private readonly AdminUrlGenerator $adminUrlGenerator,
-
+        private readonly UploaderHelper        $uploaderHelper,
+        private readonly AdminUrlGenerator     $adminUrlGenerator,
+        private readonly DashboardStatsService $statsService,
+        private readonly LoggerInterface       $logger
     )
     {
     }
 
     #[Route('/admin', name: 'admin')]
-    public function admin(
-        ChartBuilderInterface $chartBuilder,
-        UserRepository        $userRepository,
-        UserCourseRepository  $userCourseRepository,
-        PlanningRepository    $planningRepository
-    ): Response
+    public function admin(ChartBuilderInterface $chartBuilder): Response
     {
-        $chart = $chartBuilder->createChart(Chart::TYPE_LINE);
-        $stats = new StatsResource();
+        try {
+            $chart = $this->createDashboardChart($chartBuilder);
+            $stats = $this->statsService->getDashboardStats();
 
-        $users = new ArrayCollection();
-        $teachers = new ArrayCollection();
-        $students = new ArrayCollection();
+            return $this->render('admin/index.html.twig', [
+                'chart' => $chart,
+                'stats' => $stats
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur lors du chargement du tableau de bord', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
 
-        $userCourses = $userCourseRepository->findAll();
-        $plannings = $planningRepository->findAll();
+            $this->addFlash('danger', 'Une erreur est survenue lors du chargement du tableau de bord.');
 
-        array_map(function (User $user) use (&$users, &$teachers, &$students) {
-            $users->add($user);
-            if ($user->getRoles() == User::STUDENT)
-                $students->add($user);
-            if ($teacher = $user->getTeacher())
-                $teachers->add($teacher);
-        }, $userRepository->findAll());
-
-        array_map(function (UserCourse $userCourse) {
-
-        }, $userCourses);
-
-        array_map(function (Planning $planning) {
-
-        }, $plannings);
-
-        $stats->total['users'] = count($users);
-        $stats->total['teachers'] = [
-            'value' => $teachers->count(),
-            'waiting' => $teachers->filter(fn(Teacher $teacher) => $teacher->getStatus() === Teacher::STATUS_WAITING)->count()
-        ];
-        $stats->total['students'] = $students->count();
-        $stats->total['courses'] = count($userCourses);
-        $stats->total['waiting_courses'] = 0;
-        $stats->total['hours_courses'] = 0;
-
-        return $this->render('admin/index.html.twig', [
-            'chart' => $chart,
-            'stats' => $stats
-        ]);
+            return $this->render('admin/index.html.twig', [
+                'chart' => $chartBuilder->createChart(Chart::TYPE_LINE),
+                'stats' => null
+            ]);
+        }
     }
 
     public function configureDashboard(): Dashboard
     {
         return Dashboard::new()
-            ->setTitle('<img src="/images/logo.png" alt="logo" width="125">')
-            ->setFaviconPath('/images/favicon.ico');
+            ->setTitle('<img src="/images/logo.png" alt="Idioma Admin" width="130" class="admin-logo">')
+            ->setFaviconPath('/images/favicon.ico')
+            ->renderContentMaximized()
+            ->renderSidebarMinimized()
+            ->setLocales([
+                'fr' => 'Français',
+                'en' => 'English'
+            ]);
+    }
+
+    public function configureAssets(): Assets
+    {
+        return Assets::new()
+            ->addCssFile('build/admin.css')
+            ->addJsFile('build/admin.js');
     }
 
     public function configureMenuItems(): iterable
     {
-        yield MenuItem::linkToDashboard('Tableau de bord', 'fa fa-home');
-        yield MenuItem::section('Générales');
-        yield MenuItem::linkToCrud("Langues", "fas fa-language", Language::class);
-        yield MenuItem::linkToCrud("Catégories de cours", "fas fa-language", Category::class);
+        // Tableau de bord principal
+        yield MenuItem::linkToDashboard('Tableau de bord', 'fas fa-tachometer-alt')
+            ->setCssClass('dashboard-main-link');
 
-        yield MenuItem::section('Cours');
-        yield MenuItem::linkToCrud("Cours", "fas fa-book", Course::class);
-        yield MenuItem::linkToCrud("Cours d'étudiants", "fas fa-graduation-cap", UserCourse::class);
-        yield MenuItem::linkToCrud("Professeurs d'étudiants", "fas fa-plus", UserTeacher::class);
+        // Section Configuration
+        yield MenuItem::section('Configuration')
+            ->setCssClass('menu-section-config');
 
-        yield MenuItem::section('Professeurs');
-        yield MenuItem::subMenu("Professeurs", "fas fa-users")->setSubItems([
-            MenuItem::linkToUrl('Liste', 'fas fa-list', $this->adminUrlGenerator
-                ->setController(TeacherCrudController::class)
-                ->setAction(Crud::PAGE_INDEX)),
-            MenuItem::linkToUrl("En attente", 'fas fa-list', $this->adminUrlGenerator
-                ->setController(OnWaitingTeacherCrudController::class)
-                ->setAction(Crud::PAGE_INDEX)),
-            MenuItem::linkToUrl("Désactivés", 'fas fa-list', $this->adminUrlGenerator
-                ->setController(DeactivateCrudController::class)
-                ->setAction(Crud::PAGE_INDEX)),
-            MenuItem::linkToUrl("Ajouter un professeur", 'fas fa-plus', $this->adminUrlGenerator
-                ->setController(TeacherCrudController::class)
-                ->setAction(Crud::PAGE_NEW)),
-        ]);
-        yield MenuItem::subMenu("Plannings", "fas fa-calendar")->setSubItems([
-            MenuItem::linkToCrud("Liste", "fas fa-list", Planning::class),
-            MenuItem::linkToCrud("Ajouter un planning", "fas fa-plus", Planning::class)
-                ->setAction(Action::NEW),
-        ]);
-        yield MenuItem::subMenu("Certifications", "fas fa-users")->setSubItems([
-            MenuItem::linkToCrud("Certificats", "fas fa-book", Certification::class),
-            MenuItem::linkToCrud("Ajouter un certificat", "fas fa-plus", Certification::class)
-                ->setAction(Action::NEW),
-        ]);
-        yield MenuItem::subMenu("Messagerie", "fas fa-book")->setSubItems([
-            MenuItem::linkToCrud("Toutes les discussions", "fas fa-list", InboxThread::class),
-            MenuItem::linkToCrud("Créer une discussion", "fas fa-plus", InboxThread::class)
-                ->setAction(Action::NEW),
-        ]);
+        yield MenuItem::linkToCrud('Langues', 'fas fa-language', Language::class);
+        yield MenuItem::linkToCrud('Catégories', 'fas fa-tags', Category::class);
 
-        yield MenuItem::section('Utilisateurs');
-        yield MenuItem::subMenu("Utilisateurs", "fas fa-users")->setSubItems([
-            MenuItem::linkToCrud("Liste", "fas fa-list", User::class),
-            MenuItem::linkToCrud("Ajouter", "fas fa-plus", User::class)
-                ->setAction(Action::NEW),
-        ]);
-        yield MenuItem::linkToCrud("Contacts", "fas fa-users", Contact::class);
+        // Section Pédagogie
+        yield MenuItem::section('Pédagogie')
+            ->setCssClass('menu-section-education');
 
-        yield MenuItem::section('Comptabilité');
-        yield MenuItem::subMenu("Paiements", "fas fa-users")->setSubItems([
-            MenuItem::linkToUrl('Liste', 'fas fa-list', $this->adminUrlGenerator
-                ->setController(PaymentCrudController::class)
-                ->setAction(Crud::PAGE_INDEX)),
-            MenuItem::linkToUrl("Effectuer un paiement", 'fas fa-plus', $this->adminUrlGenerator
-                ->setController(PaymentCrudController::class)
-                ->setAction(Crud::PAGE_NEW)),
-        ]);
-        yield MenuItem::subMenu("Comptabilité", "fas fa-book")->setSubItems([
-            MenuItem::linkToCrud("Commandes", "fas fa-list", Order::class),
-            MenuItem::linkToCrud("Transactions", "fas fa-list", Transaction::class),
-            MenuItem::linkToCrud("Commissions", "fas fa-list", Fee::class),
-            MenuItem::linkToCrud("Devises", "fas fa-list", Currency::class),
-            MenuItem::linkToCrud("Taux", "fas fa-plus", Rate::class),
-            MenuItem::linkToCrud("Packages", "fas fa-plus", Package::class)
-        ]);
+        yield MenuItem::linkToCrud('Cours', 'fas fa-book-open', Course::class);
+        yield MenuItem::linkToCrud('Cours étudiants', 'fas fa-user-graduate', UserCourse::class);
+        yield MenuItem::linkToCrud('Relations prof-étudiant', 'fas fa-handshake', UserTeacher::class);
+
+        // Section Professeurs
+        yield MenuItem::section('Gestion Professeurs')
+            ->setCssClass('menu-section-teachers');
+
+        yield from $this->getTeacherMenuItems();
+        yield from $this->getPlanningMenuItems();
+        yield from $this->getCertificationMenuItems();
+
+        // Section Communication
+        yield MenuItem::section('Communication')
+            ->setCssClass('menu-section-communication');
+
+        yield from $this->getMessagingMenuItems();
+
+        // Section Utilisateurs
+        yield MenuItem::section('Utilisateurs')
+            ->setCssClass('menu-section-users');
+
+        yield from $this->getUserMenuItems();
+        yield MenuItem::linkToCrud('Contacts', 'fas fa-address-book', Contact::class);
+
+        // Section Comptabilité
+        yield MenuItem::section('Comptabilité')
+            ->setCssClass('menu-section-accounting');
+
+        yield from $this->getPaymentMenuItems();
+        yield from $this->getAccountingMenuItems();
+
+        // Section Administration
+        yield MenuItem::section('Administration')
+            ->setCssClass('menu-section-admin');
+
+        yield MenuItem::linkToUrl('Statistiques avancées', 'fas fa-chart-bar', '/admin/stats')
+            ->setLinkTarget('_blank');
+
+        yield MenuItem::linkToUrl('Logs système', 'fas fa-file-alt', '/admin/logs')
+            ->setLinkTarget('_blank');
     }
-
 
     public function configureUserMenu(UserInterface $user): UserMenu
     {
         /** @var User $user */
+        $avatarUrl = $user->getThumbnail()
+            ? $this->uploaderHelper->asset($user->getThumbnail(), 'file')
+            : '/images/default-avatar.png';
+
         return parent::configureUserMenu($user)
             ->setName($user->getFullname())
-            ->setAvatarUrl($user->getThumbnail() ? $this->uploaderHelper->asset($user->getThumbnail(), 'file') : null);
+            ->addMenuItems([
+                MenuItem::linkToUrl('Mon profil', 'fas fa-user', '/admin/profile'),
+                MenuItem::section(),
+                MenuItem::linkToUrl('Paramètres', 'fas fa-cog', '/admin/settings'),
+                MenuItem::linkToUrl('Sécurité', 'fas fa-shield-alt', '/admin/security'),
+            ]);
+    }
+
+    private function createDashboardChart(ChartBuilderInterface $chartBuilder): Chart
+    {
+        $chart = $chartBuilder->createChart(Chart::TYPE_LINE);
+
+        // Configuration du graphique
+        $chart->setData([
+            'labels' => ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'],
+            'datasets' => [
+                [
+                    'label' => 'Nouveaux utilisateurs',
+                    'backgroundColor' => 'rgba(54, 162, 235, 0.2)',
+                    'borderColor' => 'rgba(54, 162, 235, 1)',
+                    'data' => $this->statsService->getMonthlyUserStats(),
+                ],
+                [
+                    'label' => 'Nouveaux cours',
+                    'backgroundColor' => 'rgba(255, 99, 132, 0.2)',
+                    'borderColor' => 'rgba(255, 99, 132, 1)',
+                    'data' => $this->statsService->getMonthlyCourseStats(),
+                ]
+            ],
+        ]);
+
+        $chart->setOptions([
+            'responsive' => true,
+            'plugins' => [
+                'title' => [
+                    'display' => true,
+                    'text' => 'Évolution mensuelle'
+                ]
+            ]
+        ]);
+
+        return $chart;
+    }
+
+    private function getTeacherMenuItems(): iterable
+    {
+        yield MenuItem::subMenu('Professeurs', 'fas fa-chalkboard-teacher')
+            ->setCssClass('submenu-teachers')
+            ->setSubItems([
+                MenuItem::linkToUrl('Tous les professeurs', 'fas fa-list',
+                    $this->adminUrlGenerator
+                        ->setController(TeacherCrudController::class)
+                        ->setAction(Crud::PAGE_INDEX)
+                ),
+
+                MenuItem::linkToUrl('En attente de validation', 'fas fa-clock',
+                    $this->adminUrlGenerator
+                        ->setController(OnWaitingTeacherCrudController::class)
+                        ->setAction(Crud::PAGE_INDEX)
+                ),
+
+                MenuItem::linkToUrl('Professeurs désactivés', 'fas fa-user-slash',
+                    $this->adminUrlGenerator
+                        ->setController(DeactivateCrudController::class)
+                        ->setAction(Crud::PAGE_INDEX)
+                ),
+
+                MenuItem::section('Actions'),
+
+                MenuItem::linkToUrl('Ajouter un professeur', 'fas fa-plus-circle',
+                    $this->adminUrlGenerator
+                        ->setController(TeacherCrudController::class)
+                        ->setAction(Crud::PAGE_NEW)
+                )->setCssClass('menu-action-add'),
+            ]);
+    }
+
+    private function getPlanningMenuItems(): iterable
+    {
+        yield MenuItem::subMenu('Plannings', 'fas fa-calendar-alt')
+            ->setCssClass('submenu-planning')
+            ->setSubItems([
+                MenuItem::linkToCrud('Tous les plannings', 'fas fa-list', Planning::class),
+
+                MenuItem::linkToCrud('Planning du jour', 'fas fa-calendar-day', Planning::class)
+                    ->setQueryParameter('filter', 'today'),
+
+                MenuItem::linkToCrud('Planning de la semaine', 'fas fa-calendar-week', Planning::class)
+                    ->setQueryParameter('filter', 'week'),
+
+                MenuItem::section('Actions'),
+
+                MenuItem::linkToCrud('Nouveau planning', 'fas fa-plus-circle', Planning::class)
+                    ->setAction(Action::NEW)
+                    ->setCssClass('menu-action-add'),
+            ]);
+    }
+
+    private function getCertificationMenuItems(): iterable
+    {
+        yield MenuItem::subMenu('Certifications', 'fas fa-certificate')
+            ->setCssClass('submenu-certifications')
+            ->setSubItems([
+                MenuItem::linkToCrud('Tous les certificats', 'fas fa-award', Certification::class),
+
+                MenuItem::linkToCrud('Certificats validés', 'fas fa-check-circle', Certification::class)
+                    ->setQueryParameter('filter', 'validated'),
+
+                MenuItem::linkToCrud('En attente de validation', 'fas fa-hourglass-half', Certification::class)
+                    ->setQueryParameter('filter', 'pending'),
+
+                MenuItem::section('Actions'),
+
+                MenuItem::linkToCrud('Nouveau certificat', 'fas fa-plus-circle', Certification::class)
+                    ->setAction(Action::NEW)
+                    ->setCssClass('menu-action-add'),
+            ]);
+    }
+
+    private function getMessagingMenuItems(): iterable
+    {
+        yield MenuItem::subMenu('Messagerie', 'fas fa-comments')
+            ->setCssClass('submenu-messaging')
+            ->setSubItems([
+                MenuItem::linkToCrud('Toutes les discussions', 'fas fa-inbox', InboxThread::class),
+
+                MenuItem::linkToCrud('Discussions actives', 'fas fa-fire', InboxThread::class)
+                    ->setQueryParameter('filter', 'active'),
+
+                MenuItem::linkToCrud('Messages non lus', 'fas fa-envelope', InboxThread::class)
+                    ->setQueryParameter('filter', 'unread'),
+
+                MenuItem::section('Actions'),
+
+                MenuItem::linkToCrud('Nouvelle discussion', 'fas fa-plus-circle', InboxThread::class)
+                    ->setAction(Action::NEW)
+                    ->setCssClass('menu-action-add'),
+            ]);
+    }
+
+    private function getUserMenuItems(): iterable
+    {
+        yield MenuItem::subMenu('Utilisateurs', 'fas fa-users')
+            ->setCssClass('submenu-users')
+            ->setSubItems([
+                MenuItem::linkToCrud('Tous les utilisateurs', 'fas fa-list', User::class),
+
+                MenuItem::linkToCrud('Utilisateurs actifs', 'fas fa-user-check', User::class)
+                    ->setQueryParameter('filter', 'active'),
+
+                MenuItem::linkToCrud('Étudiants', 'fas fa-user-graduate', User::class)
+                    ->setQueryParameter('filter', 'students'),
+
+                MenuItem::linkToCrud('Professeurs', 'fas fa-chalkboard-teacher', User::class)
+                    ->setQueryParameter('filter', 'teachers'),
+
+                MenuItem::section('Actions'),
+
+                MenuItem::linkToCrud('Nouvel utilisateur', 'fas fa-user-plus', User::class)
+                    ->setAction(Action::NEW)
+                    ->setCssClass('menu-action-add'),
+            ]);
+    }
+
+    private function getPaymentMenuItems(): iterable
+    {
+        yield MenuItem::subMenu('Paiements', 'fas fa-credit-card')
+            ->setCssClass('submenu-payments')
+            ->setSubItems([
+                MenuItem::linkToUrl('Tous les paiements', 'fas fa-list',
+                    $this->adminUrlGenerator
+                        ->setController(PaymentCrudController::class)
+                        ->setAction(Crud::PAGE_INDEX)
+                ),
+
+                MenuItem::linkToUrl('Paiements réussis', 'fas fa-check-circle',
+                    $this->adminUrlGenerator
+                        ->setController(PaymentCrudController::class)
+                        ->setAction(Crud::PAGE_INDEX)
+                        ->set('filter', 'success')
+                ),
+
+                MenuItem::linkToUrl('En attente', 'fas fa-hourglass-half',
+                    $this->adminUrlGenerator
+                        ->setController(PaymentCrudController::class)
+                        ->setAction(Crud::PAGE_INDEX)
+                        ->set('filter', 'pending')
+                ),
+
+                MenuItem::linkToUrl('Paiements échoués', 'fas fa-times-circle',
+                    $this->adminUrlGenerator
+                        ->setController(PaymentCrudController::class)
+                        ->setAction(Crud::PAGE_INDEX)
+                        ->set('filter', 'failed')
+                ),
+
+                MenuItem::section('Actions'),
+
+                MenuItem::linkToUrl('Nouveau paiement', 'fas fa-plus-circle',
+                    $this->adminUrlGenerator
+                        ->setController(PaymentCrudController::class)
+                        ->setAction(Crud::PAGE_NEW)
+                )->setCssClass('menu-action-add'),
+            ]);
+    }
+
+    private function getAccountingMenuItems(): iterable
+    {
+        yield MenuItem::subMenu('Comptabilité avancée', 'fas fa-chart-pie')
+            ->setCssClass('submenu-accounting')
+            ->setSubItems([
+                MenuItem::linkToCrud('Commandes', 'fas fa-shopping-cart', Order::class),
+                MenuItem::linkToCrud('Transactions', 'fas fa-exchange-alt', Transaction::class),
+                MenuItem::linkToCrud('Commissions', 'fas fa-percentage', Fee::class),
+
+                MenuItem::section('Configuration'),
+
+                MenuItem::linkToCrud('Devises', 'fas fa-coins', Currency::class),
+                MenuItem::linkToCrud('Taux de change', 'fas fa-chart-line', Rate::class),
+                MenuItem::linkToCrud('Packages', 'fas fa-box', Package::class),
+            ]);
     }
 }

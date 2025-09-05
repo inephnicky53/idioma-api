@@ -148,6 +148,27 @@ readonly class TeacherManager
         return $teacher;
     }
 
+    public function updateAvailabilities(Teacher $teacher, array $availabilities): Teacher
+    {
+        $teacher->getDisponibilities()->clear();
+
+        foreach ($availabilities as $availabilityModel) {
+            foreach ($availabilityModel->programs as $timeSlot) {
+                $disponibility = (new Disponibility())
+                    ->setDay(ucfirst($availabilityModel->day))
+                    ->setStart($timeSlot->start)
+                    ->setEnd($timeSlot->end)
+                    ->setIsActive(true);
+
+                $teacher->addDisponibility($disponibility);
+            }
+        }
+
+        $this->em->flush();
+
+        return $teacher;
+    }
+
     /**
      * @throws Exception
      */

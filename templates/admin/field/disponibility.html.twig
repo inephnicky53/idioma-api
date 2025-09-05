@@ -1,12 +1,85 @@
 {% if field.value is not empty %}
-    <ol>
+    <div class="disponibilities-list">
         {% for value in field.value %}
-            <li>
-                <b>{{ value.day|trans({}, 'messages') }}</b> de <b>{{ value.start }}</b> à <b>{{ value.end }}</b><br>
-                <em>{{ value.isActive ? "actif" : "non actif" }}</em>
-            </li>
+            <div class="disponibility-item {{ value.isActive ? 'active' : 'inactive' }}">
+                <span class="day-label">
+                    <i class="fas fa-calendar-day"></i>
+                    {{ value.day|trans({}, 'messages') }}
+                </span>
+                <span class="time-range">
+                    <i class="fas fa-clock"></i>
+                    {{ value.start }} - {{ value.end }}
+                </span>
+                <span class="status-badge badge {{ value.isActive ? 'badge-success' : 'badge-secondary' }}">
+                    {{ value.isActive ? 'Actif' : 'Inactif' }}
+                </span>
+            </div>
         {% endfor %}
-    </ol>
+    </div>
 {% else %}
-    Pas de disponibilité
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        Aucune disponibilité configurée
+    </div>
 {% endif %}
+
+<style>
+:root {
+    --disponibility-bg: #f8f9fa;
+    --disponibility-border: #e9ecef;
+    --disponibility-text: #212529;
+    --disponibility-muted: #6c757d;
+    --disponibility-inactive-opacity: 0.6;
+}
+
+[data-bs-theme="dark"] {
+    --disponibility-bg: #2d3748;
+    --disponibility-border: #4a5568;
+    --disponibility-text: #e2e8f0;
+    --disponibility-muted: #a0aec0;
+}
+
+.disponibilities-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.disponibility-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border: 1px solid var(--disponibility-border);
+    border-radius: 6px;
+    background: var(--disponibility-bg);
+    color: var(--disponibility-text);
+    transition: all 0.2s ease;
+}
+
+.disponibility-item.inactive {
+    opacity: var(--disponibility-inactive-opacity);
+}
+
+.day-label, .time-range {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.day-label {
+    font-weight: 600;
+    min-width: 100px;
+    color: var(--disponibility-text);
+}
+
+.time-range {
+    color: var(--disponibility-muted);
+    min-width: 120px;
+}
+
+.status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+</style>
