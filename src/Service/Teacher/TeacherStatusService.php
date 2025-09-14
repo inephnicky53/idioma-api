@@ -17,7 +17,9 @@ readonly class TeacherStatusService
         private Security $security,
         private LoggerInterface $logger,
         private EventDispatcherInterface $eventDispatcher
-    ) {}
+    ) 
+    {
+    }
 
     public function activate(Teacher $teacher): bool
     {

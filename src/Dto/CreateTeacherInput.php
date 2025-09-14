@@ -26,8 +26,8 @@ class CreateTeacherInput
 
     #[Assert\NotBlank]
     #[Assert\Regex(
-        pattern: '/^\d{10,15}$/', // Regex pour valider le numéro de téléphone
-        message: 'Le numéro de téléphone doit contenir entre 10 et 15 chiffres.'
+        pattern: '/^\+?\d{10,15}$/',
+        message: 'Le numéro de téléphone doit commencer éventuellement par + et contenir entre 10 et 15 chiffres.'
     )]
     public ?string $phone = null;
 

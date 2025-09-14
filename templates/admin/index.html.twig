@@ -48,7 +48,7 @@
                         </div>
                     </div>
                     <div class="stat-card-footer">
-                        <a href="{{ ea_url().setController('App\\Controller\\Admin\\UserCrudController').setAction('index').set('filter', 'students') }}" class="stat-link">
+                        <a href="{{ ea_url().setController('App\\Controller\\Admin\\User\\UserCrudController').setAction('index').set('filter', 'students') }}" class="stat-link">
                             Voir tous les étudiants <i class="fas fa-arrow-right ms-1"></i>
                         </a>
                     </div>
@@ -98,7 +98,7 @@
                         </div>
                     </div>
                     <div class="stat-card-footer">
-                        <a href="{{ ea_url().setController('App\\Controller\\Admin\\UserCrudController').setAction('index') }}" class="stat-link">
+                        <a href="{{ ea_url().setController('App\\Controller\\Admin\\User\\UserCrudController').setAction('index') }}" class="stat-link">
                             Tous les utilisateurs <i class="fas fa-arrow-right ms-1"></i>
                         </a>
                     </div>
@@ -163,7 +163,7 @@
                     </div>
                     
                     <div class="actions-grid my-4">
-                        <a href="{{ ea_url().setController('App\\Controller\\Admin\\UserCrudController').setAction('new') }}" class="action-card action-primary">
+                        <a href="{{ ea_url().setController('App\\Controller\\Admin\\User\\UserCrudController').setAction('new') }}" class="action-card action-primary">
                             <div class="action-icon">
                                 <i class="fas fa-user-plus"></i>
                             </div>
