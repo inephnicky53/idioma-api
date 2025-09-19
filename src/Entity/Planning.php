@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Common\State\PersistProcessor;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
@@ -44,6 +45,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
             denormalizationContext: ['groups' => ['planning:start']],
             security: "is_granted('ROLE_USER')",
             processor: StartPlanningProcessor::class
+        ),
+        new Patch(
+            uriTemplate: "plannings/{id}/link",
+            denormalizationContext: ['groups' => ['planning:meeting:link']],
+            security: "is_granted('ROLE_USER')",
+            processor: PersistProcessor::class
         ),
         new Delete(
             uriTemplate: "plannings/{id}/cancel",
@@ -97,7 +104,7 @@ class Planning
     private bool $isTrial = false;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['planning:show', 'planning:create'])]
+    #[Groups(['planning:show', 'planning:create', 'planning:meeting:link'])]
     private ?string $meetingLink = null;
 
     #[ORM\Column(length: 255)]
