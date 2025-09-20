@@ -5,6 +5,7 @@ namespace App\Serializer\Normalizer;
 use App\Entity\Planning;
 use App\Entity\Teacher;
 use App\Entity\User;
+use App\Entity\UserTeacher;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Serializer\Exception\ExceptionInterface;
@@ -38,8 +39,8 @@ readonly class TeacherNormalizer implements NormalizerInterface
 
             $object->setCanTrial($canTrial);
 
-            $userTeacher = $user->getTeachers()->filter(fn(Teacher $t) => $t->getId() === $object->getId())->first();
-            $object->setHours($userTeacher instanceof Teacher ? $userTeacher->getHours() : 0);
+            $userTeacher = $user->getTeachers()->filter(fn(UserTeacher $t) => $t->getTeacher()->getId() === $object->getId())->first();
+            $object->setHours($userTeacher instanceof UserTeacher ? $userTeacher->getHours() : 0);
         }
 
         return $this->normalizer->normalize($object, $format, $context);
