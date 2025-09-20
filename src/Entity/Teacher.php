@@ -15,6 +15,7 @@ use App\Controller\Api\Teacher\TeacherMediaController;
 use App\Controller\Api\Teacher\TeacherGetCoursesController;
 use App\Dto\CreateTeacherInput;
 use App\Dto\UpdateDisponibilitiesInput;
+use App\Dto\UpdateTeacherInput;
 use App\Dto\Wallet\WithdrawalRequestInput;
 use App\Idioma;
 use App\Repository\TeacherRepository;
@@ -26,6 +27,7 @@ use App\State\Teacher\TeacherGetProvider;
 use App\State\Teacher\TeacherSelfDisponibilitiesProvider;
 use App\State\Teacher\TeacherWalletProvider;
 use App\State\Teacher\UpdateDisponibilitiesProcessor;
+use App\State\Teacher\UpdateTeacherProcessor;
 use App\State\Wallet\WithdrawalRequestProcessor;
 use App\Trait\Activable;
 use App\Trait\Datable;
@@ -109,6 +111,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
             security: "is_granted('ROLE_USER')",
             input: UpdateDisponibilitiesInput::class,
             processor: UpdateDisponibilitiesProcessor::class
+        ),
+        new Patch(
+            uriTemplate: '/teacher/update',
+            security: "is_granted('ROLE_USER')",
+            input: UpdateTeacherInput::class,
+            processor: UpdateTeacherProcessor::class
         ),
     ],
     normalizationContext: ['groups' => ['teacher:list', 'teacher:show']],

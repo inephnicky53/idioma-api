@@ -2,11 +2,13 @@
 
 namespace App\Service\Teacher;
 
+use App\Dto\UpdateTeacherInput;
 use App\Entity\Disponibility;
 use App\Entity\SpokenLanguage;
 use App\Entity\Teacher;
 use App\Entity\TeacherCertification;
 use App\Entity\TeacherFormation;
+use App\Entity\User;
 use App\Entity\UserTeacher;
 use App\Event\TeacherCreatedEvent;
 use App\Event\TeacherValidatedEvent;
@@ -83,6 +85,7 @@ readonly class TeacherManager
                     ->addLanguage($item->language)
                     ->setYearStart($item->yearStart)
                     ->setYearEnd($item->yearEnd)
+                    ->setProofImage($item->proofImage)
             );
         }
 
@@ -94,6 +97,7 @@ readonly class TeacherManager
                     ->setSpeciality($item->speciality)
                     ->setYearStart($item->yearStart)
                     ->setYearEnd($item->yearEnd)
+                    ->setProofImage($item->proofImage)
             );
         }
 
@@ -212,5 +216,67 @@ readonly class TeacherManager
         $this->em->flush();
 
         return $data;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function update(UpdateTeacherInput $updateData): Teacher
+    {
+        /** @var User $user */
+        $user = $this->security->getUser();
+        $teacher = $this->em->getRepository(Teacher::class)->findOneBy(['user' => $user]);
+        if (!$teacher)
+            throw new Exception('User is not a teacher');
+
+        if (isset($updateData->shortDescription)) {
+            $teacher->setShortDescription($updateData->shortDescription);
+        }
+
+        if (isset($updateData->description)) {
+            $teacher->setDescription($updateData->description);
+        }
+
+        if (isset($updateData->experience)) {
+            $teacher->setExperience($updateData->experience);
+        }
+
+        if (isset($updateData->motivation)) {
+            $teacher->setMotivation($updateData->motivation);
+        }
+
+        if (isset($updateData->timezone)) {
+            $teacher->setTimezone($updateData->timezone);
+        }
+
+        if (isset($updateData->profile)) {
+            $teacher->setProfile($updateData->profile);
+        }
+
+        if (isset($updateData->price)) {
+            $teacher->setPrice($updateData->price);
+        }
+
+        if (isset($updateData->spokenLanguages) && is_array($updateData->spokenLanguages)) {
+            foreach ($teacher->getSpokenLanguages() as $spokenLanguage) {
+                $teacher->removeSpokenLanguage($spokenLanguage);
+            }
+
+            foreach ($updateData->spokenLanguages as $item) {
+                $lang = $this->languageRepository->findOneBy(['locale' => $item->language]);
+                if ($lang) {
+                    $teacher->addSpokenLanguage(
+                        (new SpokenLanguage())
+                            ->setLanguage($lang)
+                            ->setLevel($item->level)
+                    );
+                }
+            }
+        }
+
+        $this->em->persist($teacher);
+        $this->em->flush();
+
+        return $teacher;
     }
 }

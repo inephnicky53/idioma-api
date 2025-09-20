@@ -10,6 +10,7 @@ use ApiPlatform\Metadata\Post;
 use App\Controller\Api\ApiRegisterController;
 use App\Controller\Api\User\ApiPhoneVerifyController;
 use App\Controller\Api\User\ApiUserCoursesController;
+use App\Dto\NewsletterSubscriptionInput;
 use App\Dto\ResetPasswordInput;
 use App\Dto\ResetRequestedInput;
 use App\Dto\VerifyOTPInput;
@@ -20,6 +21,7 @@ use App\State\User\ResetPasswordProcessor;
 use App\State\User\ResetRequestedProcessor;
 use App\State\User\UserMeProvider;
 use App\State\User\UserPasswordHasher;
+use App\State\User\NewsletterSubscriptionProcessor;
 use App\Trait\Datable;
 use DateTime;
 use DateTimeImmutable;
@@ -96,6 +98,13 @@ use function Symfony\Component\String\u;
             security: "is_granted('ROLE_ADMIN') or is_granted('USER_EDIT', object)",
             securityMessage: "Désolé, vous n'avez pas le droit de modifier cet utilisateur.",
             processor: UserPasswordHasher::class
+        ),
+        new Patch(
+            uriTemplate: '/user/newsletter',
+            input: NewsletterSubscriptionInput::class,
+            processor: NewsletterSubscriptionProcessor::class,
+            security: "is_granted('ROLE_USER')",
+            normalizationContext: ['groups' => ['user:me']]
         ),
     ]
 )]
@@ -255,6 +264,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['user:show', 'user:me', 'user:update'])]
     private ?string $profile = null;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    #[Groups(['user:show', 'user:me'])]
+    private bool $isNewsletterSubscribed = false;
 
     public static function getRolesList(): array
     {
@@ -1066,6 +1079,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setProfile(?string $profile): static
     {
         $this->profile = $profile;
+
+        return $this;
+    }
+
+    public function isNewsletterSubscribed(): bool
+    {
+        return $this->isNewsletterSubscribed;
+    }
+
+    public function setIsNewsletterSubscribed(bool $isNewsletterSubscribed): static
+    {
+        $this->isNewsletterSubscribed = $isNewsletterSubscribed;
 
         return $this;
     }

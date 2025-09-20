@@ -69,7 +69,6 @@ readonly class TeacherSubscriber implements EventSubscriberInterface
             $this->smsService->sendBc($user->getPhone(), $message);
 
         $message = "Vous venez de valider le profil professeur de {$user->getFullname()} sur la plateforme";
-        $this->request->getSession()->getFlashBag()->set('success', $message);
     }
 
     public static function getSubscribedEvents(): array

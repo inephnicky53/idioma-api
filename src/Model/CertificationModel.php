@@ -15,4 +15,6 @@ class CertificationModel
     public ?\DateTimeImmutable $yearEnd = null;
 
     public ?string $file = null;
+
+    public ?string $proofImage = null;
 }

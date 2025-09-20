@@ -44,6 +44,10 @@ class TeacherCertification
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
     private ?Attachment $file = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['teacher:show', 'teacher:certifications'])]
+    private ?string $proofImage = null;
+
     public function __construct()
     {
         $this->language = new ArrayCollection();
@@ -134,6 +138,18 @@ class TeacherCertification
     public function setFile(?Attachment $file): static
     {
         $this->file = $file;
+
+        return $this;
+    }
+
+    public function getProofImage(): ?string
+    {
+        return $this->proofImage;
+    }
+
+    public function setProofImage(?string $proofImage): static
+    {
+        $this->proofImage = $proofImage;
 
         return $this;
     }

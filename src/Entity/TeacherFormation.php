@@ -42,6 +42,10 @@ class TeacherFormation
     #[Groups(['teacher:show'])]
     private ?Attachment $file = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['teacher:show', 'teacher:certifications'])]
+    private ?string $proofImage = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -127,6 +131,18 @@ class TeacherFormation
     public function setFile(?Attachment $file): static
     {
         $this->file = $file;
+
+        return $this;
+    }
+
+    public function getProofImage(): ?string
+    {
+        return $this->proofImage;
+    }
+
+    public function setProofImage(?string $proofImage): static
+    {
+        $this->proofImage = $proofImage;
 
         return $this;
     }
