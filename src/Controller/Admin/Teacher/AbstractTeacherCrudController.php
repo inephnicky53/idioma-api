@@ -65,6 +65,11 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
                 ->where('u.isActive = true')
                 ->orderBy('u.email', 'ASC')
             );
+        
+
+        yield AssociationField::new('language', "Langue principale")
+            ->autocomplete()
+            ->setColumns(6);
 
         yield CollectionField::new('spokenLanguages', "Langues parlées")
             ->useEntryCrudForm(SpokenLanguageCrudController::class)
