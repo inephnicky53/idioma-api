@@ -8,6 +8,7 @@ use App\Entity\SpokenLanguage;
 use App\Entity\Teacher;
 use App\Entity\TeacherCertification;
 use App\Entity\TeacherFormation;
+use App\Entity\TeachingLanguage;
 use App\Entity\User;
 use App\Entity\UserTeacher;
 use App\Event\TeacherCreatedEvent;
@@ -30,9 +31,7 @@ readonly class TeacherManager
         private UserTeacherRepository    $userTeacherRepository,
         private Security                 $security,
         private EventDispatcherInterface $dispatcher
-    )
-    {
-    }
+    ) {}
 
     /**
      * @throws Exception
@@ -66,15 +65,22 @@ readonly class TeacherManager
             ->setIsActive(false);
 
         foreach ($model->spokenLanguages as $item) {
+            $teacher->addSpokenLanguage(
+                (new SpokenLanguage())
+                    ->setLanguage($item->language)
+                    ->setLevel($item->level)
+            );
+        }
+
+        foreach ($model->languages as $item) {
             $lang = $this->languageRepository->findOneBy(['locale' => $item->language]);
 
             if (is_null($lang))
                 throw new Exception("La langue sélectionnée n'existe pas");
 
-            $teacher->addSpokenLanguage(
-                (new SpokenLanguage())
+            $teacher->addTeachingLanguage(
+                (new TeachingLanguage())
                     ->setLanguage($lang)
-                    ->setLevel($item->level)
             );
         }
 

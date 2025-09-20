@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Language;
 use App\Entity\Teacher;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
@@ -82,5 +83,23 @@ class TeacherRepository extends ServiceEntityRepository
             ->leftJoin('t.user', 'u')
             ->addSelect('u', 'd')
             ->orderBy('t.price', 'ASC');
+    }
+
+    /**
+     * Compte le nombre de professeurs qui enseignent une langue spécifique
+     */
+    public function countTeachersByTeachingLanguage(Language $language): int
+    {
+        return $this->createQueryBuilder('t')
+            ->select('COUNT(DISTINCT t.id)')
+            ->innerJoin('t.teachingLanguages', 'tl')
+            ->andWhere('tl.language = :language')
+            ->andWhere('t.isActive = :active')
+            ->andWhere('t.isVerified = :verified')
+            ->setParameter('language', $language)
+            ->setParameter('active', true)
+            ->setParameter('verified', true)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 }

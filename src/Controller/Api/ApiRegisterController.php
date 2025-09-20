@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Event\UserCreatedEvent;
 use App\Repository\OTPRepository;
 use App\Repository\UserRepository;
+use App\Sender\EmailSender;
 use App\Service\SmsService;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
@@ -35,6 +36,7 @@ class ApiRegisterController extends AbstractController
         private readonly EventDispatcherInterface $dispatcher,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
+        private readonly EmailSender $emailSender,
     ) 
     {
     }
@@ -45,11 +47,9 @@ class ApiRegisterController extends AbstractController
         SmsService $smsService
     ): JsonResponse {
         try {
-
             $validationErrors = $this->validateUserData($data);
-            if ($validationErrors) {
+            if ($validationErrors)
                 return $validationErrors;
-            }
 
             if ($this->userRepository->findOneBy(['email' => $data->getEmail()])) {
                 return $this->json([
@@ -70,19 +70,24 @@ class ApiRegisterController extends AbstractController
             $this->entityManager->beginTransaction();
             
             try {
-                // Sauvegarde de l'utilisateur
                 $this->userRepository->add($data, true);
 
-                // Gestion de l'OTP si un numéro de téléphone est fourni
+                $otp = null;
                 $otpSent = false;
-                if ($data->getPhone()) {
-                    $otpSent = $this->handleOTPGeneration($data, $smsService);
+                $emailOtpSent = false;
+
+                if ($data->getPhone() || $data->getEmail()) {
+                    $otp = $this->generateSingleOTP($data);
+                    
+                    if ($data->getPhone())
+                        $otpSent = $this->sendOTPViaSMS($data, $otp, $smsService);
+                    
+                    if ($data->getEmail())
+                        $emailOtpSent = $this->sendOTPViaEmail($data, $otp);
                 }
 
-                // Génération du token JWT
                 $token = $this->jwtManager->create($data);
 
-                // Dispatch de l'événement de création d'utilisateur
                 $this->dispatcher->dispatch(new UserCreatedEvent($data));
 
                 $this->entityManager->commit();
@@ -96,8 +101,14 @@ class ApiRegisterController extends AbstractController
                     ]
                 ];
 
-                if ($otpSent) {
+                if ($otpSent && $emailOtpSent) {
+                    $response['message'] = 'Inscription réussie. Un code de vérification a été envoyé par SMS et par email.';
+                    $response['otp_required'] = true;
+                } elseif ($otpSent) {
                     $response['message'] = 'Inscription réussie. Un code de vérification a été envoyé par SMS.';
+                    $response['otp_required'] = true;
+                } elseif ($emailOtpSent) {
+                    $response['message'] = 'Inscription réussie. Un code de vérification a été envoyé par email.';
                     $response['otp_required'] = true;
                 } else {
                     $response['message'] = 'Inscription réussie.';
@@ -168,7 +179,6 @@ class ApiRegisterController extends AbstractController
                 'ip' => $ip,
                 'error' => $e->getMessage()
             ]);
-            // Continue sans géolocalisation en cas d'erreur
         }
     }
 
@@ -176,10 +186,8 @@ class ApiRegisterController extends AbstractController
     {
         $clientIp = $request->getClientIp();
         
-        // Utiliser une IP par défaut pour les environnements locaux
-        if (in_array($clientIp, ['127.0.0.1', '::1', null], true)) {
+        if (in_array($clientIp, ['127.0.0.1', '::1', null], true))
             return self::DEFAULT_IP_FOR_LOCAL;
-        }
         
         return $clientIp;
     }
@@ -193,44 +201,64 @@ class ApiRegisterController extends AbstractController
         $data->setPassword($hashedPassword);
     }
 
-    private function handleOTPGeneration(User $data, SmsService $smsService): bool
+    private function generateSingleOTP(User $user): string
+    {
+        $this->otpRepository->deleteBy($user, OTP::TYPE_USER);
+        
+        $otp = OTP::generate(
+            $user,
+            self::OTP_LENGTH,
+            self::OTP_EXPIRY_MINUTES,
+            OTP::TYPE_USER,
+            $user->getPhone() ?? $user->getEmail(),
+            $user->getId()
+        );
+        
+        $this->otpRepository->add($otp, true);
+        
+        return $otp->getPass();
+    }
+
+    private function sendOTPViaSMS(User $user, string $otp, SmsService $smsService): bool
     {
         try {
-            $this->otpRepository->deleteBy($data, OTP::TYPE_USER);
-
-            $otp = OTP::generate(
-                $data,
-                self::OTP_LENGTH,
-                self::OTP_EXPIRY_MINUTES,
-                OTP::TYPE_USER,
-                $data->getPhone(),
-                $data->getId()
-            );
-            
-            $this->otpRepository->add($otp, true);
-
             $message = sprintf(
                 'Bienvenue ! Votre code de vérification Idioma est : %s. Ce code expire dans %d minutes.',
-                $otp->getPass(),
+                $otp,
                 self::OTP_EXPIRY_MINUTES
             );
-            
-            $smsService->sendBc($data->getPhone(), $message);
-
-            $this->logger->info('OTP envoyé avec succès', [
-                'user_id' => $data->getId(),
-                'phone' => $data->getPhone()
-            ]);
-
+            $smsService->sendBc($user->getPhone(), $message);
+            $this->logger->info('OTP SMS envoyé avec succès', ['user_id' => $user->getId()]);
             return true;
-            
         } catch (\Exception $e) {
-            $this->logger->error('Erreur lors de l\'envoi de l\'OTP', [
-                'user_id' => $data->getId(),
-                'phone' => $data->getPhone(),
+            $this->logger->error('Erreur lors de l\'envoi de l\'OTP par SMS', [
+                'user_id' => $user->getId(),
                 'error' => $e->getMessage()
             ]);
-            
+            return false;
+        }
+    }
+
+    private function sendOTPViaEmail(User $user, string $otp): bool
+    {
+        try {
+            $this->emailSender->send(
+                'Code de vérification - Inscription',
+                $user->getEmail(),
+                'email/otp_registration.mjml.twig',
+                [
+                    'user' => $user,
+                    'otp_code' => $otp,
+                    'expiry_minutes' => self::OTP_EXPIRY_MINUTES
+                ]
+            );
+            $this->logger->info('OTP Email envoyé avec succès', ['user_id' => $user->getId()]);
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur lors de l\'envoi de l\'OTP par email', [
+                'user_id' => $user->getId(),
+                'error' => $e->getMessage()
+            ]);
             return false;
         }
     }

@@ -3,8 +3,6 @@
 namespace App\Dto;
 
 use App\Entity\Currency;
-use App\Entity\Transaction;
-use App\Model\OrderProductModel;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class CreatePaymentInput
