@@ -28,5 +28,5 @@ class UpdateTeacherInput
     public ?float $price = null;
 
     #[Groups(['teacher:update'])]
-    public array $spokenLanguages = [];
+    public ?array $spokenLanguages = null;
 }
