@@ -1,0 +1,67 @@
+{% extends 'base_email.mjml.twig' %}
+
+{% block title %}{{ subject }}{% endblock %}
+
+{% block email_content %}
+    <mj-section background-color="#ffffff" padding-left="15px" padding-right="15px">
+        <mj-column width="100%">
+            <mj-text color="#212b35" font-weight="bold" font-size="20px">
+                Transaction initiée
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Cher/Chère {{ data.transaction.user.fullname }},
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Une nouvelle transaction a été initiée pour votre commande sur {{ idioma.name }}.
+            </mj-text>
+            
+            <mj-divider border-color="#e5e7eb" border-width="1px" padding="20px 0"></mj-divider>
+            
+            <mj-text color="#212b35" font-weight="bold" font-size="16px">
+                Détails de la transaction :
+            </mj-text>
+            <mj-text color="#637381" font-size="14px">
+                <strong>Référence :</strong> {{ data.transaction.reference }}
+            </mj-text>
+            <mj-text color="#637381" font-size="14px">
+                <strong>Montant :</strong> {{ data.transaction.amount }} {{ data.transaction.currency.min }}
+            </mj-text>
+            <mj-text color="#637381" font-size="14px">
+                <strong>Opérateur :</strong> {{ data.transaction.operator }}
+            </mj-text>
+            <mj-text color="#637381" font-size="14px">
+                <strong>Statut :</strong> {{ data.transaction.status }}
+            </mj-text>
+            <mj-text color="#637381" font-size="14px">
+                <strong>Date :</strong> {{ data.transaction.createdAt|date('d/m/Y à H:i') }}
+            </mj-text>
+            
+            {% if data.transaction.command %}
+                <mj-text color="#212b35" font-weight="bold" font-size="16px" padding-top="20px">
+                    Commande associée :
+                </mj-text>
+                <mj-text color="#637381" font-size="14px">
+                    <strong>Référence :</strong> {{ data.transaction.command.reference }}
+                </mj-text>
+            {% endif %}
+            
+            <mj-divider border-color="#e5e7eb" border-width="1px" padding="20px 0"></mj-divider>
+            
+            <mj-text color="#637381" font-size="16px">
+                Nous traiterons votre paiement dans les plus brefs délais. Vous recevrez une notification dès que la transaction sera confirmée.
+            </mj-text>
+            
+            <mj-button background-color="#3d165b" align="center" color="#ffffff" font-size="17px"
+                       font-weight="bold" href="{{ idioma.dashboard }}" width="300px">
+                Suivre ma transaction
+            </mj-button>
+            
+            <mj-text color="#637381" font-size="16px" padding-top="30px">
+                Merci de votre patience !
+            </mj-text>
+            <mj-text color="#637381" font-size="16px" padding-bottom="0">
+                L'équipe {{ idioma.name }}
+            </mj-text>
+        </mj-column>
+    </mj-section>
+{% endblock %}

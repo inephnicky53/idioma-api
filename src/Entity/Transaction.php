@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Repository\TransactionRepository;
 use App\State\Transaction\CheckTransactionProvider;
 use App\Trait\Datable;
@@ -16,6 +17,10 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\Entity(repositoryClass: TransactionRepository::class)]
 #[ApiResource(
     operations: [
+        new GetCollection(
+            normalizationContext: ['groups' => ['transaction:list']],
+            security: "is_granted('ROLE_USER')"
+        ),
         new Get(
             uriTemplate: 'transactions/{id}/check',
             provider: CheckTransactionProvider::class,
@@ -35,42 +40,51 @@ class Transaction
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['order:list'])]
+    #[Groups(['order:list', 'transaction:list'])]
     private ?int $id = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['order:list', 'transaction:list'])]
     private ?\DateTimeImmutable $respondedAt = null;
 
     #[ORM\Column(length: 15, nullable: true)]
-    #[Groups('transaction:new')]
+    #[Groups(['transaction:new', 'transaction:list'])]
     private ?string $phone = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['order:list', 'transaction:list'])]
     private ?string $status = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['order:list', 'transaction:list'])]
     private ?string $operator = null;
 
     #[ORM\Column]
+    #[Groups(['order:list', 'transaction:list'])]
     private ?float $amount = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['order:list', 'transaction:list'])]
     private ?string $reference = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $providerReference = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['order:list', 'transaction:list'])]
     private ?string $message = null;
 
     #[ORM\ManyToOne]
+    #[Groups(['transaction:list'])]
     private ?Currency $currency = null;
 
     #[ORM\ManyToOne(inversedBy: 'transactions')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['transaction:list'])]
     private ?User $user = null;
 
     #[ORM\OneToOne(mappedBy: 'transaction', cascade: ['persist', 'remove'])]
+    #[Groups(['transaction:list'])]
     private ?Order $command = null;
 
     /**

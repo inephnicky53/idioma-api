@@ -13,4 +13,8 @@ class VerifyOTPInput
     #[Assert\NotNull]
     #[Assert\NotBlank]
     public string $type;
+
+    #[Assert\NotNull]
+    #[Assert\NotBlank]
+    public string $token;
 }

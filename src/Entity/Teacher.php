@@ -14,17 +14,18 @@ use ApiPlatform\Metadata\Patch;
 use App\Controller\Api\Teacher\TeacherMediaController;
 use App\Controller\Api\Teacher\TeacherGetCoursesController;
 use App\Dto\CreateTeacherInput;
+use App\Dto\DisponibilityOutput;
 use App\Dto\UpdateDisponibilitiesInput;
 use App\Dto\UpdateTeacherInput;
 use App\Dto\Wallet\WithdrawalRequestInput;
 use App\Idioma;
 use App\Repository\TeacherRepository;
 use App\State\Teacher\CreateTeacherProcessor;
-use App\State\Teacher\TeacherDisponibilitiesProvider;
+use App\State\Teacher\TeacherDisponibilitiesAdvancedProvider;
 use App\State\Teacher\TeacherCollectionProvider;
 use App\State\Teacher\TeacherCheckProvider;
 use App\State\Teacher\TeacherGetProvider;
-use App\State\Teacher\TeacherSelfDisponibilitiesProvider;
+use App\State\Teacher\TeacherSelfDisponibilitiesAdvancedProvider;
 use App\State\Teacher\TeacherWalletProvider;
 use App\State\Teacher\UpdateDisponibilitiesProcessor;
 use App\State\Teacher\UpdateTeacherProcessor;
@@ -65,9 +66,10 @@ use Symfony\Component\Serializer\Annotation\Groups;
         ),
         new Get(
             uriTemplate: '/teacher/disponibilities',
+            output: DisponibilityOutput::class,
             normalizationContext: ['groups' => ['teacher:disponibilities:list']],
             security: "is_granted('ROLE_USER')",
-            provider: TeacherSelfDisponibilitiesProvider::class
+            provider: TeacherSelfDisponibilitiesAdvancedProvider::class
         ),
         new Get(
             uriTemplate: "teachers/{id}/courses",
@@ -76,7 +78,8 @@ use Symfony\Component\Serializer\Annotation\Groups;
         new Get(
             uriTemplate: "teachers/{id}/disponibilities",
             normalizationContext: ['groups' => ['teacher:disponibilities:list']],
-            provider: TeacherDisponibilitiesProvider::class
+            output: DisponibilityOutput::class,
+            provider: TeacherDisponibilitiesAdvancedProvider::class
         ),
         new Post(
             uriTemplate: "teachers/become",
@@ -163,7 +166,7 @@ class Teacher
     private ?int $id = null;
 
     #[ORM\OneToOne(inversedBy: 'teacher', cascade: ['persist', 'remove'])]
-    #[Groups(['teacher:list', 'course:list', 'user:courses', 'user:teacher:get', 'planning:show', 'user:inbox'])]
+    #[Groups(['teacher:list', 'course:list', 'user:courses', 'user:teacher:get', 'planning:show', 'user:inbox', 'order:list'])]
     private ?User $user = null;
 
     #[ORM\ManyToMany(targetEntity: Language::class, inversedBy: 'teachers')]
@@ -666,46 +669,7 @@ class Teacher
         return $this;
     }
 
-    /**
-     * @throws \Exception
-     */
-    #[Groups(['teacher:show', 'teacher:disponibilities:list'])]
-    public function getDisponibilitiesList(): array
-    {
-        $now = new DateTimeImmutable();
-        if ($this->getTimezone())
-            $now->setTimezone(new \DateTimeZone($this->getTimezone()));
-        $end = $now->modify('+ 15days');
-        $interval = DateInterval::createFromDateString('1 day');
-        $daterange = new DatePeriod($now, $interval, $end);
 
-        $plannings = [];
-
-        foreach ($daterange as $day) {
-            $this->disponibilities->map(function (Disponibility $disponibility) use ($now, $day, &$plannings) {
-                $d = $day->format('l');
-                if ($disponibility->isIsActive() && ucfirst($disponibility->getDay()) === $d) {
-                    /*$s = $now->modify("{$disponibility->getDay()} this week");
-                    if ($s->diff($now)->invert === 0) {
-                        $s = $now->modify("{$disponibility->getDay()} next week");
-                    }*/
-                    $start = $day->modify($disponibility->getStart());
-                    $end = $day->modify($disponibility->getEnd());
-                    $plannings = [...$plannings, ...Idioma::dateRange($start->format('Y-m-d H:i'), $end->format('Y-m-d H:i'))];
-                }
-                //dd($day, $disponibility, $plannings);
-            });
-        }
-
-        $allreadyPlannings = [];
-        $this->plannings->map(function (Planning $planning) use (&$allreadyPlannings) {
-            $start = $planning->getStart()->format('Y-m-d H:i');
-            $end = $planning->getEnd()->format('Y-m-d H:i');
-            $allreadyPlannings = [...$allreadyPlannings, ...Idioma::dateRange($start, $end, '+30 minutes')];
-        });
-
-        return array_values(array_diff($plannings, $allreadyPlannings));
-    }
 
 
     public function getSubmitedAt(): ?DateTimeImmutable
@@ -908,9 +872,11 @@ class Teacher
         return $this->canTrial;
     }
 
-    public function setCanTrial(bool $canTrial): void
+    public function setCanTrial(bool $canTrial): static
     {
         $this->canTrial = $canTrial;
+
+        return $this;
     }
 
     public function getHours(): ?float
@@ -918,8 +884,10 @@ class Teacher
         return $this->hours;
     }
 
-    public function setHours(?float $hours): void
+    public function setHours(?float $hours): static
     {
         $this->hours = $hours;
+
+        return $this;
     }
 }

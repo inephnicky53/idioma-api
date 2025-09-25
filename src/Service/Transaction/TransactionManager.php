@@ -9,12 +9,18 @@ use App\Entity\OrderProduct;
 use App\Entity\Transaction;
 use App\Entity\User;
 use App\Entity\UserTeacher;
+use App\Event\OrderCreatedEvent;
+use App\Event\OrderConfirmedEvent;
+use App\Event\TransactionCreatedEvent;
+use App\Event\TransactionConfirmedEvent;
+use App\Event\TransactionFailedEvent;
 use App\Exception\PaymentException;
 use App\Idioma;
 use App\Service\OperatorProcess;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 readonly class TransactionManager
@@ -23,6 +29,7 @@ readonly class TransactionManager
         private EntityManagerInterface $em,
         private OperatorProcess        $process,
         private Security               $security,
+        private EventDispatcherInterface $eventDispatcher,
     )
     {
     }
@@ -75,6 +82,9 @@ readonly class TransactionManager
         $this->em->persist($order);
         $this->em->flush();
 
+        // Dispatch OrderCreatedEvent
+        $this->eventDispatcher->dispatch(new OrderCreatedEvent($order));
+
         $transaction = (new Transaction())
             ->setOperator($operator)
             ->setPhone($dto->phone)
@@ -109,6 +119,9 @@ readonly class TransactionManager
         $this->em->persist($transaction);
         $this->em->flush();
 
+        // Dispatch TransactionCreatedEvent
+        $this->eventDispatcher->dispatch(new TransactionCreatedEvent($transaction));
+
         $this->process->process($transaction);
 
         return new JsonResponse(['message' => 'Transaction created successfully.']);
@@ -132,9 +145,21 @@ readonly class TransactionManager
                 case '0':
                     $transaction->setStatus(Idioma::STATUS_SUCCESS);
                     $this->confirmTransaction($transaction);
+                    
+                    // Dispatch TransactionConfirmedEvent
+                    $this->eventDispatcher->dispatch(new TransactionConfirmedEvent($transaction));
+                    
+                    // Dispatch OrderConfirmedEvent if order exists
+                    $order = $transaction->getCommand();
+                    if ($order) {
+                        $this->eventDispatcher->dispatch(new OrderConfirmedEvent($order));
+                    }
                     break;
                 case '1':
                     $transaction->setStatus(Idioma::STATUS_FAILED);
+                    
+                    // Dispatch TransactionFailedEvent
+                    $this->eventDispatcher->dispatch(new TransactionFailedEvent($transaction));
                     break;
                 default:
                     $transaction->setStatus(Idioma::STATUS_PROCESS);

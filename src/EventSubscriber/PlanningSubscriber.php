@@ -31,6 +31,7 @@ readonly class PlanningSubscriber implements EventSubscriberInterface
                 ->subject($subject)
                 ->htmlTemplate('email/new_booking.html.twig')
                 ->context([
+                    'subject' => $subject,
                     'data' => $planning,
                 ]);
 
@@ -50,6 +51,7 @@ readonly class PlanningSubscriber implements EventSubscriberInterface
                 ->subject($subject)
                 ->htmlTemplate('email/new_booking.html.twig')
                 ->context([
+                    'subject' => $subject,
                     'data' => $planning,
                 ]);
 

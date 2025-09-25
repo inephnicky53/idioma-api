@@ -8,7 +8,7 @@ class CertificationModel
 {
     public ?string $certification = null;
 
-    public ?Language $language = null;
+    public ?string $language = null;
 
     public ?\DateTimeImmutable $yearStart = null;
 

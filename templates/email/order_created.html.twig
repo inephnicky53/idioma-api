@@ -1,0 +1,69 @@
+{% extends 'base_email.mjml.twig' %}
+
+{% block title %}{{ subject }}{% endblock %}
+
+{% block email_content %}
+    <mj-section background-color="#ffffff" padding-left="15px" padding-right="15px">
+        <mj-column width="100%">
+            <mj-text color="#212b35" font-weight="bold" font-size="20px">
+                Nouvelle commande créée
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Cher/Chère {{ data.order.user.fullname }},
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Votre commande a été créée avec succès sur {{ idioma.name }}.
+            </mj-text>
+            
+            <mj-divider border-color="#e5e7eb" border-width="1px" padding="20px 0"></mj-divider>
+            
+            <mj-text color="#212b35" font-weight="bold" font-size="16px">
+                Détails de la commande :
+            </mj-text>
+            <mj-text color="#637381" font-size="14px">
+                <strong>Référence :</strong> {{ data.order.reference }}
+            </mj-text>
+            <mj-text color="#637381" font-size="14px">
+                <strong>Montant :</strong> {{ data.order.amount }} {{ data.order.currency.min }}
+            </mj-text>
+            <mj-text color="#637381" font-size="14px">
+                <strong>Statut :</strong> {{ data.order.status }}
+            </mj-text>
+            <mj-text color="#637381" font-size="14px">
+                <strong>Date :</strong> {{ data.order.createdAt|date('d/m/Y à H:i') }}
+            </mj-text>
+            
+            {% if data.order.products|length > 0 %}
+                <mj-text color="#212b35" font-weight="bold" font-size="16px" padding-top="20px">
+                    Produits commandés :
+                </mj-text>
+                {% for product in data.order.products %}
+                    <mj-text color="#637381" font-size="14px">
+                        • {{ product.package.name }} avec {{ product.teacher.fullname }}
+                        {% if product.amount %}
+                            - {{ product.amount }} {{ data.order.currency.min }}
+                        {% endif %}
+                    </mj-text>
+                {% endfor %}
+            {% endif %}
+            
+            <mj-divider border-color="#e5e7eb" border-width="1px" padding="20px 0"></mj-divider>
+            
+            <mj-text color="#637381" font-size="16px">
+                Nous traiterons votre commande dans les plus brefs délais. Vous recevrez une confirmation par email une fois le paiement validé.
+            </mj-text>
+            
+            <mj-button background-color="#3d165b" align="center" color="#ffffff" font-size="17px"
+                       font-weight="bold" href="{{ idioma.dashboard }}" width="300px">
+                Voir ma commande
+            </mj-button>
+            
+            <mj-text color="#637381" font-size="16px" padding-top="30px">
+                Merci de votre confiance !
+            </mj-text>
+            <mj-text color="#637381" font-size="16px" padding-bottom="0">
+                L'équipe {{ idioma.name }}
+            </mj-text>
+        </mj-column>
+    </mj-section>
+{% endblock %}

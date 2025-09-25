@@ -32,9 +32,15 @@ readonly class TeacherNormalizer implements NormalizerInterface
 
         if ($user instanceof User) {
             // Vérifier si l'utilisateur peut faire un cours d'essai avec ce professeur
-            // Condition: l'utilisateur ne doit pas avoir de sessions (plannings) avec ce professeur
+            // Condition: l'utilisateur ne doit pas avoir de sessions (plannings) valides avec ce professeur
+            // On exclut les plannings annulés et rejetés
             $canTrial = !$user->getPlannings()->exists(
-                fn($key, Planning $planning) => $planning->getTeacher()->getId() === $object->getId()
+                fn($key, Planning $planning) => 
+                    $planning->getTeacher()->getId() === $object->getId() &&
+                    !in_array($planning->getStatus(), [
+                        Planning::STATUS_CANCELED,
+                        Planning::STATUS_REJECTED
+                    ])
             );
 
             $object->setCanTrial($canTrial);

@@ -27,12 +27,14 @@ readonly class TeacherSubscriber implements EventSubscriberInterface
     public function onTeacherCreated(TeacherCreatedEvent $event): void
     {
         $teacher = $event->getTeacher();
+        $subject = "Inscription en tant que professeur";
         try {
             $email = (new TemplatedEmail())
                 ->to(new Address($teacher->getUser()->getEmail()))
-                ->subject("Inscription en tant que professeur")
+                ->subject($subject)
                 ->htmlTemplate('email/new_teacher.html.twig')
                 ->context([
+                    'subject' => $subject,
                     'data' => $teacher,
                 ]);
 

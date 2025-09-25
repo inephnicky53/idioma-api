@@ -1,5 +1,38 @@
-<h1>Réservation d'heure confirmé !</h1>
+{% extends 'base_email.mjml.twig' %}
 
-<p>
-    Un planning vient d'être enregistré
-</p>
+{% block title %}{{ subject }}{% endblock %}
+
+{% block email_content %}
+    <mj-section background-color="#ffffff" padding-left="15px" padding-right="15px">
+        <mj-column width="100%">
+            <mj-text color="#212b35" font-weight="bold" font-size="20px">
+                Nouvelle réservation de cours
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Cher/Chère {{ data.teacher.user.fullname }},
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Vous avez reçu une nouvelle réservation de cours !
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                <strong>Étudiant :</strong> {{ data.participants.first.fullname }}<br>
+                <strong>Date :</strong> {{ data.start|date('d/m/Y') }}<br>
+                <strong>Heure :</strong> {{ data.start|date('H:i') }} - {{ data.end|date('H:i') }}<br>
+                {% if data.course %}<strong>Cours :</strong> {{ data.course.name }}{% endif %}
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Veuillez vous connecter à votre tableau de bord pour confirmer ou gérer cette réservation.
+            </mj-text>
+            <mj-button background-color="#3d165b" align="center" color="#ffffff" font-size="17px"
+                       font-weight="bold" href="{{ idioma.teacher_dashboard }}" width="300px">
+                Voir ma réservation
+            </mj-button>
+            <mj-text color="#637381" font-size="16px" padding-top="30px">
+                Bon cours !
+            </mj-text>
+            <mj-text color="#637381" font-size="16px" padding-bottom="0">
+                L'équipe {{ idioma.name }}
+            </mj-text>
+        </mj-column>
+    </mj-section>
+{% endblock %}

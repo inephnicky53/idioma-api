@@ -3,6 +3,7 @@
 namespace App\Controller\Admin\Teacher;
 
 use App\Entity\Teacher;
+use App\Event\TeacherValidatedEvent;
 use App\Repository\TeacherRepository;
 use App\Service\Teacher\TeacherManager;
 use App\Service\Teacher\TeacherStatusService;
@@ -17,6 +18,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGenerator;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class OnWaitingTeacherCrudController extends AbstractTeacherCrudController
@@ -26,6 +28,7 @@ class OnWaitingTeacherCrudController extends AbstractTeacherCrudController
         TeacherRepository                  $repository,
         TeacherStatusService               $statusService,
         LoggerInterface                    $logger,
+        private EventDispatcherInterface $dispatcher,
         private readonly AdminUrlGenerator $adminUrlGenerator
     )
     {
@@ -78,6 +81,10 @@ class OnWaitingTeacherCrudController extends AbstractTeacherCrudController
         } else {
             $this->addFlash('error', 'Erreur lors de la validation du professeur.');
         }
+
+        $this->dispatcher->dispatch(
+            new TeacherValidatedEvent($teacher)
+        );
 
         return $this->redirect($this->adminUrlGenerator
             ->setController(self::class)

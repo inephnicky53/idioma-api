@@ -25,7 +25,7 @@ class ApiRegisterController extends AbstractController
 {
     private const DEFAULT_IP_FOR_LOCAL = '41.78.192.90';
     private const OTP_LENGTH = 4;
-    private const OTP_EXPIRY_MINUTES = 2;
+    private const OTP_EXPIRY_MINUTES = 15;
     
     public function __construct(
         private readonly UserPasswordHasherInterface $userPasswordHasher,

@@ -2,11 +2,15 @@
 
 namespace App\Controller;
 
+use App\Event\OrderConfirmedEvent;
+use App\Event\TransactionConfirmedEvent;
+use App\Event\TransactionFailedEvent;
 use App\Idioma;
 use App\Repository\TransactionRepository;
 use App\Service\Transaction\TransactionManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -16,7 +20,8 @@ class CallbackController extends AbstractController
     public function __construct(
         private readonly TransactionRepository  $transactionRepository,
         private readonly TransactionManager     $manager,
-        private readonly EntityManagerInterface $em
+        private readonly EntityManagerInterface $em,
+        private readonly EventDispatcherInterface $eventDispatcher
     )
     {
     }
@@ -45,8 +50,20 @@ class CallbackController extends AbstractController
                 $transaction->setProviderReference($body['provider_reference']);
             }
             $this->manager->confirmTransaction($transaction);
+            
+            // Dispatch TransactionConfirmedEvent
+            $this->eventDispatcher->dispatch(new TransactionConfirmedEvent($transaction));
+            
+            // Dispatch OrderConfirmedEvent if order exists
+            $order = $transaction->getCommand();
+            if ($order) {
+                $this->eventDispatcher->dispatch(new OrderConfirmedEvent($order));
+            }
         } else {
             $transaction->setStatus(Idioma::STATUS_ERROR);
+            
+            // Dispatch TransactionFailedEvent
+            $this->eventDispatcher->dispatch(new TransactionFailedEvent($transaction));
         }
 
         $transaction->setRespondedAt(new \DateTimeImmutable());

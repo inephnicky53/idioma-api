@@ -1,9 +1,35 @@
-<h1>Bienvenu(e) cher(e) professeur(e) !</h1>
+{% extends 'base_email.mjml.twig' %}
 
-<p>
-    Votre compte est en cours de validation, nous vous informerons des avancées.
-</p>
+{% block title %}{{ subject }}{% endblock %}
 
-<p>
-    Si vous n'êtes pas l'auteur ou que vous ne reconnaissez pas cette opération, vous pouvez ignorer ce message.
-</p>
+{% block email_content %}
+    <mj-section background-color="#ffffff" padding-left="15px" padding-right="15px">
+        <mj-column width="100%">
+            <mj-text color="#212b35" font-weight="bold" font-size="20px">
+                Bienvenue chez {{ idioma.name }} !
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Cher/Chère {{ data.user.fullname }},
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Nous avons bien reçu votre candidature pour devenir professeur sur notre plateforme.
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Votre profil est actuellement en cours de validation par notre équipe. 
+                Nous examinerons attentivement vos qualifications et votre expérience.
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Vous recevrez une notification par email dès que votre compte sera validé et activé.
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer ce message.
+            </mj-text>
+            <mj-text color="#637381" font-size="16px" padding-top="30px">
+                Merci de votre intérêt pour {{ idioma.name }} !
+            </mj-text>
+            <mj-text color="#637381" font-size="16px" padding-bottom="0">
+                L'équipe {{ idioma.name }}
+            </mj-text>
+        </mj-column>
+    </mj-section>
+{% endblock %}

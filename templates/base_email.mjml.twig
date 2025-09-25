@@ -1,121 +1,84 @@
 {% mjml %}
     <mjml>
         <mj-head>
-            <mj-title>{% block title %}Bienvenue chez Idioma International{% endblock %}</mj-title>
-            <mj-preview>{% block preview %}Bienvenue chez Idioma International{% endblock %}</mj-preview>
+            <mj-title>{% block title %}{{ subject }}{% endblock %}</mj-title>
+            <mj-preview>{% block preview %}{{ subject }}{% endblock %}</mj-preview>
             <mj-attributes>
-                <mj-all font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"></mj-all>
-                <mj-text font-weight="400" font-size="16px" color="#000000" line-height="24px"
-                         font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"></mj-text>
+                <mj-all font-family="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"></mj-all>
+                <mj-text font-weight="400" font-size="16px" color="#333333" line-height="1.6"></mj-text>
             </mj-attributes>
             <mj-style inline="inline">
                 .body-section {
-                -webkit-box-shadow: 1px 4px 11px 0px rgba(0, 0, 0, 0.15);
-                -moz-box-shadow: 1px 4px 11px 0px rgba(0, 0, 0, 0.15);
-                box-shadow: 1px 4px 11px 0px rgba(0, 0, 0, 0.15);
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
                 }
-            </mj-style>
-            <mj-style inline="inline">
                 .text-link {
-                color: #3d165b
+                    color: #3d165b;
+                    text-decoration: none;
                 }
-            </mj-style>
-            <mj-style inline="inline">
                 .footer-link {
-                color: #888888
+                    color: #888888;
+                    text-decoration: none;
+                }
+                .header-bg {
+                    background: linear-gradient(135deg, #3d165b 0%, #1f2e78 100%);
                 }
             </mj-style>
-
         </mj-head>
-        <mj-body background-color="#E7E7E7" width="600px">
-            <mj-section full-width="full-width" background-color="#3d165b" padding-bottom="0">
+        <mj-body background-color="#f5f5f5" width="600px">
+            <!-- Header avec logo -->
+            <mj-section background-color="#3d165b" padding="20px 0" css-class="header-bg">
                 <mj-column width="100%">
-                    <mj-image
-                            src="/images/logo.png"
-                            alt="" align="center" width="150px"/>
-                    <mj-image
-                            src="https://res.cloudinary.com/dheck1ubc/image/upload/v1544156968/Email/Images/AnnouncementOffset/header-top.png"
-                            width="600px" alt="" padding="0" href="https://google.com"/>
+                    <mj-text align="center" color="#ffffff" font-size="28px" font-weight="bold" padding="10px 0">
+                        Idioma International
+                    </mj-text>
+                    <mj-text align="center" color="#ffffff" font-size="14px" padding="0">
+                        Votre plateforme d'apprentissage des langues
+                    </mj-text>
                 </mj-column>
             </mj-section>
-            <mj-section background-color="#1f2e78">
-                <mj-column width="100%">
-                    <mj-image
-                            src="https://res.cloudinary.com/dheck1ubc/image/upload/v1544156968/Email/Images/AnnouncementOffset/header-bottom.png"
-                            width="600px" alt="" padding="0" href="https://google.com"/>
-                </mj-column>
-            </mj-section>
-            <mj-wrapper padding-top="0" padding-bottom="0" css-class="body-section">
+
+            <!-- Contenu principal -->
+            <mj-wrapper padding="20px" css-class="body-section">
                 {% block email_content %}{% endblock %}
-                <mj-section background-color="#ffffff" padding-left="15px" padding-right="15px" padding-top="0">
-                    <mj-column width="100%">
-                        <mj-divider border-color="#DFE3E8" border-width="1px"/>
-                    </mj-column>
-                </mj-section>
-                <mj-section background-color="#ffffff" padding-left="15px" padding-right="15px">
-                    <mj-column width="50%">
-                        <mj-text color="#212b35" font-size="12px" text-transform="uppercase" font-weight="bold"
-                                 padding-bottom="0">
-                            address
-                        </mj-text>
-                        <mj-text color="#637381" font-size="14px" padding-top="0">
-                            Avenue Chute de Lofoy 16, Kintambo
-                            <br/>
-                            Kinshasa - RDC
-                        </mj-text>
-                    </mj-column>
-                    <mj-column width="50%">
-                        <mj-text color="#212b35" font-size="12px" text-transform="uppercase" font-weight="bold"
-                                 padding-bottom="0">
-                            Heures de service client
-                        </mj-text>
-                        <mj-text color="#637381" font-size="14px" padding-top="0">
-                            Lundi au vendredi: de 8h à 17h
-                            <br/>
-                            Samedi : de 8h à 12h
-                        </mj-text>
-                    </mj-column>
-                </mj-section>
             </mj-wrapper>
 
-            <mj-wrapper full-width="full-width">
-                <mj-section>
-                    <mj-column width="100%" padding="0">
-                        <mj-social font-size="15px" icon-size="30px" mode="horizontal" padding="0" align="center">
-                            <mj-social-element name="facebook" href="https://mjml.io/" background-color="#A1A0A0">
-                            </mj-social-element>
-                            <mj-social-element name="youtube" href="https://mjml.io/" background-color="#A1A0A0">
-                            </mj-social-element>
-                            <mj-social-element name="linkedin" href="https://mjml.io/" background-color="#A1A0A0">
-                            </mj-social-element>
-                        </mj-social>
-                        <mj-text color="#445566" font-size="11px" font-weight="bold" align="center">
-                            Voir cet email sur votre navigateur web
-                        </mj-text>
-                        <mj-text color="#445566" font-size="11px" align="center" line-height="16px">
-                            Vous recevez cet email car vous êtes inscrit sur la plateforme Idioma International.
-                            (Avenue Chute de Lofoy 16, Kintambo, Kinshasa - RDC) et également vous recevrez les
-                            emails sur les nouveautés, événéments et les différentes offres.
-                        </mj-text>
-                        <mj-text color="#445566" font-size="11px" align="center" line-height="16px">
-                            &copy; Idioma International Sarl, Tous droits réservés.
-                        </mj-text>
-                    </mj-column>
-                </mj-section>
-                <mj-section padding-top="0">
-                    <mj-group>
-                        <mj-column width="100%" padding-right="0">
-                            <mj-text color="#445566" font-size="11px" align="center" line-height="16px"
-                                     font-weight="bold">
-                                <a class="footer-link" href="https://www.google.com">Politique de
-                                    confidentialité</a>&#xA0;&#xA0;&#xA0;&#xA0;&#xA0;&#xA0;&#xA0;&#xA0;<a
-                                        class="footer-link" href="https://www.google.com">Se désabonner</a>
-                            </mj-text>
-                        </mj-column>
-                    </mj-group>
+            <!-- Footer -->
+            <mj-section background-color="#f8f9fa" padding="30px 20px">
+                <mj-column width="100%">
+                    <mj-divider border-color="#e9ecef" border-width="1px" padding="0 0 20px 0"/>
+                    
+                    <mj-text color="#6c757d" font-size="14px" align="center" padding="10px 0">
+                        <strong>Idioma International</strong><br/>
+                        Avenue Chute de Lofoy 16, Kintambo<br/>
+                        Kinshasa - RDC
+                    </mj-text>
+                    
+                    <mj-text color="#6c757d" font-size="12px" align="center" padding="10px 0">
+                        Heures de service : Lundi au vendredi de 8h à 17h, Samedi de 8h à 12h
+                    </mj-text>
 
-                </mj-section>
-            </mj-wrapper>
+                    <mj-social font-size="15px" icon-size="30px" mode="horizontal" padding="20px 0" align="center">
+                        <mj-social-element name="facebook" href="#" background-color="#3d165b"></mj-social-element>
+                        <mj-social-element name="youtube" href="#" background-color="#3d165b"></mj-social-element>
+                        <mj-social-element name="linkedin" href="#" background-color="#3d165b"></mj-social-element>
+                    </mj-social>
+
+                    <mj-text color="#6c757d" font-size="11px" align="center" line-height="16px" padding="10px 0">
+                        Vous recevez cet email car vous êtes inscrit sur la plateforme Idioma International.
+                    </mj-text>
+                    
+                    <mj-text color="#6c757d" font-size="11px" align="center" line-height="16px">
+                        &copy; {{ "now"|date("Y") }} Idioma International Sarl, Tous droits réservés.
+                    </mj-text>
+                    
+                    <mj-text color="#6c757d" font-size="11px" align="center" padding="10px 0">
+                        <a class="footer-link" href="#">Politique de confidentialité</a> | 
+                        <a class="footer-link" href="#">Se désabonner</a>
+                    </mj-text>
+                </mj-column>
+            </mj-section>
         </mj-body>
     </mjml>
 {% endmjml %}

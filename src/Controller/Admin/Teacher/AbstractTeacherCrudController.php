@@ -113,6 +113,16 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
             ->setColumns(6)
             ->setHelp('Lien YouTube ou Vimeo');
 
+        yield UrlField::new('video', "Vidéo de présentation")
+            ->hideOnIndex()
+            ->setColumns(6)
+            ->setHelp('URL de la vidéo de présentation');
+
+        yield UrlField::new('profile', "Photo de profil")
+            ->hideOnIndex()
+            ->setColumns(6)
+            ->setHelp('URL de la photo de profil du professeur');
+
         // Description
         yield FormField::addTab('Présentation')
             ->setHelp("Informations de présentation du professeur");
@@ -137,7 +147,24 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
             ->hideOnIndex()
             ->setNumOfRows(6);
 
-        // Tarification et disponibilités
+        // Certifications & Formations
+        yield FormField::addTab("Certifications & Formations")
+            ->onlyOnForms()
+            ->setHelp("Certifications et formations du professeur");
+
+        yield AssociationField::new('certifications', "Certifications")
+            ->hideOnIndex()
+            ->setColumns(12)
+            ->setHelp('Certifications et diplômes du professeur')
+            ->setCrudController(TeacherCertificationCrudController::class);
+
+        yield AssociationField::new('formations', "Formations")
+            ->hideOnIndex()
+            ->setColumns(12)
+            ->setHelp('Formations académiques du professeur')
+            ->setCrudController(TeacherFormationCrudController::class);
+
+        // Tarification & Disponibilités
         yield FormField::addTab("Tarification & Disponibilités")
             ->setHelp("Configuration des prix et créneaux");
 

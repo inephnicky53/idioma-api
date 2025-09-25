@@ -8,6 +8,7 @@ twig:
             city: Kinshasa, RDC
             find_teacher: '%env(APP_URL)%/find-teacher'
             teacher_dashboard: '%env(APP_URL)%/teacher/dashboard'
+            dashboard: '%env(APP_URL)%/dashboard'
 
 
 when@test:

@@ -7,25 +7,32 @@ namespace App\Service;
 use App\Entity\Transaction;
 use App\Entity\UserCourse;
 use App\Entity\UserTeacher;
+use App\Event\OrderConfirmedEvent;
+use App\Event\TransactionConfirmedEvent;
+use App\Event\TransactionFailedEvent;
 use App\Idioma;
 use App\Kimia;
 use DateTime;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class CheckTransaction
 {
     private EntityManagerInterface $em;
     private OperatorProcess $process;
+    private EventDispatcherInterface $eventDispatcher;
 
     public function __construct(
         EntityManagerInterface $em,
-        OperatorProcess $process
+        OperatorProcess $process,
+        EventDispatcherInterface $eventDispatcher
     )
     {
         $this->em = $em;
         $this->process = $process;
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     public function all()
@@ -88,20 +95,10 @@ class CheckTransaction
         $order = $transaction->getCommand();
         $order->setStatus(Idioma::STATUS_SUCCESS);
 
-        $order->getUserCourses()->map(function (UserCourse $course) {
-            $course
-                ->setIsBuyed(true)
-                ->setBuyedAt(new DateTimeImmutable());
-        });
-
-        $order->getOrderTeachers()->map(function (UserTeacher $userTeacher) {
-            $userTeacher
-                ->addHours(1)
-                ->setBuyedAt(new DateTimeImmutable());
-        });
+        // Dispatch OrderConfirmedEvent
+        $this->eventDispatcher->dispatch(new OrderConfirmedEvent($order));
 
         $this->em->flush();
-
     }
 
     public function disapproveOrder(Transaction $transaction): void

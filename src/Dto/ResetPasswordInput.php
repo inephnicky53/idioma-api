@@ -9,4 +9,8 @@ class ResetPasswordInput
     #[Assert\NotNull]
     #[Assert\NotBlank]
     public ?string $plainPassword = null;
+
+    #[Assert\NotNull]
+    #[Assert\NotBlank]
+    public ?string $token = null;
 }

@@ -126,7 +126,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
-    #[Groups(['user:show', 'user:register', 'course:list', 'user:inbox', 'planning:show', 'payment:get'])]
+    #[Groups(['user:show', 'user:register', 'course:list', 'user:inbox', 'planning:show', 'payment:get', 'order:list'])]
     private ?string $email = null;
 
     #[ORM\Column]
@@ -293,7 +293,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->currency = 'USD';
         $this->birthdayAt = new DateTime("01-01-2000");
 
-        //if ($ip) $this->initGeoIp($ip);
         $this->thumbnails = new ArrayCollection();
         $this->courses = new ArrayCollection();
         $this->transactions = new ArrayCollection();
@@ -333,7 +332,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return (string)$this->email;
     }
 
-    #[Groups(['teacher:list', 'course:list', 'user:teacher:get', 'user:inbox', 'rating:list', 'payment:get'])]
+    #[Groups(['teacher:list', 'course:list', 'user:teacher:get', 'user:inbox', 'rating:list', 'payment:get', 'order:list'])]
     public function getFullname(): ?string
     {
         $fullname = $this->firstname;
@@ -530,26 +529,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function setPhone(?string $phone): static
     {
-        $prefix = GeoIP::countryPrefix($this->getCountry());
-
         if ($phone) {
             $phone = u($phone)
                 ->replace(' ', '')
                 ->replace('(', '')
-                ->replace(')', '');
+                ->replace(')', '')
+                ->replace('-', '');
 
-            if ($phone->startsWith($prefix)) {
-                $this->phone = $phone;
-            } elseif ($phone->startsWith("+$prefix")) {
-                $this->phone = $phone->splice('', 0, 1);
-            } elseif ($phone->startsWith("00$prefix")) {
-                $this->phone = $phone->splice('', 0, 2);
-            } elseif ($phone->startsWith("0")) {
-                $this->phone = $phone->splice($prefix, 0, 1);
-            } elseif ($phone->startsWith("+")) {
-                $this->phone = $phone->splice('', 0, 1);
-            } else
-                $this->phone = $phone->prepend($prefix);
+            $this->phone = $phone;
         }
         return $this;
     }

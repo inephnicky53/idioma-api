@@ -1,5 +1,37 @@
-<h1>Votre paiement à été refusé !</h1>
+{% extends 'base_email.mjml.twig' %}
 
-<p>
-    Votre paiement vient d'être refusé
-</p>
+{% block title %}{{ subject }}{% endblock %}
+
+{% block email_content %}
+    <mj-section background-color="#ffffff" padding-left="15px" padding-right="15px">
+        <mj-column width="100%">
+            <mj-text color="#212b35" font-weight="bold" font-size="20px">
+                Paiement refusé
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Cher/Chère {{ data.user.fullname }},
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Nous vous informons que votre paiement d'un montant de {{ data.amount }} {{ data.currency.code }} 
+                a été refusé par votre opérateur de paiement.
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                <strong>Référence de transaction :</strong> {{ data.reference }}
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Nous vous invitons à vérifier vos informations de paiement et à réessayer. 
+                Si le problème persiste, veuillez contacter votre opérateur de paiement.
+            </mj-text>
+            <mj-button background-color="#3d165b" align="center" color="#ffffff" font-size="17px"
+                       font-weight="bold" href="{{ idioma.url }}/orders" width="300px">
+                Réessayer le paiement
+            </mj-button>
+            <mj-text color="#637381" font-size="16px" padding-top="30px">
+                N'hésitez pas à nous contacter si vous avez besoin d'aide.
+            </mj-text>
+            <mj-text color="#637381" font-size="16px" padding-bottom="0">
+                L'équipe {{ idioma.name }}
+            </mj-text>
+        </mj-column>
+    </mj-section>
+{% endblock %}

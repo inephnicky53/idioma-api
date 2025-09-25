@@ -30,6 +30,7 @@ readonly class PaymentSubscriber implements EventSubscriberInterface
                 ->subject($subject)
                 ->htmlTemplate('email/new_payment.html.twig')
                 ->context([
+                    'subject' => $subject,
                     'data' => $payment,
                 ]);
 
@@ -48,6 +49,7 @@ readonly class PaymentSubscriber implements EventSubscriberInterface
                 ->subject($subject)
                 ->htmlTemplate('email/validated_payment.html.twig')
                 ->context([
+                    'subject' => $subject,
                     'data' => $payment,
                 ]);
 
@@ -66,6 +68,7 @@ readonly class PaymentSubscriber implements EventSubscriberInterface
                 ->subject($subject)
                 ->htmlTemplate('email/declined_payment.html.twig')
                 ->context([
+                    'subject' => $subject,
                     'data' => $payment,
                 ]);
 

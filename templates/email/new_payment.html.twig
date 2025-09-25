@@ -1,5 +1,35 @@
-<h1>Nouvelle demande de paiement !</h1>
+{% extends 'base_email.mjml.twig' %}
 
-<p>
-    Une demande de paiement vient d'être enregistré
-</p>
+{% block title %}{{ subject }}{% endblock %}
+
+{% block email_content %}
+    <mj-section background-color="#ffffff" padding-left="15px" padding-right="15px">
+        <mj-column width="100%">
+            <mj-text color="#212b35" font-weight="bold" font-size="20px">
+                Nouvelle demande de paiement
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Cher/Chère {{ data.user.fullname }},
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Nous avons reçu votre demande de paiement d'un montant de {{ data.amount }} {{ data.currency.code }}.
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                <strong>Référence de transaction :</strong> {{ data.reference }}
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Votre paiement est en cours de traitement. Vous recevrez une confirmation dès que celui-ci sera validé.
+            </mj-text>
+            <mj-button background-color="#3d165b" align="center" color="#ffffff" font-size="17px"
+                       font-weight="bold" href="{{ idioma.url }}/transactions" width="300px">
+                Suivre ma transaction
+            </mj-button>
+            <mj-text color="#637381" font-size="16px" padding-top="30px">
+                Merci de votre confiance !
+            </mj-text>
+            <mj-text color="#637381" font-size="16px" padding-bottom="0">
+                L'équipe {{ idioma.name }}
+            </mj-text>
+        </mj-column>
+    </mj-section>
+{% endblock %}

@@ -1,5 +1,36 @@
-<h1>Votre paiement à été effectué !</h1>
+{% extends 'base_email.mjml.twig' %}
 
-<p>
-    Votre paiement vient d'être effectué
-</p>
+{% block title %}{{ subject }}{% endblock %}
+
+{% block email_content %}
+    <mj-section background-color="#ffffff" padding-left="15px" padding-right="15px">
+        <mj-column width="100%">
+            <mj-text color="#212b35" font-weight="bold" font-size="20px">
+                Paiement confirmé !
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Cher/Chère {{ data.user.fullname }},
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Nous avons le plaisir de vous confirmer que votre paiement d'un montant de {{ data.amount }} {{ data.currency.code }} 
+                a été effectué avec succès.
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                <strong>Référence de transaction :</strong> {{ data.reference }}
+            </mj-text>
+            <mj-text color="#637381" font-size="16px">
+                Vous pouvez maintenant profiter pleinement de nos services et commencer vos cours avec vos professeurs.
+            </mj-text>
+            <mj-button background-color="#3d165b" align="center" color="#ffffff" font-size="17px"
+                       font-weight="bold" href="{{ idioma.find_teacher }}" width="300px">
+                Réserver un cours
+            </mj-button>
+            <mj-text color="#637381" font-size="16px" padding-top="30px">
+                Merci de votre confiance et bon apprentissage !
+            </mj-text>
+            <mj-text color="#637381" font-size="16px" padding-bottom="0">
+                L'équipe {{ idioma.name }}
+            </mj-text>
+        </mj-column>
+    </mj-section>
+{% endblock %}
