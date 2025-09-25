@@ -152,6 +152,18 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
             ->onlyOnForms()
             ->setHelp("Certifications et formations du professeur");
 
+        yield AssociationField::new('certifications', "Certifications")
+            ->hideOnIndex()
+            ->setColumns(12)
+            ->setHelp('Certifications et diplômes du professeur')
+            ->setCrudController(TeacherCertificationCrudController::class);
+
+        yield AssociationField::new('formations', "Formations")
+            ->hideOnIndex()
+            ->setColumns(12)
+            ->setHelp('Formations académiques du professeur')
+            ->setCrudController(TeacherFormationCrudController::class);
+
         // Tarification & Disponibilités
         yield FormField::addTab("Tarification & Disponibilités")
             ->setHelp("Configuration des prix et créneaux");
