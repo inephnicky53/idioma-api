@@ -185,7 +185,7 @@ class Teacher
     private Collection $courses;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Groups(['teacher:show', 'teacher:become', 'planning:show', 'teacher:update'])]
+    #[Groups(['teacher:list', 'teacher:show', 'teacher:become', 'planning:show', 'teacher:update'])]
     private ?string $description = null;
 
     #[ORM\OneToMany(mappedBy: 'teacher', targetEntity: Social::class)]
