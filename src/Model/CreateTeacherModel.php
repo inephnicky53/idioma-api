@@ -27,7 +27,7 @@ class CreateTeacherModel
 
         public string $link,
 
-        public string $shortDescription,
+        public ?string $shortDescription = null,
 
         public string $description,
 

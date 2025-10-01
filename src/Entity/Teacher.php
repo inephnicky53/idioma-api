@@ -206,7 +206,7 @@ class Teacher
     #[ORM\OneToMany(targetEntity: UserTeacher::class, mappedBy: 'teacher')]
     private Collection $students;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['teacher:list', 'teacher:become', 'teacher:update'])]
     private ?string $shortDescription = null;
 
@@ -536,7 +536,7 @@ class Teacher
         return $this->shortDescription;
     }
 
-    public function setShortDescription(string $shortDescription): static
+    public function setShortDescription(?string $shortDescription): static
     {
         $this->shortDescription = $shortDescription;
 
