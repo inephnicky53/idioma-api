@@ -152,17 +152,17 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
             ->onlyOnForms()
             ->setHelp("Certifications et formations du idiomaster");
 
-        yield AssociationField::new('certifications', "Certifications")
+        yield CollectionField::new('teacherCertifications', "Certifications")
+            ->useEntryCrudForm(TeacherCertificationCrudController::class)
             ->hideOnIndex()
             ->setColumns(12)
-            ->setHelp('Certifications et diplômes du idiomaster')
-            ->setCrudController(TeacherCertificationCrudController::class);
+            ->setHelp('Certifications et diplômes du idiomaster');
 
-        yield AssociationField::new('formations', "Formations")
+        yield CollectionField::new('teacherFormations', "Formations")
+            ->useEntryCrudForm(TeacherFormationCrudController::class)
             ->hideOnIndex()
             ->setColumns(12)
-            ->setHelp('Formations académiques du idiomaster')
-            ->setCrudController(TeacherFormationCrudController::class);
+            ->setHelp('Formations académiques du idiomaster');
 
         // Affichages détaillés (lecture seule)
         yield FormField::addPanel('Détails du Idiomaster')
