@@ -86,7 +86,7 @@ class TeacherRepository extends ServiceEntityRepository
     }
 
     /**
-     * Compte le nombre de professeurs qui enseignent une langue spécifique
+     * Compte le nombre de idiomasters qui enseignent une langue spécifique
      */
     public function countTeachersByTeachingLanguage(Language $language): int
     {

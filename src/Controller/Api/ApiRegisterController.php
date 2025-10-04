@@ -227,7 +227,8 @@ class ApiRegisterController extends AbstractController
                 $otp,
                 self::OTP_EXPIRY_MINUTES
             );
-            $smsService->sendBc($user->getPhone(), $message);
+            // Utilise le format international avec préfixe '+' pour l'API SMS
+            $smsService->sendBc($user->getPhone(true), $message);
             $this->logger->info('OTP SMS envoyé avec succès', ['user_id' => $user->getId()]);
             return true;
         } catch (\Exception $e) {
@@ -248,7 +249,7 @@ class ApiRegisterController extends AbstractController
                 'email/otp_registration.mjml.twig',
                 [
                     'user' => $user,
-                    'otp_code' => $otp,
+                    'otp' => $otp,
                     'expiry_minutes' => self::OTP_EXPIRY_MINUTES
                 ]
             );

@@ -54,7 +54,7 @@ readonly class TeacherDisponibilitiesAdvancedProvider implements ProviderInterfa
         // Vérifier s'il y a des plannings confirmés qui chevauchent avec cette disponibilité
         $now = new DateTimeImmutable();
         
-        // Récupérer les plannings du professeur qui ne sont pas annulés ou rejetés
+        // Récupérer les plannings du idiomaster qui ne sont pas annulés ou rejetés
         $plannings = $this->entityManager->getRepository(Planning::class)
             ->createQueryBuilder('p')
             ->where('p.teacher = :teacher')

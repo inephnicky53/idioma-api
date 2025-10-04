@@ -1,0 +1,28 @@
+{% if field.value is not empty %}
+  <div class="tl-list">
+    {% for tl in field.value %}
+      <div class="tl-item">
+        <div class="tl-language">
+          <i class="fas fa-language"></i> {{ tl.language }}
+        </div>
+        {% if tl.categories is not empty %}
+          <div class="tl-categories">
+            <i class="fas fa-tags"></i>
+            {% for cat in tl.categories %}
+              <span class="badge bg-secondary">{{ cat }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <span class="text-muted">Aucune langue enseignée</span>
+{% endif %}
+
+<style>
+.tl-list { display: flex; flex-direction: column; gap: 8px; }
+.tl-item { border: 1px solid var(--ea-border-color,#e9ecef); border-radius: 6px; padding: 8px 12px; }
+.tl-language { font-weight: 600; margin-bottom: 6px; }
+.tl-categories { display: flex; gap: 6px; flex-wrap: wrap; }
+</style>

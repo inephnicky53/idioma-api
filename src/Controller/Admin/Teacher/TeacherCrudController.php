@@ -35,8 +35,8 @@ class TeacherCrudController extends AbstractTeacherCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return parent::configureCrud($crud)
-            ->setPageTitle(Crud::PAGE_INDEX, 'Professeurs Actifs')
-            ->setHelp(Crud::PAGE_INDEX, 'Liste des professeurs actuellement actifs sur la plateforme');
+            ->setPageTitle(Crud::PAGE_INDEX, 'Idiomasters Actifs')
+            ->setHelp(Crud::PAGE_INDEX, 'Liste des idiomasters actuellement actifs sur la plateforme');
     }
 
     public function configureActions(Actions $actions): Actions
@@ -72,11 +72,11 @@ class TeacherCrudController extends AbstractTeacherCrudController
 
         if ($this->statusService->deactivate($teacher)) {
             $this->addFlash('success', sprintf(
-                'Le professeur "%s" a été désactivé avec succès.',
+                'Le idiomaster "%s" a été désactivé avec succès.',
                 $teacher->getUser()->getFullName()
             ));
         } else {
-            $this->addFlash('error', 'Erreur lors de la désactivation du professeur.');
+            $this->addFlash('error', 'Erreur lors de la désactivation du idiomaster.');
         }
 
         return $this->redirect($this->adminUrlGenerator
@@ -98,7 +98,7 @@ class TeacherCrudController extends AbstractTeacherCrudController
         }
 
         $this->addFlash('success', sprintf(
-            '%d professeur(s) activé(s) avec succès.',
+            '%d idiomaster(s) activé(s) avec succès.',
             $activated
         ));
 

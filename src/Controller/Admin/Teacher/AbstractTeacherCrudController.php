@@ -41,7 +41,7 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
-            ->setEntityLabelInPlural('Professeurs')
+            ->setEntityLabelInPlural('Idiomasters')
             ->setEntityLabelInSingular(function (?Teacher $teacher, ?string $pageName) {
                 return $teacher;
             })
@@ -54,7 +54,7 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
     {
         // Informations générales
         yield FormField::addTab('Informations générales')
-            ->setHelp("Les informations générales du professeur");
+            ->setHelp("Les informations générales du idiomaster");
 
         yield IdField::new('id')->hideOnForm();
 
@@ -74,12 +74,12 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
         yield CollectionField::new('spokenLanguages', "Langues parlées")
             ->useEntryCrudForm(SpokenLanguageCrudController::class)
             ->setColumns(12)
-            ->setHelp('Langues que le professeur peut parler');
+            ->setHelp('Langues que le idiomaster peut parler');
 
         yield CollectionField::new('teachingLanguages', "Langues enseignées")
             ->useEntryCrudForm(TeachingLanguageCrudController::class)
             ->setColumns(12)
-            ->setHelp('Langues que le professeur peut enseigner');
+            ->setHelp('Langues que le idiomaster peut enseigner');
 
         // Statuts et dates
         yield BooleanField::new('isActive', "Actif")
@@ -106,7 +106,7 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
         // Média
         yield FormField::addTab("Média")
             ->onlyOnForms()
-            ->setHelp("Médias du professeur");
+            ->setHelp("Médias du idiomaster");
 
         yield UrlField::new('link', "Lien de présentation")
             ->hideOnIndex()
@@ -121,11 +121,11 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
         yield UrlField::new('profile', "Photo de profil")
             ->hideOnIndex()
             ->setColumns(6)
-            ->setHelp('URL de la photo de profil du professeur');
+            ->setHelp('URL de la photo de profil du idiomaster');
 
         // Description
         yield FormField::addTab('Présentation')
-            ->setHelp("Informations de présentation du professeur");
+            ->setHelp("Informations de présentation du idiomaster");
 
         yield TextField::new('shortDescription', "Description courte")
             ->hideOnIndex()
@@ -150,19 +150,46 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
         // Certifications & Formations
         yield FormField::addTab("Certifications & Formations")
             ->onlyOnForms()
-            ->setHelp("Certifications et formations du professeur");
+            ->setHelp("Certifications et formations du idiomaster");
 
         yield AssociationField::new('certifications', "Certifications")
             ->hideOnIndex()
             ->setColumns(12)
-            ->setHelp('Certifications et diplômes du professeur')
+            ->setHelp('Certifications et diplômes du idiomaster')
             ->setCrudController(TeacherCertificationCrudController::class);
 
         yield AssociationField::new('formations', "Formations")
             ->hideOnIndex()
             ->setColumns(12)
-            ->setHelp('Formations académiques du professeur')
+            ->setHelp('Formations académiques du idiomaster')
             ->setCrudController(TeacherFormationCrudController::class);
+
+        // Affichages détaillés (lecture seule)
+        yield FormField::addPanel('Détails du Idiomaster')
+            ->onlyOnDetail();
+
+        // Médias (affichage)
+        yield UrlField::new('profile', "Avatar (Cloudinary)")
+            ->onlyOnDetail()
+            ->setTemplatePath('admin/field/url_image.html.twig');
+
+        yield UrlField::new('video', "Vidéo de présentation")
+            ->onlyOnDetail()
+            ->setTemplatePath('admin/field/url_video.html.twig');
+
+        // Langues enseignées
+        yield CollectionField::new('teachingLanguages', "Langues enseignées")
+            ->onlyOnDetail()
+            ->setTemplatePath('admin/field/teaching_languages.html.twig');
+
+        // Certifications & Formations (affichage)
+        yield CollectionField::new('teacherCertifications', "Certifications")
+            ->onlyOnDetail()
+            ->setTemplatePath('admin/field/teacher_certifications.html.twig');
+
+        yield CollectionField::new('teacherFormations', "Formations")
+            ->onlyOnDetail()
+            ->setTemplatePath('admin/field/teacher_formations.html.twig');
 
         // Tarification & Disponibilités
         yield FormField::addTab("Tarification & Disponibilités")
@@ -191,7 +218,7 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
         // Statistiques (uniquement en détail)
         yield FormField::addTab('Statistiques')
             ->onlyOnDetail()
-            ->setHelp("Statistiques et avis du professeur");
+            ->setHelp("Statistiques et avis du idiomaster");
 
         yield AssociationField::new('courses', "Cours donnés")
             ->onlyOnIndex();

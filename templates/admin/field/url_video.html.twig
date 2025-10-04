@@ -1,0 +1,31 @@
+{# Affiche une vidéo depuis une URL. YouTube/Vimeo en iframe, sinon balise <video> #}
+{% set url = field.value %}
+{% if url %}
+  {% set lower = url|lower %}
+  {% if 'youtube.com/watch' in lower or 'youtu.be/' in lower %}
+    {# Extraire l'ID de la vidéo YouTube #}
+    {% set video_id = null %}
+    {% if 'youtu.be/' in lower %}
+      {% set video_id = lower|split('youtu.be/')[1]|split('?')[0] %}
+    {% elseif 'v=' in lower %}
+      {% set video_id = lower|split('v=')[1]|split('&')[0] %}
+    {% endif %}
+    {% if video_id %}
+      <div class="ratio ratio-16x9">
+        <iframe src="https://www.youtube.com/embed/{{ video_id }}" title="YouTube video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+    {% else %}
+      <a href="{{ url }}" target="_blank" rel="noopener">Voir la vidéo</a>
+    {% endif %}
+  {% elseif 'vimeo.com/' in lower %}
+    {% set segments = lower|split('/') %}
+    {% set vimeo_id = segments|last %}
+    <div class="ratio ratio-16x9">
+      <iframe src="https://player.vimeo.com/video/{{ vimeo_id }}" title="Vimeo video" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+    </div>
+  {% else %}
+    <video src="{{ url }}" controls style="max-width: 480px; border-radius: 6px;"></video>
+  {% endif %}
+{% else %}
+  <span class="text-muted">Aucune vidéo</span>
+{% endif %}

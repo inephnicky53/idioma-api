@@ -31,8 +31,8 @@ readonly class TeacherNormalizer implements NormalizerInterface
         $user = $this->security->getUser();
 
         if ($user instanceof User) {
-            // Vérifier si l'utilisateur peut faire un cours d'essai avec ce professeur
-            // Condition: l'utilisateur ne doit pas avoir de sessions (plannings) valides avec ce professeur
+            // Vérifier si l'utilisateur peut faire un cours d'essai avec cet idiomaster
+            // Condition: l'utilisateur ne doit pas avoir de sessions (plannings) valides avec cet idiomaster
             // On exclut les plannings annulés et rejetés
             $canTrial = !$user->getPlannings()->exists(
                 fn($key, Planning $planning) => 

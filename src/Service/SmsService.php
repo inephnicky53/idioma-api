@@ -1,106 +1,80 @@
 <?php
 
-
 namespace App\Service;
 
-
-use GuzzleHttp\Client;
-use GuzzleHttp\Psr7\Request;
-use Symfony\Component\Notifier\TexterInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class SmsService
 {
-    public function __construct(
-        //private readonly TexterInterface $texter
-    )
+    public function __construct(private readonly HttpClientInterface $httpClient)
     {
     }
 
-    const SMS_FROM = "IDIOMA";
+    public const SMS_FROM = "IDIOMA";
+    private const BASE_URL = 'https://www.unikron.tech/api/v2/sms/send';
 
-    public function sendBulk($telephone, $Message){
-        $telephone=str_replace('+','',$telephone);
-        //$apiKey = "Basic RTJEREZCN0QxQzE0NEQ0M0FFM0MxMTgzQTdBNjIzMkMtMDItQzpkaFQzSlV5ZUhQQklfS0draTNVRVMxYl9WRF9NYw==";
-        $token_id = "7C36D1973D7F4BC2907FDE2C26415650-02-4";
-        $token_key = "S_wU10!k0QmzcuraZwwn9F*FHmaXe";
-        $apiKey = "Basic ". base64_encode("{$token_id}:{$token_key}");
-        $headers = [
-            'Authorization'=> $apiKey,
-            'Content-Type' => "application/json"
+    private function getAppKey(): string
+    {
+        $key = $_ENV['UNIKRON_APP_KEY'] ?? $_SERVER['UNIKRON_APP_KEY'] ?? null;
+        if (!$key) {
+            throw new \RuntimeException('UNIKRON_APP_KEY is not configured. Add it to your environment.');
+        }
+        return $key;
+    }
+
+    /**
+     * Envoie un ou plusieurs SMS via l'API v2.
+     *
+     * @param string|array $number Numéro unique ou tableau de numéros
+     * @param string $text Contenu du SMS
+     * @param string|null $sender Nom de l'expéditeur (max 11 caractères)
+     * @return array Réponse décodée de l'API
+     */
+    public function send(string|array $number, string $text, ?string $sender = null): array
+    {
+        $numbers = is_array($number) ? implode(',', array_map('trim', $number)) : trim($number);
+        $from = substr($sender ?? self::SMS_FROM, 0, 11);
+
+        $payload = [
+            'number' => $numbers,
+            'text' => $text,
+            'sender' => $from,
         ];
-        $param = http_build_query(
-            [
-                "from" => self::SMS_FROM,
-                'to' => $telephone,
-                'body' => $Message,
-                "encoding" => "UNICODE",
-                "auto-unicode" => true,
-            ]
-        );
-        $client = new Client(
-            ['headers'=>$headers]
-        );
-        //dd($client,$param,$apiKey,$Message);
-        $request = new Request('GET', "https://api.bulksms.com/v1/messages/send?$param");
 
-        $promise = $client->send($request);
+        $response = $this->httpClient->request('POST', self::BASE_URL, [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->getAppKey(),
+                'Content-Type' => 'application/json',
+            ],
+            'json' => $payload,
+        ]);
 
-        /*$r = 23;
-        $promise->then(
-            function (ResponseInterface $res) use (&$r){
-            //function ($res) {
-                $r = 20;
-            },
-            function (RequestException $e) use (&$r){
-                $r = 22;
-            }
-        );*/
-        //dd($promise->getStatusCode());
-        return $promise->getStatusCode();
+        $status = $response->getStatusCode();
+        $body = $response->getContent(false);
+        $data = json_decode($body, true);
+
+        // Gestion des codes d'erreur documentés
+        if ($status === 401) {
+            throw new \RuntimeException('AppKey invalide ou manquante (401).');
+        }
+        if ($status === 400) {
+            throw new \InvalidArgumentException('Paramètres manquants ou invalides (400).');
+        }
+        if ($status === 422) {
+            throw new \RuntimeException('Trop de numéros dans la requête (422).');
+        }
+        if ($status >= 400) {
+            throw new \RuntimeException('Erreur API SMS v2: HTTP ' . $status . ' ' . $body);
+        }
+
+        return is_array($data) ? $data : ['status' => 'processed', 'message' => 'Request processed', 'raw' => $body];
     }
 
-    public function sendBc($phone, $message){
-        $username = "mmuseghe@gmail.com";
-        $apiKey = "59fdd5910bde5a08db4b767c5a3f3c03462eee89";
-
-
-        $body = http_build_query(
-            [
-                "username" => $username,
-                "app_key" => $apiKey,
-                "from" => self::SMS_FROM,
-                "tel" => trim($phone),
-                'message' => $message,
-            ]
-        );
-
-        $ch = curl_init("https://www.unikron.tech/api/send.jsp?$body");
-
-        $options = array(
-            //CURLOPT_URL => $this->URL,              #set URL address
-            //CURLOPT_USERAGENT => $this->UserAgent,  #set UserAgent to get right content like a browser
-            CURLOPT_RETURNTRANSFER => true,         #redirection result from output to string as curl_exec() result
-            //CURLOPT_COOKIEFILE => 'cookies.txt',    #set cookie to skip site ads
-            //CURLOPT_COOKIEJAR => 'cookiesjar.txt',  #set cookie to skip site ads
-            CURLOPT_FOLLOWLOCATION => true,         #follow by header location
-            CURLOPT_HEADER => true,                 #get header (not head) of site
-            CURLOPT_FORBID_REUSE => true,           #close connection, connection is not pooled to reuse
-            CURLOPT_FRESH_CONNECT => true,          #force the use of a new connection instead of a cached one
-            CURLOPT_SSL_VERIFYPEER => false         #can get protected content SSL
-        );
-        //set array options to object $curl
-        curl_setopt_array($ch, $options);
-
-        $response = curl_exec($ch);
-        curl_close($ch);
-
-        //dd($response, $phone);
-        //return $response;
-    }
-
-    public function send($phone, $message)
+    /**
+     * Compatibilité ancienne méthode: envoie un SMS avec la nouvelle API.
+     */
+    public function sendBc($phone, $message): array
     {
-
+        return $this->send($phone, $message, self::SMS_FROM);
     }
-
 }

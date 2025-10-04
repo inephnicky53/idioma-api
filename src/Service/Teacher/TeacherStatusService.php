@@ -123,7 +123,7 @@ readonly class TeacherStatusService
     }
 
     /**
-     * Rejette un professeur (désactive et dé-vérifie)
+     * Rejette un idiomaster (désactive et dé-vérifie)
      */
     public function reject(Teacher $teacher): bool
     {
@@ -163,7 +163,7 @@ readonly class TeacherStatusService
     }
 
     /**
-     * Bloque un professeur
+     * Bloque un idiomaster
      */
     public function block(Teacher $teacher): bool
     {
@@ -198,7 +198,7 @@ readonly class TeacherStatusService
     }
 
     /**
-     * Vérifie si un professeur peut être activé
+     * Vérifie si un idiomaster peut être activé
      */
     public function canActivate(Teacher $teacher): bool
     {
@@ -208,7 +208,7 @@ readonly class TeacherStatusService
     }
 
     /**
-     * Vérifie si un professeur peut être vérifié
+     * Vérifie si un idiomaster peut être vérifié
      */
     public function canVerify(Teacher $teacher): bool
     {
@@ -217,7 +217,7 @@ readonly class TeacherStatusService
     }
 
     /**
-     * Obtient le statut actuel d'un professeur
+     * Obtient le statut actuel d'un idiomaster
      */
     public function getStatus(Teacher $teacher): string
     {

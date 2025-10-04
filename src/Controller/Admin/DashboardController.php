@@ -117,8 +117,8 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkToCrud('Cours étudiants', 'fas fa-user-graduate', UserCourse::class);
         yield MenuItem::linkToCrud('Relations prof-étudiant', 'fas fa-handshake', UserTeacher::class);
 
-        // Section Professeurs
-        yield MenuItem::section('Gestion Professeurs')
+        // Section Idiomasters
+        yield MenuItem::section('Gestion Idiomasters')
             ->setCssClass('menu-section-teachers');
 
         yield from $this->getTeacherMenuItems();
@@ -211,10 +211,10 @@ class DashboardController extends AbstractDashboardController
 
     private function getTeacherMenuItems(): iterable
     {
-        yield MenuItem::subMenu('Professeurs', 'fas fa-chalkboard-teacher')
+        yield MenuItem::subMenu('Idiomasters', 'fas fa-chalkboard-teacher')
             ->setCssClass('submenu-teachers')
             ->setSubItems([
-                MenuItem::linkToUrl('Tous les professeurs', 'fas fa-list',
+                MenuItem::linkToUrl('Tous les idiomasters', 'fas fa-list',
                     $this->adminUrlGenerator
                         ->setController(TeacherCrudController::class)
                         ->setAction(Crud::PAGE_INDEX)
@@ -226,7 +226,7 @@ class DashboardController extends AbstractDashboardController
                         ->setAction(Crud::PAGE_INDEX)
                 ),
 
-                MenuItem::linkToUrl('Professeurs désactivés', 'fas fa-user-slash',
+                MenuItem::linkToUrl('Idiomasters désactivés', 'fas fa-user-slash',
                     $this->adminUrlGenerator
                         ->setController(DeactivateCrudController::class)
                         ->setAction(Crud::PAGE_INDEX)
@@ -234,7 +234,7 @@ class DashboardController extends AbstractDashboardController
 
                 MenuItem::section('Actions'),
 
-                MenuItem::linkToUrl('Ajouter un professeur', 'fas fa-plus-circle',
+                MenuItem::linkToUrl('Ajouter un idiomaster', 'fas fa-plus-circle',
                     $this->adminUrlGenerator
                         ->setController(TeacherCrudController::class)
                         ->setAction(Crud::PAGE_NEW)
@@ -318,7 +318,7 @@ class DashboardController extends AbstractDashboardController
                 MenuItem::linkToCrud('Étudiants', 'fas fa-user-graduate', User::class)
                     ->setQueryParameter('filter', 'students'),
 
-                MenuItem::linkToCrud('Professeurs', 'fas fa-chalkboard-teacher', User::class)
+                MenuItem::linkToCrud('Idiomasters', 'fas fa-chalkboard-teacher', User::class)
                     ->setQueryParameter('filter', 'teachers'),
 
                 MenuItem::section('Actions'),

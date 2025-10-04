@@ -63,7 +63,7 @@
                         </div>
                         <div class="stat-content">
                             <div class="stat-value">{{ stats.total['teachers']['value'] }}</div>
-                            <div class="stat-label">Professeurs validés</div>
+                            <div class="stat-label">Idiomasters validés</div>
                             {% if stats.total['teachers']['waiting'] > 0 %}
                                 <div class="stat-trend warning">
                                     <i class="fas fa-clock"></i> {{ stats.total['teachers']['waiting'] }} en attente
@@ -77,7 +77,7 @@
                     </div>
                     <div class="stat-card-footer">
                         <a href="{{ ea_url().setController('App\\Controller\\Admin\\Teacher\\TeacherCrudController').setAction('index') }}" class="stat-link">
-                            Gérer les professeurs <i class="fas fa-arrow-right ms-1"></i>
+                            Gérer les idiomasters <i class="fas fa-arrow-right ms-1"></i>
                         </a>
                     </div>
                 </div>
@@ -181,7 +181,7 @@
                                 <i class="fas fa-chalkboard-teacher"></i>
                             </div>
                             <div class="action-content">
-                                <div class="action-title">Nouveau professeur</div>
+                                <div class="action-title">Nouveau idiomaster</div>
                                 <div class="action-desc">Ajouter un enseignant</div>
                             </div>
                             <div class="action-arrow">
@@ -209,7 +209,7 @@
                                 </div>
                                 <div class="action-content">
                                     <div class="action-title">Validations en attente</div>
-                                    <div class="action-desc">{{ stats.total['teachers']['waiting'] }} professeur(s)</div>
+                                    <div class="action-desc">{{ stats.total['teachers']['waiting'] }} idiomaster(s)</div>
                                 </div>
                                 <div class="action-arrow">
                                     <i class="fas fa-chevron-right"></i>

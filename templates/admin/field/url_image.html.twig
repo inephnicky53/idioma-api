@@ -1,0 +1,8 @@
+{# Affiche une image à partir d'une URL (Cloudinary) #}
+{% if field.value %}
+  <div class="ea-image-field">
+    <img src="{{ field.value }}" alt="image" class="img-fluid" style="max-width: 220px; border-radius: 6px;"/>
+  </div>
+{% else %}
+  <span class="text-muted">Aucune image</span>
+{% endif %}

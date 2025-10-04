@@ -195,7 +195,7 @@ readonly class PlanningManager
             $end = \DateTimeImmutable::createFromFormat('Y-m-d H:i', "$currentYear-" . date('W', strtotime($day)) . '-1 ' . $availability->getEnd());
 
             if ($availability->isIsActive() && $this->isOverlapping($data->getStart(), $data->getEnd(), $start, $end))
-                throw new \Exception("Le professeur n'est pas disponible à ce créneau.");
+                throw new \Exception("Le idiomaster n'est pas disponible à ce créneau.");
         }
     }
 

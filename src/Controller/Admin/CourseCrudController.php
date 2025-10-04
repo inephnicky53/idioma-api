@@ -71,7 +71,7 @@ class CourseCrudController extends AbstractCrudController
         yield AssociationField::new('language', "Langue")
             ->autocomplete()
             ->setColumns(6);
-        yield AssociationField::new('teacher', "Professeur")
+        yield AssociationField::new('teacher', "Idiomaster")
             ->autocomplete()
             ->setColumns(6);
         yield AssociationField::new('categories')

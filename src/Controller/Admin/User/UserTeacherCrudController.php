@@ -19,10 +19,10 @@ class UserTeacherCrudController extends AbstractCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
-            ->setPageTitle(Crud::PAGE_INDEX, "Liste des professeurs d'étudiants")
-            ->setEntityLabelInPlural("Professeurs d'étudiants")
+            ->setPageTitle(Crud::PAGE_INDEX, "Liste des idiomasters d'étudiants")
+            ->setEntityLabelInPlural("Idiomasters d'étudiants")
             ->setEntityLabelInSingular(function (?UserTeacher $userTeacher, ?string $pageName) {
-                return 'edit' === $pageName ? $userTeacher : "Professeur d'étudiant";
+                return 'edit' === $pageName ? $userTeacher : "Idiomaster d'étudiant";
             });
     }
 
@@ -35,7 +35,7 @@ class UserTeacherCrudController extends AbstractCrudController
             ->autocomplete()
             ->setColumns(6);
 
-        yield AssociationField::new('teacher', "Professeur")
+        yield AssociationField::new('teacher', "Idiomaster")
             ->autocomplete()
             ->setColumns(6);
 

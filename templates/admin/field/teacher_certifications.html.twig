@@ -1,0 +1,45 @@
+{% if field.value is not empty %}
+  <div class="cert-list">
+    {% for cert in field.value %}
+      <div class="cert-item">
+        <div class="cert-header">
+          <span class="cert-name">{{ cert.certification }}</span>
+          {% if cert.isVerified is defined and cert.isVerified %}
+            <span class="badge bg-success">Vérifié</span>
+          {% endif %}
+        </div>
+        <div class="cert-meta">
+          {% if cert.language is not empty %}
+            <div class="cert-languages">
+              <i class="fas fa-language"></i>
+              {% for lang in cert.language %}
+                <span class="badge bg-secondary">{{ lang }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+          <div class="cert-period">
+            <i class="fas fa-calendar"></i>
+            {{ cert.yearStart ? cert.yearStart|date('d/m/Y') : 'N/A' }} - {{ cert.yearEnd ? cert.yearEnd|date('d/m/Y') : 'N/A' }}
+          </div>
+        </div>
+        {% if cert.proofImage %}
+          <div class="cert-proof">
+            <img src="{{ cert.proofImage }}" alt="preuve" class="img-fluid" style="max-width: 220px; border-radius: 6px;"/>
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <span class="text-muted">Aucune certification</span>
+{% endif %}
+
+<style>
+.cert-list { display: flex; flex-direction: column; gap: 10px; }
+.cert-item { border: 1px solid var(--ea-border-color,#e9ecef); border-radius: 8px; padding: 10px 12px; }
+.cert-header { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.cert-name { font-weight: 600; }
+.cert-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+.cert-languages { display: flex; gap: 6px; flex-wrap: wrap; }
+.cert-proof { margin-top: 8px; }
+</style>

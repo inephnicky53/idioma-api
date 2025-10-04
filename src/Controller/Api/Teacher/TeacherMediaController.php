@@ -19,7 +19,7 @@ class TeacherMediaController extends AbstractController
         if (!$data = $user->getTeacher())
             return $this->json([
                 'status' => false,
-                "message" => "Vous devez être professeur pour continuer"
+                "message" => "Vous devez être idiomaster pour continuer"
             ]);
         $video = $request->files->get('video');
         $link = $request->get('link');

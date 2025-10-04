@@ -192,7 +192,7 @@ readonly class TeacherManager
         $user = $this->security->getUser();
 
         if ($this->userTeacherRepository->findOneBy(['user' => $user, 'teacher' => $teacher]))
-            throw new Exception("Ce professeur est déjà ajouté");
+            throw new Exception("Cet idiomaster est déjà ajouté");
 
         $userTeacher = new UserTeacher();
         $userTeacher
@@ -214,13 +214,13 @@ readonly class TeacherManager
         $teacher = $this->userTeacherRepository->findOneBy(['user' => $user, 'teacher' => $data->getId()]);
 
         if (is_null($teacher))
-            throw new Exception("Ce professeur est déjà ajouté");
+            throw new Exception("Cet idiomaster est déjà ajouté");
 
         if ($teacher) {
             if ($teacher->getHours() > 0)
-                throw new Exception("Vous avez des heures disponible pour ce professeur");
+                throw new Exception("Vous avez des heures disponible pour cet idiomaster");
         } else {
-            throw new Exception("Ce professeur ne fait pas partie de vos favoris");
+            throw new Exception("Cet idiomaster ne fait pas partie de vos favoris");
         }
 
         $this->em->remove($teacher);

@@ -21,7 +21,7 @@ readonly class TeacherCheckProvider implements ProviderInterface
         /** @var User $user */
         $user = $this->security->getUser();
         if(!$teacher = $user->getTeacher())
-            return new JsonResponse(['status' => false, "Vous n'êtes pas professeur"]);
+            return new JsonResponse(['status' => false, "Vous n'êtes pas idiomaster"]);
         return $teacher;
     }
 }

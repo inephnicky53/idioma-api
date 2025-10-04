@@ -25,7 +25,7 @@ class PlanningCrudController extends AbstractCrudController
         yield AssociationField::new('course', "Cours")
             ->setColumns(6);
 
-        yield AssociationField::new('teacher', "Professeur")
+        yield AssociationField::new('teacher', "Idiomaster")
             ->setColumns(6);
 
         yield DateTimeField::new('start', "Début")

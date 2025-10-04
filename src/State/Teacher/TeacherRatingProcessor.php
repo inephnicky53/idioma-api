@@ -27,7 +27,7 @@ readonly class TeacherRatingProcessor implements ProcessorInterface
         if ($data->getTeacher() && $this->ratingRepository->findBy(["user" => $user, "teacher" => $data->getTeacher()]))
             return new JsonResponse([
                 'status' => false,
-                'message' => "Vous avez déjà donné votre avis sur ce professeur"
+                'message' => "Vous avez déjà donné votre avis sur cet idiomaster"
             ]);
 
         if ($data->getCourse() && $this->ratingRepository->findBy(["user" => $user, "course" => $data->getCourse()]))

@@ -237,7 +237,7 @@ class UserCrudController extends AbstractCrudController
             ->setHelp('Nombre total d\'heures de cours suivies')
             ->setColumns(6);
 
-        yield AssociationField::new('teachers', 'Professeurs suivis')
+        yield AssociationField::new('teachers', 'Idiomasters suivis')
             ->onlyOnDetail()
             ->setTemplatePath('admin/field/teachers.html.twig')
             ->setColumns(6);

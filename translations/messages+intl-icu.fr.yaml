@@ -1,14 +1,14 @@
 user:
   user: Utilisateur
   student: Etudiant
-  teacher: Professeur
+  teacher: Idiomaster
   admin: Administrateur
 
   hours:
-    empty: pas d'heures avec ce professeur
+    empty: pas d'heures avec cet idiomaster
     with_number: >
       {number, plural,
-        =0  {pas d'heures avec ce professeur}
+        =0  {pas d'heures avec cet idiomaster}
         =1  {avec une heure}
         other  {avec # heures}
       }
@@ -17,7 +17,7 @@ user:
 planning:
   no_course: Pas de nom du cours
   empty: Pas de planning
-  with_teacher: avec le professeur
+  with_teacher: avec le idiomaster
 
 
 monday: lundi
@@ -41,8 +41,8 @@ comment:
 
 teacher:
   favorite:
-    added: Vous avez ajouté ce professeur dans vos favoris
-    removed: Vous venez de retirer ce professeur
-    cant_remove: Vous avez des heurs disponible pour ce professeur
-    no_exist: Ce professeur ne fait pas partie de vos favoris
+    added: Vous avez ajouté cet idiomaster dans vos favoris
+    removed: Vous venez de retirer cet idiomaster
+    cant_remove: Vous avez des heurs disponible pour cet idiomaster
+    no_exist: Cet idiomaster ne fait pas partie de vos favoris
 

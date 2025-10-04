@@ -56,7 +56,7 @@ class InboxThreadCrudController extends AbstractCrudController
         yield IdField::new('id')
             ->hideOnForm();
 
-        yield AssociationField::new('teacher', "Professeur")
+        yield AssociationField::new('teacher', "Idiomaster")
             ->autocomplete()
             ->setColumns(6);
 

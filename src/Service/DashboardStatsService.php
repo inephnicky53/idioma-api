@@ -30,7 +30,7 @@ class DashboardStatsService
         $stats->total['users'] = $userStats['total'];
         $stats->total['students'] = $userStats['students'];
         
-        // Statistiques professeurs
+        // Statistiques idiomasters
         $teacherStats = $this->getTeacherStats();
         $stats->total['teachers'] = [
             'value' => $teacherStats['total'],

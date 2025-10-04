@@ -38,8 +38,8 @@ class OnWaitingTeacherCrudController extends AbstractTeacherCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return parent::configureCrud($crud)
-            ->setPageTitle(Crud::PAGE_INDEX, "Professeurs en Attente")
-            ->setHelp(Crud::PAGE_INDEX, 'Professeurs en attente de validation par l\'équipe');
+            ->setPageTitle(Crud::PAGE_INDEX, "Idiomasters en Attente")
+            ->setHelp(Crud::PAGE_INDEX, 'Idiomasters en attente de validation par l\'équipe');
     }
 
     public function configureActions(Actions $actions): Actions
@@ -75,11 +75,11 @@ class OnWaitingTeacherCrudController extends AbstractTeacherCrudController
 
         if ($this->statusService->activate($teacher) && $this->statusService->verify($teacher)) {
             $this->addFlash('success', sprintf(
-                'Le professeur "%s" a été validé et activé.',
+                'Le idiomaster "%s" a été validé et activé.',
                 $teacher->getUser()->getFullName()
             ));
         } else {
-            $this->addFlash('error', 'Erreur lors de la validation du professeur.');
+            $this->addFlash('error', 'Erreur lors de la validation du idiomaster.');
         }
 
         $this->dispatcher->dispatch(
@@ -99,11 +99,11 @@ class OnWaitingTeacherCrudController extends AbstractTeacherCrudController
 
         if ($this->statusService->deactivate($teacher)) {
             $this->addFlash('warning', sprintf(
-                'Le professeur "%s" a été rejeté.',
+                'Le idiomaster "%s" a été rejeté.',
                 $teacher->getUser()->getFullName()
             ));
         } else {
-            $this->addFlash('error', 'Erreur lors du rejet du professeur.');
+            $this->addFlash('error', 'Erreur lors du rejet du idiomaster.');
         }
 
         return $this->redirect($this->adminUrlGenerator

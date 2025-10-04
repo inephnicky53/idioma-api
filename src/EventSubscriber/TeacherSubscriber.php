@@ -27,7 +27,7 @@ readonly class TeacherSubscriber implements EventSubscriberInterface
     public function onTeacherCreated(TeacherCreatedEvent $event): void
     {
         $teacher = $event->getTeacher();
-        $subject = "Inscription en tant que professeur";
+        $subject = "Inscription en tant que idiomaster";
         try {
             $email = (new TemplatedEmail())
                 ->to(new Address($teacher->getUser()->getEmail()))
@@ -42,9 +42,8 @@ readonly class TeacherSubscriber implements EventSubscriberInterface
         } catch (TransportExceptionInterface $e) {
         }
 
-        $message = "Votre demande pour devenir professeur est en cours de traitement";
-        if ($this->kernel->getEnvironment() == "prod")
-            $this->smsService->sendBc($teacher->getUser()->getPhone(), $message);
+        $message = "Votre demande pour devenir idiomaster est en cours de traitement";
+        $this->smsService->sendBc($teacher->getUser()->getPhone(), $message);
     }
 
     public function onTeacherValidated(TeacherValidatedEvent $event): void
@@ -52,7 +51,7 @@ readonly class TeacherSubscriber implements EventSubscriberInterface
         $teacher = $event->getTeacher();
         $user = $teacher->getUser();
         try {
-            $subject = "Validation du compte professeur";
+            $subject = "Validation du compte idiomaster";
             $email = (new TemplatedEmail())
                 ->to(new Address($user->getEmail()))
                 ->subject($subject)
@@ -66,11 +65,9 @@ readonly class TeacherSubscriber implements EventSubscriberInterface
         } catch (TransportExceptionInterface $e) {
         }
 
-        $message = "Votre demande pour devenir professeur vient d'etre valide, vous pouvez consulter votre compte";
-        if ($this->kernel->getEnvironment() == "prod")
-            $this->smsService->sendBc($user->getPhone(), $message);
+        $message = "Votre demande pour devenir idiomaster vient d'etre valide, vous pouvez consulter votre compte";
 
-        $message = "Vous venez de valider le profil professeur de {$user->getFullname()} sur la plateforme";
+        $this->smsService->sendBc($user->getPhone(), $message);
     }
 
     public static function getSubscribedEvents(): array

@@ -29,6 +29,7 @@ public/uploads
 
 ###> liip/imagine-bundle ###
 /public/media/cache/
+/public/bundles
 ###< liip/imagine-bundle ###
 
 ###> symfony/webpack-encore-bundle ###

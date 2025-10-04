@@ -1,0 +1,31 @@
+{% if field.value is not empty %}
+  <div class="form-list">
+    {% for form in field.value %}
+      <div class="form-item">
+        <div class="form-header">
+          <span class="form-university">{{ form.university }}</span>
+          <span class="form-certificate">— {{ form.certificate }}{% if form.speciality %} ({{ form.speciality }}){% endif %}</span>
+        </div>
+        <div class="form-period">
+          <i class="fas fa-calendar"></i>
+          {{ form.yearStart ?? 'N/A' }} - {{ form.yearEnd ?? 'N/A' }}
+        </div>
+        {% if form.proofImage %}
+          <div class="form-proof">
+            <img src="{{ form.proofImage }}" alt="preuve" class="img-fluid" style="max-width: 220px; border-radius: 6px;"/>
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <span class="text-muted">Aucune formation</span>
+{% endif %}
+
+<style>
+.form-list { display: flex; flex-direction: column; gap: 10px; }
+.form-item { border: 1px solid var(--ea-border-color,#e9ecef); border-radius: 8px; padding: 10px 12px; }
+.form-header { display: flex; gap: 6px; flex-wrap: wrap; font-weight: 600; }
+.form-period { margin-top: 6px; color: var(--ea-muted-color,#6c757d); }
+.form-proof { margin-top: 8px; }
+</style>
