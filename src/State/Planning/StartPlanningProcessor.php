@@ -19,6 +19,6 @@ readonly class StartPlanningProcessor implements ProcessorInterface
      */
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): Planning
     {
-        return $this->manager->start($data);
+        return $this->manager->start($uriVariables['id']);
     }
 }

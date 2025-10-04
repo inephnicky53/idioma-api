@@ -58,8 +58,12 @@ readonly class PlanningManager
     /**
      * @throws \Exception
      */
-    public function start(Planning $planning): Planning
+    public function start(string $meetingLink): Planning
     {
+        $planning = $this->planningRepository->findOneBy(['meetingLink' => $meetingLink]);
+        if (!$planning) {
+            throw new \Exception("Planning not found for meeting link $meetingLink");
+        }
         $now = new \DateTimeImmutable('now');
 
         if ($planning->getEnd() <= $now->modify('-30 minutes')) {
@@ -113,10 +117,27 @@ readonly class PlanningManager
 
     public function cancel(Planning $planning): Planning
     {
-        if ($planning->getStart() >= new \DateTimeImmutable())
-            throw new \Exception("Date cannot be less than start date");
+        $now = new \DateTimeImmutable('now');
+        $limit = $planning->getStart()->modify('-1 hour');
+
+        // Autoriser l'annulation uniquement jusqu'à 1h avant le début
+        if ($now >= $limit) {
+            throw new \Exception("Vous ne pouvez annuler qu'au moins 1 heure avant le début du cours.");
+        }
 
         $planning->setStatus(Planning::STATUS_CANCELED);
+
+        if (!$planning->isTrial()) {
+            /** @var User $user */
+            $user = $this->security->getUser();
+            $userTeacher = $this->em->getRepository(UserTeacher::class)
+                ->findOneBy(['user' => $user, 'teacher' => $planning->getTeacher()]);
+
+            if ($userTeacher) {
+                $userTeacher->setHours($userTeacher->getHours() + 1);
+                $this->em->persist($userTeacher);
+            }
+        }
 
         $this->em->persist($planning);
         $this->em->flush();
