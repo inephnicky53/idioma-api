@@ -32,7 +32,9 @@ class SmsService
      */
     public function send(string|array $number, string $text, ?string $sender = null): array
     {
-        $numbers = is_array($number) ? implode(',', array_map('trim', $number)) : trim($number);
+        $numbers = is_array($number) 
+            ? implode(',', array_map(fn($n) => ltrim(trim($n), '+'), $number)) 
+            : ltrim(trim($number), '+');
         $from = substr($sender ?? self::SMS_FROM, 0, 11);
 
         $payload = [
@@ -47,6 +49,8 @@ class SmsService
                 'Content-Type' => 'application/json',
             ],
             'json' => $payload,
+            'verify_peer' => false,
+            'verify_host' => false,
         ]);
 
         $status = $response->getStatusCode();
