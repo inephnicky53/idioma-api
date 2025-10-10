@@ -6,8 +6,8 @@ twig:
             url: '%env(APP_URL)%'
             address: Avenue Chute de Lofoy 16, Kintambo
             city: Kinshasa, RDC
-            find_teacher: '%env(APP_URL)%/find-teacher'
-            teacher_dashboard: '%env(APP_URL)%/teacher/dashboard'
+            find_teacher: '%env(APP_URL)%/teachers'
+            teacher_dashboard: '%env(APP_URL)%/dashboard'
             dashboard: '%env(APP_URL)%/dashboard'
 
 
