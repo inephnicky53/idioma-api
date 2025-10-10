@@ -33,6 +33,8 @@ class JWTCreatedListener
         $payload = $event->getData();
         $payload['id'] = $user->getId();
         $payload['firstname'] = $user->getFirstName();
+        $payload['name'] = $user->getName();
+        $payload['postname'] = $user->getPostname();
         $payload['fullname'] = $user->getFullname();
         $payload['avatar'] = $user->getThumbnail() ? "{$schemeAndHttpHost}{$assetThumbnail}" : null;
         $payload['profile'] = $user->getProfile();
