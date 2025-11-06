@@ -1,0 +1,600 @@
+{% extends '@EasyAdmin/layout.html.twig' %}
+
+{% block content_title %}
+    <div class="dashboard-header">
+        <h1 class="page-title">
+            <i class="fa fa-chart-line"></i> Tableau de Bord
+        </h1>
+        <div class="filter-buttons">
+            <button type="button" class="filter-btn {% if period == 'today' %}active{% endif %}" data-period="today">
+                <i class="fa fa-calendar-day"></i> Aujourd'hui
+            </button>
+            <button type="button" class="filter-btn {% if period == 'week' %}active{% endif %}" data-period="week">
+                <i class="fa fa-calendar-week"></i> Cette semaine
+            </button>
+            <button type="button" class="filter-btn {% if period == 'month' %}active{% endif %}" data-period="month">
+                <i class="fa fa-calendar-alt"></i> Ce mois
+            </button>
+        </div>
+    </div>
+{% endblock %}
+
+{% block main %}
+    <div class="container-fluid dashboard-container">
+
+        <!-- Section Utilisateurs -->
+        <div class="section-title mb-3">
+            <h4><i class="fa fa-users"></i> Utilisateurs</h4>
+        </div>
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card primary">
+                    <div class="card-icon">
+                        <i class="fa fa-users"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">Total Utilisateurs</h6>
+                        <h2 class="card-value">{{ stats.users.total }}</h2>
+                        <p class="card-subtitle"><span class="badge badge-success">{{ stats.users.active }} actifs</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card info">
+                    <div class="card-icon">
+                        <i class="fa fa-check-circle"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">Abonnements Actifs</h6>
+                        <h2 class="card-value">{{ stats.users.withActiveSubscriptions }}</h2>
+                        <p class="card-subtitle">Utilisateurs avec plan actif</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card success">
+                    <div class="card-icon">
+                        <i class="fa fa-user-plus"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">Nouveaux (Mois)</h6>
+                        <h2 class="card-value">{{ stats.users.newThisMonth }}</h2>
+                        <p class="card-subtitle {% if stats.users.newThisMonthVsLastMonth >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {% if stats.users.newThisMonthVsLastMonth >= 0 %}
+                                <i class="fa fa-arrow-up"></i> {{ stats.users.newThisMonthVsLastMonth }}%
+                            {% else %}
+                                <i class="fa fa-arrow-down"></i> {{ stats.users.newThisMonthVsLastMonth|abs }}%
+                            {% endif %}
+                            vs mois dernier
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card warning">
+                    <div class="card-icon">
+                        <i class="fa fa-calendar-day"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">Aujourd'hui</h6>
+                        <h2 class="card-value">{{ stats.users.newToday }}</h2>
+                        <p class="card-subtitle {% if stats.users.newTodayVsYesterday >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {% if stats.users.newTodayVsYesterday >= 0 %}
+                                <i class="fa fa-arrow-up"></i> {{ stats.users.newTodayVsYesterday }}%
+                            {% else %}
+                                <i class="fa fa-arrow-down"></i> {{ stats.users.newTodayVsYesterday|abs }}%
+                            {% endif %}
+                            vs hier
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Abonnements -->
+        <div class="section-title mb-3">
+            <h4><i class="fa fa-ticket"></i> Abonnements</h4>
+        </div>
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card primary">
+                    <div class="card-icon">
+                        <i class="fa fa-ticket"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">Abonnements Actifs</h6>
+                        <h2 class="card-value">{{ stats.subscriptions.active }}</h2>
+                        <p class="card-subtitle"><span class="badge badge-danger">{{ stats.subscriptions.expired }} expirés</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card success">
+                    <div class="card-icon">
+                        <i class="fa fa-plus-circle"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">Nouveaux (Mois)</h6>
+                        <h2 class="card-value">{{ stats.subscriptions.newThisMonth }}</h2>
+                        <p class="card-subtitle {% if stats.subscriptions.newThisMonthVsLastMonth >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {% if stats.subscriptions.newThisMonthVsLastMonth >= 0 %}
+                                <i class="fa fa-arrow-up"></i> {{ stats.subscriptions.newThisMonthVsLastMonth }}%
+                            {% else %}
+                                <i class="fa fa-arrow-down"></i> {{ stats.subscriptions.newThisMonthVsLastMonth|abs }}%
+                            {% endif %}
+                            vs mois dernier
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card warning">
+                    <div class="card-icon">
+                        <i class="fa fa-calendar-day"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">Aujourd'hui</h6>
+                        <h2 class="card-value">{{ stats.subscriptions.newToday }}</h2>
+                        <p class="card-subtitle {% if stats.subscriptions.newTodayVsYesterday >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {% if stats.subscriptions.newTodayVsYesterday >= 0 %}
+                                <i class="fa fa-arrow-up"></i> {{ stats.subscriptions.newTodayVsYesterday }}%
+                            {% else %}
+                                <i class="fa fa-arrow-down"></i> {{ stats.subscriptions.newTodayVsYesterday|abs }}%
+                            {% endif %}
+                            vs hier
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Paiements -->
+        <div class="section-title mb-3">
+            <h4><i class="fa fa-credit-card"></i> Paiements</h4>
+        </div>
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card success">
+                    <div class="card-icon">
+                        <i class="fa fa-money-bill"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">Revenu Aujourd'hui</h6>
+                        <h2 class="card-value">{{ stats.payments.revenueToday|number_format(2, ',', ' ') }} €</h2>
+                        <p class="card-subtitle {% if stats.payments.revenueTodayVsYesterday >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {% if stats.payments.revenueTodayVsYesterday >= 0 %}
+                                <i class="fa fa-arrow-up"></i> {{ stats.payments.revenueTodayVsYesterday }}%
+                            {% else %}
+                                <i class="fa fa-arrow-down"></i> {{ stats.payments.revenueTodayVsYesterday|abs }}%
+                            {% endif %}
+                            vs hier
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card info">
+                    <div class="card-icon">
+                        <i class="fa fa-calendar-week"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">Revenu Cette Semaine</h6>
+                        <h2 class="card-value">{{ stats.payments.revenueThisWeek|number_format(2, ',', ' ') }} €</h2>
+                        <p class="card-subtitle">7 derniers jours</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card primary">
+                    <div class="card-icon">
+                        <i class="fa fa-calendar-alt"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">Revenu Ce Mois</h6>
+                        <h2 class="card-value">{{ stats.payments.revenueThisMonth|number_format(2, ',', ' ') }} €</h2>
+                        <p class="card-subtitle">Depuis le 1er du mois</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card warning">
+                    <div class="card-icon">
+                        <i class="fa fa-receipt"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">Paiements Aujourd'hui</h6>
+                        <h2 class="card-value">{{ stats.payments.paymentsToday }}</h2>
+                        <p class="card-subtitle {% if stats.payments.paymentsTodayVsYesterday >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {% if stats.payments.paymentsTodayVsYesterday >= 0 %}
+                                <i class="fa fa-arrow-up"></i> {{ stats.payments.paymentsTodayVsYesterday }}%
+                            {% else %}
+                                <i class="fa fa-arrow-down"></i> {{ stats.payments.paymentsTodayVsYesterday|abs }}%
+                            {% endif %}
+                            vs hier
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Check-ins -->
+        <div class="section-title mb-3">
+            <h4><i class="fa fa-sign-in-alt"></i> Présences (Check-ins)</h4>
+        </div>
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card primary">
+                    <div class="card-icon">
+                        <i class="fa fa-calendar-day"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">Aujourd'hui</h6>
+                        <h2 class="card-value">{{ stats.checkIns.today }}</h2>
+                        <p class="card-subtitle">Présences du jour</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card info">
+                    <div class="card-icon">
+                        <i class="fa fa-calendar-week"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">Cette Semaine</h6>
+                        <h2 class="card-value">{{ stats.checkIns.thisWeek }}</h2>
+                        <p class="card-subtitle">7 derniers jours</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card success">
+                    <div class="card-icon">
+                        <i class="fa fa-calendar-alt"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">Ce Mois</h6>
+                        <h2 class="card-value">{{ stats.checkIns.thisMonth }}</h2>
+                        <p class="card-subtitle">Depuis le 1er du mois</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card warning">
+                    <div class="card-icon">
+                        <i class="fa fa-hourglass-start"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">Actifs</h6>
+                        <h2 class="card-value">{{ stats.checkIns.active }}</h2>
+                        <p class="card-subtitle">Pas encore de checkout</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions Rapides -->
+        <div class="section-title mb-3">
+            <h4><i class="fa fa-bolt"></i> Actions Rapides</h4>
+        </div>
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="dashboard-card action-card">
+                    <div class="card-body">
+                        <div class="action-buttons">
+                            <a href="{{ ea_url().setAction('new').setController('App\\Controller\\Admin\\UserCrudController') }}" class="action-btn btn-primary">
+                                <i class="fa fa-user-plus"></i>
+                                <span>Ajouter un utilisateur</span>
+                            </a>
+                            <a href="{{ ea_url().setAction('new').setController('App\\Controller\\Admin\\SubscriptionCrudController') }}" class="action-btn btn-success">
+                                <i class="fa fa-plus"></i>
+                                <span>Créer un abonnement</span>
+                            </a>
+                            <a href="{{ ea_url().setAction('new').setController('App\\Controller\\Admin\\PaymentCrudController') }}" class="action-btn btn-info">
+                                <i class="fa fa-credit-card"></i>
+                                <span>Enregistrer un paiement</span>
+                            </a>
+                            <a href="{{ ea_url().setAction('new').setController('App\\Controller\\Admin\\CheckInCrudController') }}" class="action-btn btn-warning">
+                                <i class="fa fa-sign-in-alt"></i>
+                                <span>Nouveau check-in</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            gap: 20px;
+        }
+
+        .page-title {
+            margin: 0;
+            color: #333;
+            font-weight: 700;
+            flex: 1;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .filter-btn {
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 6px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .filter-btn i {
+            font-size: 14px;
+        }
+
+        .filter-btn:hover {
+            border-color: #007bff;
+            color: #007bff;
+            background: #f8f9ff;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border-color: #0056b3;
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        }
+
+        .dashboard-container {
+            padding: 20px 0;
+        }
+
+        .section-title {
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .section-title h4 {
+            color: #333;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .dashboard-card {
+            background: white;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .dashboard-card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .dashboard-card.stat-card {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            min-height: 140px;
+        }
+
+        .dashboard-card.stat-card .card-icon {
+            font-size: 32px;
+            margin-right: 20px;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .dashboard-card.stat-card.primary .card-icon {
+            color: #007bff;
+        }
+
+        .dashboard-card.stat-card.success .card-icon {
+            color: #28a745;
+        }
+
+        .dashboard-card.stat-card.info .card-icon {
+            color: #17a2b8;
+        }
+
+        .dashboard-card.stat-card.warning .card-icon {
+            color: #ffc107;
+        }
+
+        .dashboard-card.stat-card.danger .card-icon {
+            color: #dc3545;
+        }
+
+        .card-content {
+            flex: 1;
+        }
+
+        .card-label {
+            color: #999;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0 0 8px 0;
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #333;
+            margin: 0 0 8px 0;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: #999;
+            margin: 0;
+        }
+
+        .card-subtitle.text-success {
+            color: #28a745 !important;
+        }
+
+        .card-subtitle.text-danger {
+            color: #dc3545 !important;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .badge-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .filter-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .filter-card .card-header {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 15px 20px;
+        }
+
+        .filter-card .card-title {
+            color: white;
+        }
+
+        .filter-card .card-body {
+            padding: 15px 20px;
+        }
+
+        .action-card {
+            background: white;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .action-btn i {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .action-btn span {
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .action-btn.btn-primary {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        }
+
+        .action-btn.btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        }
+
+        .action-btn.btn-info {
+            background: linear-gradient(135deg, #17a2b8 0%, #0c5460 100%);
+        }
+
+        .action-btn.btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+            color: #333;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            background-color: transparent;
+            border-bottom: 1px solid #f0f0f0;
+            padding: 15px 20px;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .filter-buttons {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .filter-btn {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterButtons = document.querySelectorAll('.filter-btn');
+
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Retirer la classe active de tous les boutons
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+
+                    // Ajouter la classe active au bouton cliqué
+                    this.classList.add('active');
+
+                    const period = this.getAttribute('data-period');
+
+                    // Recharger la page avec le paramètre de période
+                    window.location.href = '{{ path("admin_dashboard") }}?period=' + period;
+                });
+            });
+        });
+    </script>
+{% endblock %}
+

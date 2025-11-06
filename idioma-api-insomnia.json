@@ -1,0 +1,279 @@
+{
+  "_type": "export",
+  "exportFormat": 4,
+  "exportDate": "2025-01-01T00:00:00.000Z",
+  "resources": [
+    {
+      "_id": "wrk_idioma_api",
+      "_type": "workspace",
+      "name": "Idioma API v2.0.0",
+      "description": "API REST pour la gestion des abonnements et check-ins",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_base",
+      "_type": "environment",
+      "parentId": "wrk_idioma_api",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:8000",
+        "api_url": "http://localhost:8000/api",
+        "token": "",
+        "refresh_token": "",
+        "admin_email": "admin@idioma-club.com",
+        "admin_password": "Admin123!@"
+      }
+    },
+    {
+      "_id": "fld_auth",
+      "_type": "request_group",
+      "parentId": "wrk_idioma_api",
+      "name": "🔐 Authentification"
+    },
+    {
+      "_id": "req_register",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Register - Créer un compte",
+      "method": "POST",
+      "url": "{{ _.api_url }}/auth/register",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Test123!@\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phone\": \"+33612345678\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_login",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Login - Se connecter",
+      "method": "POST",
+      "url": "{{ _.api_url }}/login_check",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"{{ _.admin_email }}\",\n  \"password\": \"{{ _.admin_password }}\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "fld_dashboard",
+      "_type": "request_group",
+      "parentId": "wrk_idioma_api",
+      "name": "📊 Dashboard"
+    },
+    {
+      "_id": "req_profile",
+      "_type": "request",
+      "parentId": "fld_dashboard",
+      "name": "Get Profile - Mon profil",
+      "method": "GET",
+      "url": "{{ _.api_url }}/dashboard/profile",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_subscription",
+      "_type": "request",
+      "parentId": "fld_dashboard",
+      "name": "Get Subscription - Mon abonnement",
+      "method": "GET",
+      "url": "{{ _.api_url }}/dashboard/subscription",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_payments",
+      "_type": "request",
+      "parentId": "fld_dashboard",
+      "name": "Get Payments - Mes paiements",
+      "method": "GET",
+      "url": "{{ _.api_url }}/dashboard/payments",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_qrcode",
+      "_type": "request",
+      "parentId": "fld_dashboard",
+      "name": "Get QR Code - Mon QR code",
+      "method": "GET",
+      "url": "{{ _.api_url }}/dashboard/qr-code",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_next_subscription",
+      "_type": "request",
+      "parentId": "fld_dashboard",
+      "name": "Get Next Subscription - Prochain abonnement",
+      "method": "GET",
+      "url": "{{ _.api_url }}/dashboard/next-subscription",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ]
+    },
+    {
+      "_id": "fld_checkin",
+      "_type": "request_group",
+      "parentId": "wrk_idioma_api",
+      "name": "✅ Check-in"
+    },
+    {
+      "_id": "req_checkin_create",
+      "_type": "request",
+      "parentId": "fld_checkin",
+      "name": "Create Check-in - Arrivée",
+      "method": "POST",
+      "url": "{{ _.api_url }}/check-in",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"location\": \"Paris\"\n}"
+      },
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    },
+    {
+      "_id": "req_checkin_today",
+      "_type": "request",
+      "parentId": "fld_checkin",
+      "name": "Get Today Check-ins - Check-ins du jour",
+      "method": "GET",
+      "url": "{{ _.api_url }}/check-in/today",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_checkin_checkout",
+      "_type": "request",
+      "parentId": "fld_checkin",
+      "name": "Checkout - Départ",
+      "method": "PATCH",
+      "url": "{{ _.api_url }}/check-in/1/checkout",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_checkin_history",
+      "_type": "request",
+      "parentId": "fld_checkin",
+      "name": "Get Check-in History - Historique",
+      "method": "GET",
+      "url": "{{ _.api_url }}/check-in/history",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ]
+    },
+    {
+      "_id": "fld_crud",
+      "_type": "request_group",
+      "parentId": "wrk_idioma_api",
+      "name": "⚙️ API Platform CRUD"
+    },
+    {
+      "_id": "req_subscription_plans_list",
+      "_type": "request",
+      "parentId": "fld_crud",
+      "name": "List Subscription Plans",
+      "method": "GET",
+      "url": "{{ _.api_url }}/subscription_plans",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_subscriptions_list",
+      "_type": "request",
+      "parentId": "fld_crud",
+      "name": "List Subscriptions",
+      "method": "GET",
+      "url": "{{ _.api_url }}/subscriptions",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_payments_list",
+      "_type": "request",
+      "parentId": "fld_crud",
+      "name": "List Payments",
+      "method": "GET",
+      "url": "{{ _.api_url }}/payments",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_checkins_list",
+      "_type": "request",
+      "parentId": "fld_crud",
+      "name": "List Check-ins",
+      "method": "GET",
+      "url": "{{ _.api_url }}/check_ins",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ _.token }}"
+        }
+      ]
+    }
+  ]
+}
+

@@ -1,0 +1,47 @@
+# EasyAdmin French Translations
+easyadmin:
+  # Actions
+  action:
+    new: "Créer"
+    edit: "Modifier"
+    delete: "Supprimer"
+    search: "Rechercher"
+    detail: "Détails"
+    list: "Liste"
+    show: "Afficher"
+    save: "Enregistrer"
+    save_and_continue: "Enregistrer et continuer"
+    save_and_add_another: "Enregistrer et ajouter un autre"
+    cancel: "Annuler"
+    back: "Retour à la liste"
+    batch_delete: "Supprimer la sélection"
+    batch_delete_confirm: "Êtes-vous sûr de vouloir supprimer les éléments sélectionnés ?"
+    
+  # Labels
+  label:
+    true_word: "Oui"
+    false_word: "Non"
+    null_word: "Aucun"
+    empty_value: "(vide)"
+    
+  # Messages
+  message:
+    confirm_delete: "Êtes-vous sûr de vouloir supprimer cet élément ?"
+    delete_success: "L'élément a été supprimé avec succès."
+    delete_error: "Une erreur s'est produite lors de la suppression."
+    save_success: "L'élément a été enregistré avec succès."
+    save_error: "Une erreur s'est produite lors de l'enregistrement."
+    
+  # Pagination
+  pagination:
+    first: "Première"
+    previous: "Précédente"
+    next: "Suivante"
+    last: "Dernière"
+    results: "Résultats"
+    
+  # Search
+  search:
+    placeholder: "Rechercher..."
+    no_results: "Aucun résultat trouvé."
+
