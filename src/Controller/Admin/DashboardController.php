@@ -2,12 +2,15 @@
 
 namespace App\Controller\Admin;
 
+use App\Entity\CheckIn;
+use App\Entity\Course;
+use App\Entity\CourseVideo;
+use App\Entity\Payment;
+use App\Entity\Rate;
+use App\Entity\Subscription;
+use App\Entity\SubscriptionPlan;
 use App\Entity\TimeSlot;
 use App\Entity\User;
-use App\Entity\SubscriptionPlan;
-use App\Entity\Subscription;
-use App\Entity\Payment;
-use App\Entity\CheckIn;
 use App\Service\DashboardStatsService;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
@@ -58,8 +61,15 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkToCrud('Abonnements', 'fas fa-ticket', Subscription::class);
         yield MenuItem::linkToCrud('Paiements', 'fas fa-credit-card', Payment::class);
 
+        yield MenuItem::section('Cours');
+        yield MenuItem::linkToCrud('Cours', 'fas fa-graduation-cap', Course::class);
+        yield MenuItem::linkToCrud('Vidéos', 'fas fa-video', CourseVideo::class);
+
         yield MenuItem::section('Présences');
         yield MenuItem::linkToCrud('Check-ins', 'fas fa-sign-in-alt', CheckIn::class);
+
+        yield MenuItem::section('Configuration');
+        yield MenuItem::linkToCrud('Taux de change', 'fas fa-exchange-alt', Rate::class);
 
         yield MenuItem::section('Héritage');
         yield MenuItem::linkToCrud('Membres Actifs (Ce Mois)', 'fas fa-user-check', User::class)

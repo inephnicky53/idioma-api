@@ -33,7 +33,10 @@ class SubscriptionPlanCrudController extends AbstractCrudController
         return [
             TextField::new('name')->setLabel('Nom'),
             TextEditorField::new('description')->setLabel('Description'),
-            MoneyField::new('price')->setLabel('Prix')->setCurrency('EUR'),
+            MoneyField::new('price')
+                ->setLabel('Prix')
+                ->setCurrency('USD')
+                ->setStoredAsCents(false),
             IntegerField::new('durationDays')->setLabel('Durée (jours)'),
             ChoiceField::new('type')->setLabel('Type')->setChoices([
                 'Club' => 'club',

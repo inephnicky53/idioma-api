@@ -8,13 +8,14 @@ use App\Entity\SubscriptionPlan;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use DateTime;
 
-class UserRegisterProcessor implements ProcessorInterface
+readonly class UserRegisterProcessor implements ProcessorInterface
 {
     public function __construct(
-        private EntityManagerInterface $entityManager,
+        private EntityManagerInterface      $entityManager,
         private UserPasswordHasherInterface $passwordHasher,
     ) {}
 
@@ -32,13 +33,13 @@ class UserRegisterProcessor implements ProcessorInterface
         // Vérifier si l'email existe déjà
         $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $data->getEmail()]);
         if ($existingUser) {
-            throw new \Exception('Cet email est déjà utilisé');
+            throw new Exception('Cet email est déjà utilisé');
         }
 
         // Hacher le mot de passe
         $plainPassword = $data->getPassword();
         if (!$plainPassword) {
-            throw new \Exception('Password is required');
+            throw new Exception('Password is required');
         }
 
         $hashedPassword = $this->passwordHasher->hashPassword($data, $plainPassword);

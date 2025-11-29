@@ -8,6 +8,8 @@ use App\Entity\Subscription;
 use App\Entity\Payment;
 use App\Entity\CheckIn;
 use App\Entity\TimeSlot;
+use App\Enum\PaymentStatus;
+use DateTime;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -115,8 +117,8 @@ class AppFixtures extends Fixture
             $subscription = new Subscription();
             $subscription->setUser($user);
             $subscription->setPlan($plans['club']);
-            $subscription->setStartDate(new \DateTime('-10 days'));
-            $subscription->setEndDate(new \DateTime('+20 days'));
+            $subscription->setStartDate(new DateTime('-10 days'));
+            $subscription->setEndDate(new DateTime('+20 days'));
             $subscription->setStatus('active');
             $subscription->setSessionsUsed(2);
             $subscription->setAutoRenew(true);
@@ -127,9 +129,9 @@ class AppFixtures extends Fixture
             $payment->setUser($user);
             $payment->setSubscriptionPlan($plans['club']);
             $payment->setAmount('29.99');
-            $payment->setStatus('completed');
+            $payment->setStatus(PaymentStatus::COMPLETED);
             $payment->setPaymentMethod('card');
-            $payment->setPaidAt(new \DateTime('-10 days'));
+            $payment->setPaidAt(new DateTime('-10 days'));
             $manager->persist($payment);
 
             // Create check-ins
@@ -137,7 +139,7 @@ class AppFixtures extends Fixture
                 $checkIn = new CheckIn();
                 $checkIn->setUser($user);
                 $checkIn->setLocation('Salle ' . ($j + 1));
-                $checkIn->setCheckedInAt(new \DateTime("-{$j} days"));
+                $checkIn->setCheckedInAt(new DateTime("-{$j} days"));
                 $manager->persist($checkIn);
             }
         }

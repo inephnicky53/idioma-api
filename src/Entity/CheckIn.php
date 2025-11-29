@@ -7,6 +7,8 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use App\Repository\CheckInRepository;
+use DateTime;
+use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -39,11 +41,11 @@ class CheckIn
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Assert\NotNull(message: 'Check-in time cannot be null')]
     #[Groups(['checkin:read', 'checkin:write'])]
-    private ?\DateTimeInterface $checkedInAt = null;
+    private ?DateTimeInterface $checkedInAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     #[Groups(['checkin:read', 'checkin:write'])]
-    private ?\DateTimeInterface $checkedOutAt = null;
+    private ?DateTimeInterface $checkedOutAt = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['checkin:read', 'checkin:write'])]
@@ -55,12 +57,12 @@ class CheckIn
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Groups(['checkin:read'])]
-    private ?\DateTimeInterface $createdAt = null;
+    private ?DateTimeInterface $createdAt;
 
     public function __construct()
     {
-        $this->createdAt = new \DateTime();
-        $this->checkedInAt = new \DateTime();
+        $this->createdAt = new DateTime();
+        $this->checkedInAt = new DateTime();
     }
 
     public function getId(): ?int
@@ -79,23 +81,23 @@ class CheckIn
         return $this;
     }
 
-    public function getCheckedInAt(): ?\DateTimeInterface
+    public function getCheckedInAt(): ?DateTimeInterface
     {
         return $this->checkedInAt;
     }
 
-    public function setCheckedInAt(\DateTimeInterface $checkedInAt): static
+    public function setCheckedInAt(DateTimeInterface $checkedInAt): static
     {
         $this->checkedInAt = $checkedInAt;
         return $this;
     }
 
-    public function getCheckedOutAt(): ?\DateTimeInterface
+    public function getCheckedOutAt(): ?DateTimeInterface
     {
         return $this->checkedOutAt;
     }
 
-    public function setCheckedOutAt(?\DateTimeInterface $checkedOutAt): static
+    public function setCheckedOutAt(?DateTimeInterface $checkedOutAt): static
     {
         $this->checkedOutAt = $checkedOutAt;
         return $this;
@@ -123,12 +125,12 @@ class CheckIn
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?DateTimeInterface
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): static
+    public function setCreatedAt(DateTimeInterface $createdAt): static
     {
         $this->createdAt = $createdAt;
         return $this;

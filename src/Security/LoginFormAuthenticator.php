@@ -16,12 +16,16 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\PasswordCredentials;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
+use Symfony\Component\Security\Http\EntryPoint\AuthenticationEntryPointInterface;
 
 /**
  * Authenticator for web form login only
  * API login is handled by json_login in security.yaml
+ *
+ * Implements AuthenticationEntryPointInterface to redirect to login page
+ * when user tries to access protected resources without authentication
  */
-class LoginFormAuthenticator extends AbstractAuthenticator
+class LoginFormAuthenticator extends AbstractAuthenticator implements AuthenticationEntryPointInterface
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
@@ -66,7 +70,13 @@ class LoginFormAuthenticator extends AbstractAuthenticator
         $user->setLastLoginAt(new DateTime());
         $this->entityManager->flush();
 
-        // Redirect to admin dashboard
+        // Redirect to target path if set, otherwise to admin dashboard
+        $targetPath = $request->getSession()->get('_security.main.target_path');
+        if ($targetPath) {
+            $request->getSession()->remove('_security.main.target_path');
+            return new RedirectResponse($targetPath);
+        }
+
         return new RedirectResponse($this->urlGenerator->generate('admin_dashboard'));
     }
 
@@ -75,6 +85,18 @@ class LoginFormAuthenticator extends AbstractAuthenticator
         // Store error in session for display on login page
         $request->getSession()->set('_security.last_error', $exception);
         $request->getSession()->set('_security.last_username', $request->request->get('email'));
+
+        return new RedirectResponse($this->urlGenerator->generate('app_login'));
+    }
+
+    /**
+     * Called when authentication is needed but user is not authenticated
+     * Redirects to login page and stores the target URL for redirect after login
+     */
+    public function start(Request $request, ?AuthenticationException $authException = null): Response
+    {
+        // Store the target URL to redirect after successful login
+        $request->getSession()->set('_security.main.target_path', $request->getUri());
 
         return new RedirectResponse($this->urlGenerator->generate('app_login'));
     }

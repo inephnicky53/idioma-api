@@ -8,7 +8,9 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
+use App\Dto\RegisterWithPaymentDto;
 use App\Repository\UserRepository;
+use App\State\Processor\RegisterWithPaymentProcessor;
 use DateTime;
 use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -42,6 +44,14 @@ use App\State\UserRegisterProcessor;
             denormalizationContext: ['groups' => ['user:write']],
             name: 'register',
             processor: UserRegisterProcessor::class
+        ),
+        new Post(
+            uriTemplate: '/auth/register-with-payment',
+            input: RegisterWithPaymentDto::class,
+            output: false,
+            name: 'register_with_payment',
+            processor: RegisterWithPaymentProcessor::class,
+            description: 'Inscription avec paiement - Crée un utilisateur et initie un paiement en une seule transaction'
         ),
         new Patch(
             normalizationContext: ['groups' => ['user:read']],

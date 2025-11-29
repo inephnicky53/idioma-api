@@ -4,6 +4,11 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    payment_provider: '%env(PAYMENT_PROVIDER)%'
+    flexpay_endpoint: '%env(FLEXPAY_ENDPOINT)%'
+    flexpay_merchant_name: '%env(FLEXPAY_MERCHANT_NAME)%'
+    flexpay_token: '%env(FLEXPAY_TOKEN)%'
+    merchant_name: '%env(MERCHANT_NAME)%'
 
 services:
     # default configuration for services in *this* file
@@ -15,6 +20,27 @@ services:
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
+
+    App\Service\Config:
+        arguments:
+            $flexpayToken: '%flexpay_token%'
+            $flexpayEndpoint: '%flexpay_endpoint%'
+            $merchantName: '%merchant_name%'
+
+    App\Service\OperatorProcess:
+        arguments:
+            $provider: '%payment_provider%'
+
+    App\Service\Payment\FlexPayProvider:
+        arguments:
+            $flexpayToken: '%flexpay_token%'
+            $flexpayEndpoint: '%flexpay_endpoint%'
+            $merchantName: '%flexpay_merchant_name%'
+
+    App\Service\Payment\PaymentManager:
+        arguments:
+            $provider: '%payment_provider%'
+            $flexPayProvider: '@App\Service\Payment\FlexPayProvider'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

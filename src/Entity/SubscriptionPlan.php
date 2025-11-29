@@ -8,7 +8,12 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
+use App\Contract\PayableInterface;
+use App\Enum\Currency;
+use App\Enum\PurchaseType;
 use App\Repository\SubscriptionPlanRepository;
+use DateTime;
+use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -29,7 +34,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     normalizationContext: ['groups' => ['subscriptionplan:read']],
     denormalizationContext: ['groups' => ['subscriptionplan:write']]
 )]
-class SubscriptionPlan
+class SubscriptionPlan implements PayableInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -51,6 +56,10 @@ class SubscriptionPlan
     #[Assert\Positive(message: 'Price must be positive')]
     #[Groups(['subscriptionplan:read', 'subscriptionplan:write', 'subscription:read', 'payment:read'])]
     private ?string $price = null;
+
+    #[ORM\Column(length: 3, enumType: Currency::class)]
+    #[Groups(['subscriptionplan:read', 'subscriptionplan:write', 'subscription:read', 'payment:read'])]
+    private Currency $currency = Currency::USD;
 
     #[ORM\Column]
     #[Assert\NotBlank(message: 'Duration in days cannot be empty')]
@@ -79,11 +88,11 @@ class SubscriptionPlan
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Groups(['subscriptionplan:read'])]
-    private ?\DateTimeInterface $createdAt = null;
+    private ?DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     #[Groups(['subscriptionplan:read'])]
-    private ?\DateTimeInterface $updatedAt = null;
+    private ?DateTimeInterface $updatedAt = null;
 
     /**
      * @var Collection<int, Subscription>
@@ -93,7 +102,7 @@ class SubscriptionPlan
 
     public function __construct()
     {
-        $this->createdAt = new \DateTime();
+        $this->createdAt = new DateTime();
         $this->subscriptions = new ArrayCollection();
     }
 
@@ -124,9 +133,9 @@ class SubscriptionPlan
         return $this;
     }
 
-    public function getPrice(): ?string
+    public function getPrice(): string
     {
-        return $this->price;
+        return $this->price ?? '0';
     }
 
     public function setPrice(string $price): static
@@ -179,23 +188,23 @@ class SubscriptionPlan
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?DateTimeInterface
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): static
+    public function setCreatedAt(DateTimeInterface $createdAt): static
     {
         $this->createdAt = $createdAt;
         return $this;
     }
 
-    public function getUpdatedAt(): ?\DateTimeInterface
+    public function getUpdatedAt(): ?DateTimeInterface
     {
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(?\DateTimeInterface $updatedAt): static
+    public function setUpdatedAt(?DateTimeInterface $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
         return $this;
@@ -236,7 +245,35 @@ class SubscriptionPlan
     #[ORM\PreUpdate]
     public function setUpdatedAtValue(): void
     {
-        $this->updatedAt = new \DateTime();
+        $this->updatedAt = new DateTime();
+    }
+
+    // ========== PayableInterface Implementation ==========
+
+    public function getCurrency(): Currency
+    {
+        return $this->currency;
+    }
+
+    public function setCurrency(Currency $currency): static
+    {
+        $this->currency = $currency;
+        return $this;
+    }
+
+    public function getLabel(): string
+    {
+        return $this->name ?? 'Plan d\'abonnement';
+    }
+
+    public function getPurchaseType(): PurchaseType
+    {
+        return PurchaseType::SUBSCRIPTION_CLUB;
+    }
+
+    public function isAvailableForPurchase(): bool
+    {
+        return $this->isActive;
     }
 }
 
