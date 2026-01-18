@@ -24,6 +24,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Serializer\Annotation\SerializedName;
 use Symfony\Component\Validator\Constraints as Assert;
 use App\State\UserRegisterProcessor;
+use App\Dto\RegisterDto;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
@@ -43,6 +44,7 @@ use App\State\UserRegisterProcessor;
             description: 'Inscription - Crée un utilisateur avec ou sans paiement',
             normalizationContext: ['groups' => ['user:read']],
             denormalizationContext: ['groups' => ['user:write']],
+            input: RegisterDto::class,
             name: 'register',
             processor: UserRegisterProcessor::class
         ),

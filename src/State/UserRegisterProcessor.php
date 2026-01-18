@@ -2,6 +2,7 @@
 
 namespace App\State;
 
+use App\Dto\RegisterDto;
 use App\Entity\User;
 use App\Entity\Subscription;
 use App\Entity\SubscriptionPlan;
@@ -33,7 +34,7 @@ readonly class UserRegisterProcessor implements ProcessorInterface
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): mixed
     {
-        if (!$data instanceof User) {
+        if (!$data instanceof RegisterDto) {
             return $data;
         }
 
@@ -43,58 +44,41 @@ readonly class UserRegisterProcessor implements ProcessorInterface
         }
 
         // Vérifier si l'email existe déjà
-        $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $data->getEmail()]);
+        $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $data->email]);
         if ($existingUser) {
             throw new Exception('Cet email est déjà utilisé');
         }
-
-        // Hacher le mot de passe
-        $plainPassword = $data->getPassword();
-        if (!$plainPassword) {
-            throw new Exception('Password is required');
-        }
-
-        $hashedPassword = $this->passwordHasher->hashPassword($data, $plainPassword);
-        $data->setPassword($hashedPassword);
-
-        // Définir les valeurs par défaut
-        $data->setIsActive(true);
-        $data->setCreatedAt(new DateTime());
 
         // Démarrer une transaction
         $this->entityManager->beginTransaction();
 
         try {
-            // Sauvegarder l'utilisateur
-            $this->entityManager->persist($data);
-            $this->entityManager->flush();
+            // Créer l'utilisateur
+            $user = $this->createUser($data);
 
-            // Vérifier si c'est une inscription avec paiement (subscriptionPlanId fourni)
-            $subscriptionPlanId = $data->getSubscriptionPlanId();
-            $paymentMethod = $data->getPaymentMethod();
-
-            if ($subscriptionPlanId && $paymentMethod) {
+            // Vérifier si c'est une inscription avec paiement
+            if ($data->hasPayment()) {
                 // Vérifier que le plan existe et est actif
-                $plan = $this->entityManager->getRepository(SubscriptionPlan::class)->find($subscriptionPlanId);
+                $plan = $this->entityManager->getRepository(SubscriptionPlan::class)->find($data->subscriptionPlanId);
                 if (!$plan || !$plan->isActive()) {
                     throw new Exception('Plan d\'abonnement invalide ou inactif');
                 }
 
                 // Créer le paiement
-                $payment = $this->createPayment($data, $plan, $paymentMethod);
+                $payment = $this->createPayment($user, $plan, $data);
 
                 // Traiter le paiement selon la méthode
-                $this->processPayment($payment, $paymentMethod);
+                $this->processPayment($payment, $data->getPaymentMethodEnum());
 
                 $this->logger->info('User registered with payment', [
-                    'userId' => $data->getId(),
+                    'userId' => $user->getId(),
                     'paymentId' => $payment->getId(),
-                    'paymentMethod' => $paymentMethod->value
+                    'paymentMethod' => $data->paymentMethod
                 ]);
             } else {
                 // Inscription simple au club si les champs club sont remplis
-                if ($data->isClubMember() || $data->getLevel()) {
-                    $this->createClubSubscription($data);
+                if ($data->level || $data->participationType) {
+                    $this->createClubSubscription($user, $data);
                 }
             }
 
@@ -102,35 +86,74 @@ readonly class UserRegisterProcessor implements ProcessorInterface
             $this->entityManager->commit();
 
             // Générer le JWT token
-            $token = $this->jwtManager->create($data);
-            $data->setToken($token);
+            $token = $this->jwtManager->create($user);
 
-            return $data;
+            return [
+                'success' => true,
+                'token' => $token,
+                'user' => [
+                    'id' => $user->getId(),
+                    'email' => $user->getEmail(),
+                    'firstName' => $user->getFirstName(),
+                    'lastName' => $user->getLastName(),
+                    'phone' => $user->getPhone(),
+                ]
+            ];
 
         } catch (\Exception $e) {
             $this->entityManager->rollback();
 
             $this->logger->error('Registration failed', [
                 'error' => $e->getMessage(),
-                'email' => $data->getEmail() ?? 'unknown'
+                'email' => $data->email ?? 'unknown'
             ]);
 
             throw $e;
         }
     }
 
-    private function createPayment(User $user, SubscriptionPlan $plan, PaymentMethod $paymentMethod): Payment
+    private function createUser(RegisterDto $data): User
+    {
+        $user = new User();
+        $user->setEmail($data->email);
+        $user->setFirstName($data->firstName);
+        $user->setLastName($data->lastName);
+        $user->setPhone($data->phone);
+        $user->setIsActive(true);
+        $user->setCreatedAt(new DateTime());
+
+        // Hacher le mot de passe
+        $hashedPassword = $this->passwordHasher->hashPassword($user, $data->password);
+        $user->setPassword($hashedPassword);
+
+        // Définir le niveau du club si fourni
+        if ($data->level) {
+            $user->setLevel($data->level);
+        }
+
+        // Définir le type de participation si fourni
+        if ($data->participationType) {
+            $user->setParticipationType($data->participationType);
+        }
+
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
+
+        return $user;
+    }
+
+    private function createPayment(User $user, SubscriptionPlan $plan, RegisterDto $data): Payment
     {
         $payment = new Payment();
         $payment->setUser($user);
         $payment->setSubscriptionPlan($plan);
-        $payment->setPaymentMethod($paymentMethod);
+        $payment->setPaymentMethod($data->getPaymentMethodEnum());
         $payment->setTransactionId(strtoupper(uniqid('PAY_')));
         $payment->setStatus(PaymentStatus::INIT);
         $payment->setIsSmsSend(false);
 
         // Gérer la devise et le montant
-        $currency = $user->getCurrency() ?? $plan->getCurrency();
+        $currency = $data->currency ?? $plan->getCurrency();
 
         if ($currency !== $plan->getCurrency()) {
             $amount = $this->rateService->convert(
@@ -144,9 +167,10 @@ readonly class UserRegisterProcessor implements ProcessorInterface
         }
         $payment->setCurrency($currency);
 
-        // Formater le téléphone si présent
-        if (!empty($user->getPhone())) {
-            $phone = PaymentMethod::formatPhoneNumber($user->getPhone());
+        // Utiliser le téléphone de paiement si fourni, sinon le téléphone principal
+        $phoneForPayment = $data->phonePayment ?? $user->getPhone();
+        if (!empty($phoneForPayment)) {
+            $phone = PaymentMethod::formatPhoneNumber($phoneForPayment);
             $payment->setPhone($phone);
         }
 
@@ -172,7 +196,7 @@ readonly class UserRegisterProcessor implements ProcessorInterface
         }
     }
 
-    private function createClubSubscription(User $user): void
+    private function createClubSubscription(User $user, RegisterDto $data): void
     {
         // Récupérer ou créer le plan "Club Plan"
         $clubPlan = $this->entityManager->getRepository(SubscriptionPlan::class)->findOneBy(['type' => 'club']);
