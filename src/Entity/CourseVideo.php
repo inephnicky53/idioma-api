@@ -6,6 +6,7 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use App\Controller\Api\VideoStreamAction;
+use App\Model\UploadedFileAwareInterface;
 use App\Repository\CourseVideoRepository;
 use DateTime;
 use DateTimeInterface;
@@ -23,16 +24,16 @@ use Symfony\Component\Validator\Constraints as Assert;
         new Get(
             uriTemplate: '/course_videos/{id}/stream',
             controller: VideoStreamAction::class,
+            description: 'Stream une vidéo de cours avec support du Range Request',
             security: "is_granted('ROLE_USER')",
-            name: 'stream',
             read: false,
             serialize: false,
-            description: 'Stream une vidéo de cours avec support du Range Request'
+            name: 'stream'
         ),
     ],
     normalizationContext: ['groups' => ['course_video:read']],
 )]
-class CourseVideo
+class CourseVideo implements UploadedFileAwareInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -166,6 +167,15 @@ class CourseVideo
             return null;
         }
         return '/api/courses/videos/' . $this->id . '/stream';
+    }
+
+    // ========== UploadedFileAwareInterface Implementation ==========
+
+    public function getFilePropertyMapping(): array
+    {
+        return [
+            'thumbnail' => 'thumbnail',
+        ];
     }
 
     public function getDuration(): ?int

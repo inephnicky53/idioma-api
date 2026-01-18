@@ -9,6 +9,7 @@ use App\Entity\Payment;
 use App\Entity\CheckIn;
 use App\Entity\TimeSlot;
 use App\Enum\PaymentStatus;
+use App\Enum\PaymentMethod;
 use DateTime;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
@@ -130,7 +131,7 @@ class AppFixtures extends Fixture
             $payment->setSubscriptionPlan($plans['club']);
             $payment->setAmount('29.99');
             $payment->setStatus(PaymentStatus::COMPLETED);
-            $payment->setPaymentMethod('card');
+            $payment->setPaymentMethod(PaymentMethod::MOBILE);
             $payment->setPaidAt(new DateTime('-10 days'));
             $manager->persist($payment);
 

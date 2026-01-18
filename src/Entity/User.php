@@ -8,9 +8,9 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
-use App\Dto\RegisterWithPaymentDto;
+use App\Enum\PaymentMethod;
+use App\Enum\Currency;
 use App\Repository\UserRepository;
-use App\State\Processor\RegisterWithPaymentProcessor;
 use DateTime;
 use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -40,18 +40,11 @@ use App\State\UserRegisterProcessor;
         ),
         new Post(
             uriTemplate: '/auth/register',
+            description: 'Inscription - Crée un utilisateur avec ou sans paiement',
             normalizationContext: ['groups' => ['user:read']],
             denormalizationContext: ['groups' => ['user:write']],
             name: 'register',
             processor: UserRegisterProcessor::class
-        ),
-        new Post(
-            uriTemplate: '/auth/register-with-payment',
-            input: RegisterWithPaymentDto::class,
-            output: false,
-            name: 'register_with_payment',
-            processor: RegisterWithPaymentProcessor::class,
-            description: 'Inscription avec paiement - Crée un utilisateur et initie un paiement en une seule transaction'
         ),
         new Patch(
             normalizationContext: ['groups' => ['user:read']],
@@ -179,6 +172,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $learningGoals = null;
+
+    // Champs temporaires pour l'inscription avec paiement (non persistés)
+    private ?int $subscriptionPlanId = null;
+    private ?PaymentMethod $paymentMethod = null;
+    private ?Currency $currency = null;
+    private ?string $token = null;
 
     public function __construct()
     {
@@ -536,6 +535,51 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setLearningGoals(?string $learningGoals): static
     {
         $this->learningGoals = $learningGoals;
+        return $this;
+    }
+
+    // Getters et setters pour les champs temporaires d'inscription avec paiement
+    public function getSubscriptionPlanId(): ?int
+    {
+        return $this->subscriptionPlanId;
+    }
+
+    public function setSubscriptionPlanId(?int $subscriptionPlanId): static
+    {
+        $this->subscriptionPlanId = $subscriptionPlanId;
+        return $this;
+    }
+
+    public function getPaymentMethod(): ?PaymentMethod
+    {
+        return $this->paymentMethod;
+    }
+
+    public function setPaymentMethod(?PaymentMethod $paymentMethod): static
+    {
+        $this->paymentMethod = $paymentMethod;
+        return $this;
+    }
+
+    public function getCurrency(): ?Currency
+    {
+        return $this->currency;
+    }
+
+    public function setCurrency(?Currency $currency): static
+    {
+        $this->currency = $currency;
+        return $this;
+    }
+
+    public function getToken(): ?string
+    {
+        return $this->token;
+    }
+
+    public function setToken(?string $token): static
+    {
+        $this->token = $token;
         return $this;
     }
 

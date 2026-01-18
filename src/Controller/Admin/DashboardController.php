@@ -3,6 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Entity\CheckIn;
+use App\Entity\ContactMessage;
 use App\Entity\Course;
 use App\Entity\CourseVideo;
 use App\Entity\Payment;
@@ -67,6 +68,9 @@ class DashboardController extends AbstractDashboardController
 
         yield MenuItem::section('Présences');
         yield MenuItem::linkToCrud('Check-ins', 'fas fa-sign-in-alt', CheckIn::class);
+
+        yield MenuItem::section('Contact');
+        yield MenuItem::linkToCrud('Messages de Contact', 'fas fa-envelope', ContactMessage::class);
 
         yield MenuItem::section('Configuration');
         yield MenuItem::linkToCrud('Taux de change', 'fas fa-exchange-alt', Rate::class);

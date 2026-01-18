@@ -38,6 +38,7 @@ readonly class RegisterWithPaymentProcessor implements ProcessorInterface
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): array
     {
+        dd($data);
         if (!$data instanceof RegisterWithPaymentDto) {
             throw new InvalidArgumentException('Expected RegisterWithPaymentDto');
         }

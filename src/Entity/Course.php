@@ -8,7 +8,9 @@ use ApiPlatform\Metadata\GetCollection;
 use App\Contract\PayableInterface;
 use App\Enum\Currency;
 use App\Enum\PurchaseType;
+use App\Model\UploadedFileAwareInterface;
 use App\Repository\CourseRepository;
+use App\State\CourseCollectionProvider;
 use DateTime;
 use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -22,12 +24,12 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\HasLifecycleCallbacks]
 #[ApiResource(
     operations: [
-        new GetCollection(),
+        new GetCollection(provider: CourseCollectionProvider::class),
         new Get(),
     ],
     normalizationContext: ['groups' => ['course:read']],
 )]
-class Course implements PayableInterface
+class Course implements PayableInterface, UploadedFileAwareInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -316,6 +318,15 @@ class Course implements PayableInterface
     public function getFormattedPrice(): string
     {
         return number_format((float) $this->price, 2) . ' ' . $this->currency->value;
+    }
+
+    // ========== UploadedFileAwareInterface Implementation ==========
+
+    public function getFilePropertyMapping(): array
+    {
+        return [
+            'thumbnail' => 'thumbnail',
+        ];
     }
 
     // ========== PayableInterface Implementation ==========

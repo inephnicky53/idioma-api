@@ -1,0 +1,74 @@
+{% extends '@EasyAdmin/layout.html.twig' %}
+
+{% block content_title %}
+    Répondre à {{ message.name }}
+{% endblock %}
+
+{% block main %}
+    <div class="container-xl">
+        <div class="page-wrapper">
+            <div class="content">
+                <div class="row">
+                    <div class="col-md-8 offset-md-2">
+                        <div class="card">
+                            <div class="card-body">
+                                <!-- Message Original -->
+                                <div class="alert alert-light border">
+                                    <h5 class="mb-3">Message original</h5>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <strong>De :</strong> {{ message.name }}<br>
+                                            <strong>Email :</strong> {{ message.email }}<br>
+                                            <strong>Téléphone :</strong> {{ message.phone ?? '—' }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Service :</strong> {{ message.service ?? '—' }}<br>
+                                            <strong>Date :</strong> {{ message.createdAt|date('d/m/Y H:i') }}
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <strong>Sujet :</strong> {{ message.subject }}
+                                    </div>
+                                    <div class="bg-white p-3 rounded border">
+                                        <strong>Message :</strong><br>
+                                        {{ message.message|nl2br }}
+                                    </div>
+                                </div>
+
+                                <!-- Formulaire de Réponse -->
+                                <form method="POST" class="mt-4">
+                                    <div class="form-group mb-3">
+                                        <label for="reply_content" class="form-label">
+                                            <strong>Votre réponse</strong>
+                                        </label>
+                                        <textarea 
+                                            id="reply_content" 
+                                            name="reply_content" 
+                                            class="form-control" 
+                                            rows="8" 
+                                            placeholder="Écrivez votre réponse ici..."
+                                            required
+                                        ></textarea>
+                                        <small class="form-text text-muted">
+                                            Cette réponse sera envoyée par email à {{ message.email }}
+                                        </small>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fa fa-paper-plane me-2"></i>Envoyer la réponse
+                                        </button>
+                                        <a href="{{ ea_url({action: 'detail', entityId: entityId}) }}" class="btn btn-secondary">
+                                            <i class="fa fa-times me-2"></i>Annuler
+                                        </a>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
