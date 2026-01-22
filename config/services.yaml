@@ -42,5 +42,9 @@ services:
             $provider: '%payment_provider%'
             $flexPayProvider: '@App\Service\Payment\FlexPayProvider'
 
+    App\EventListener\ConflictExceptionListener:
+        tags:
+            - { name: 'kernel.event_listener', event: 'kernel.exception', priority: 100 }
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

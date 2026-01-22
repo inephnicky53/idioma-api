@@ -3,28 +3,27 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
-use ApiPlatform\Metadata\Delete;
-use App\Enum\PaymentMethod;
+use App\Dto\RegisterDto;
 use App\Enum\Currency;
+use App\Enum\PaymentMethod;
 use App\Repository\UserRepository;
+use App\State\Processor\UserRegisterProcessor;
+use App\State\Provider\RegisterDtoProvider;
 use DateTime;
 use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
-use Symfony\Component\Serializer\Annotation\SerializedName;
 use Symfony\Component\Validator\Constraints as Assert;
-use App\State\UserRegisterProcessor;
-use App\Dto\RegisterDto;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
@@ -43,9 +42,10 @@ use App\Dto\RegisterDto;
             uriTemplate: '/auth/register',
             description: 'Inscription - Crée un utilisateur avec ou sans paiement',
             normalizationContext: ['groups' => ['user:read']],
-            denormalizationContext: ['groups' => ['user:write']],
             input: RegisterDto::class,
+            validate: false,
             name: 'register',
+            provider: RegisterDtoProvider::class,
             processor: UserRegisterProcessor::class
         ),
         new Patch(
@@ -60,7 +60,6 @@ use App\Dto\RegisterDto;
         )
     ],
     normalizationContext: ['groups' => ['user:read']],
-    denormalizationContext: ['groups' => ['user:write']]
 )]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
@@ -128,6 +127,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?DateTimeInterface $refreshTokenExpiresAt = null;
+
+    /**
+     * JWT Token - Not persisted in database, only for API responses
+     */
+    #[Groups(['user:read'])]
+    private ?string $jwtToken = null;
 
     /**
      * @var Collection<int, Subscription>
@@ -582,6 +587,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setToken(?string $token): static
     {
         $this->token = $token;
+        return $this;
+    }
+
+    public function getJwtToken(): ?string
+    {
+        return $this->jwtToken;
+    }
+
+    public function setJwtToken(?string $jwtToken): static
+    {
+        $this->jwtToken = $jwtToken;
         return $this;
     }
 

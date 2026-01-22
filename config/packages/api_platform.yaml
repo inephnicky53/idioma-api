@@ -21,3 +21,10 @@ api_platform:
             mime_types: [ 'text/html' ]
 
         multipart: ['multipart/form-data']
+
+    # Configuration des erreurs
+    error_formats:
+        jsonld:
+            mime_types: [ 'application/ld+json' ]
+        json:
+            mime_types: [ 'application/json' ]

@@ -1,10 +1,9 @@
 <?php
 
-namespace App\State;
+namespace App\State\Provider;
 
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
-use App\Entity\Course;
 use App\Repository\CourseRepository;
 
 class CourseCollectionProvider implements ProviderInterface

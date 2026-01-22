@@ -4,6 +4,7 @@ namespace App\Dto;
 
 use App\Enum\Currency;
 use App\Enum\PaymentMethod;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
@@ -14,56 +15,80 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[Assert\Callback('validate')]
 final class RegisterDto
 {
+    #[Assert\NotBlank(message: 'L\'email est requis')]
+    #[Assert\Email(message: 'L\'email n\'est pas valide')]
+    public ?string $email = null;
+
+    #[Assert\NotBlank(message: 'Le mot de passe est requis')]
+    #[Assert\Length(min: 6, minMessage: 'Le mot de passe doit contenir au moins 6 caractères')]
+    public ?string $password = null;
+
+    #[Assert\NotBlank(message: 'Le prénom est requis')]
+    public ?string $firstName = null;
+
+    #[Assert\NotBlank(message: 'Le nom est requis')]
+    public ?string $lastName = null;
+
+    /**
+     * Numéro de téléphone (optionnel pour inscription simple, obligatoire pour MOBILE)
+     */
+    public ?string $phone = null;
+
+    /**
+     * Numéro de téléphone pour le paiement (obligatoire pour MOBILE)
+     */
+    public ?string $phonePayment = null;
+
+    /**
+     * Niveau du club (optionnel)
+     */
+    public ?string $level = null;
+
+    /**
+     * Type de participation (optionnel)
+     */
+    public ?string $participationType = null;
+
+    /**
+     * Plan d'abonnement (optionnel, requis si paymentMethod est fourni)
+     */
+    public ?int $subscriptionPlanId = null;
+
+    /**
+     * Méthode de paiement: MOBILE, BANK, CASH (optionnel)
+     */
+    public ?string $paymentMethod = null;
+
+    /**
+     * Devise pour le paiement (optionnel, défaut: devise du plan)
+     */
+    public ?Currency $currency = null;
+
     public function __construct(
-        #[Assert\NotBlank(message: 'L\'email est requis')]
-        #[Assert\Email(message: 'L\'email n\'est pas valide')]
-        public ?string $email = null,
-
-        #[Assert\NotBlank(message: 'Le mot de passe est requis')]
-        #[Assert\Length(min: 6, minMessage: 'Le mot de passe doit contenir au moins 6 caractères')]
-        public ?string $password = null,
-
-        #[Assert\NotBlank(message: 'Le prénom est requis')]
-        public ?string $firstName = null,
-
-        #[Assert\NotBlank(message: 'Le nom est requis')]
-        public ?string $lastName = null,
-
-        /**
-         * Numéro de téléphone (optionnel pour inscription simple, obligatoire pour MOBILE)
-         */
-        public ?string $phone = null,
-
-        /**
-         * Numéro de téléphone pour le paiement (obligatoire pour MOBILE)
-         */
-        public ?string $phonePayment = null,
-
-        /**
-         * Niveau du club (optionnel)
-         */
-        public ?string $level = null,
-
-        /**
-         * Type de participation (optionnel)
-         */
-        public ?string $participationType = null,
-
-        /**
-         * Plan d'abonnement (optionnel, requis si paymentMethod est fourni)
-         */
-        public ?int $subscriptionPlanId = null,
-
-        /**
-         * Méthode de paiement: MOBILE, BANK, CASH (optionnel)
-         */
-        public ?string $paymentMethod = null,
-
-        /**
-         * Devise pour le paiement (optionnel, défaut: devise du plan)
-         */
-        public ?Currency $currency = null,
-    ) {}
+        ?string $email = null,
+        ?string $password = null,
+        ?string $firstName = null,
+        ?string $lastName = null,
+        ?string $phone = null,
+        ?string $phonePayment = null,
+        ?string $level = null,
+        ?string $participationType = null,
+        ?int $subscriptionPlanId = null,
+        ?string $paymentMethod = null,
+        ?Currency $currency = null,
+    ) {
+        $this->email = $email;
+        $this->password = $password;
+        $this->firstName = $firstName;
+        $this->lastName = $lastName;
+        $this->phone = $phone;
+        $this->phonePayment = $phonePayment;
+        $this->level = $level;
+        $this->participationType = $participationType;
+        $this->subscriptionPlanId = $subscriptionPlanId;
+        $this->paymentMethod = $paymentMethod;
+        $this->currency = $currency;
+    }
 
     /**
      * Validation conditionnelle selon la méthode de paiement

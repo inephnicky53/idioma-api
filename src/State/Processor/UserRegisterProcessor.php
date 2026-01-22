@@ -1,25 +1,27 @@
 <?php
 
-namespace App\State;
+namespace App\State\Processor;
 
-use App\Dto\RegisterDto;
-use App\Entity\User;
-use App\Entity\Subscription;
-use App\Entity\SubscriptionPlan;
-use App\Entity\Payment;
-use App\Enum\PaymentMethod;
-use App\Enum\PaymentStatus;
-use App\Enum\Currency;
-use App\Service\Payment\PaymentManager;
-use App\Service\RateService;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
+use App\Dto\RegisterDto;
+use App\Entity\Payment;
+use App\Entity\Subscription;
+use App\Entity\SubscriptionPlan;
+use App\Entity\User;
+use App\Enum\Currency;
+use App\Enum\PaymentMethod;
+use App\Enum\PaymentStatus;
+use App\Service\Payment\PaymentManager;
+use App\Service\RateService;
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use DateTime;
 
 readonly class UserRegisterProcessor implements ProcessorInterface
 {
@@ -30,23 +32,85 @@ readonly class UserRegisterProcessor implements ProcessorInterface
         private PaymentManager              $paymentManager,
         private RateService                 $rateService,
         private LoggerInterface             $logger,
+        private RequestStack                $requestStack,
     ) {}
 
+    /**
+     * @param RegisterDto $data
+     * @param Operation $operation
+     * @param array $uriVariables
+     * @param array $context
+     * @return mixed
+     * @throws Exception
+     */
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): mixed
     {
-        if (!$data instanceof RegisterDto) {
-            return $data;
-        }
-
         // Vérifier si c'est une inscription (POST sur /auth/register)
         if ($operation->getName() !== 'register') {
             return $data;
         }
 
+        // Si les données ne sont pas un RegisterDto, essayer de les désérialiser manuellement
+        /*if (!$data instanceof RegisterDto) {
+            $request = $this->requestStack->getCurrentRequest();
+            if ($request) {
+                $jsonData = json_decode($request->getContent(), true);
+                if (is_array($jsonData)) {
+                    // Convertir la devise en enum si fournie
+                    $currency = null;
+                    if (isset($jsonData['currency']) && is_string($jsonData['currency'])) {
+                        try {
+                            $currency = Currency::from($jsonData['currency']);
+                        } catch (\ValueError $e) {
+                            // Ignorer les devises invalides
+                        }
+                    }
+
+                    // Créer le DTO avec les données
+                    $data = new RegisterDto(
+                        email: $jsonData['email'] ?? null,
+                        password: $jsonData['password'] ?? null,
+                        firstName: $jsonData['firstName'] ?? null,
+                        lastName: $jsonData['lastName'] ?? null,
+                        phone: $jsonData['phone'] ?? null,
+                        phonePayment: $jsonData['phonePayment'] ?? null,
+                        level: $jsonData['level'] ?? null,
+                        participationType: $jsonData['participationType'] ?? null,
+                        subscriptionPlanId: isset($jsonData['subscriptionPlanId']) ? (int)$jsonData['subscriptionPlanId'] : null,
+                        paymentMethod: $jsonData['paymentMethod'] ?? null,
+                        currency: $currency,
+                    );
+                }
+            }
+        }*/
+
+        if (!$data instanceof RegisterDto) {
+            $this->logger->warning('Data is not RegisterDto', ['type' => get_class($data)]);
+            throw new \Exception('Invalid data type');
+        }
+
+        $this->logger->info('UserRegisterProcessor.process called', [
+            'dataType' => get_class($data),
+            'operationName' => $operation->getName(),
+            'data' => [
+                'email' => $data->email,
+                'firstName' => $data->firstName,
+                'lastName' => $data->lastName,
+            ]
+        ]);
+
         // Vérifier si l'email existe déjà
         $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $data->email]);
         if ($existingUser) {
-            throw new Exception('Cet email est déjà utilisé');
+            throw new ConflictHttpException('Cet email est déjà utilisé');
+        }
+
+        // Vérifier si le téléphone existe déjà (s'il est fourni)
+        if (!empty($data->phone)) {
+            $existingPhone = $this->entityManager->getRepository(User::class)->findOneBy(['phone' => $data->phone]);
+            if ($existingPhone) {
+                throw new ConflictHttpException('Ce numéro de téléphone est déjà utilisé');
+            }
         }
 
         // Démarrer une transaction
@@ -85,20 +149,13 @@ readonly class UserRegisterProcessor implements ProcessorInterface
             // Commit la transaction
             $this->entityManager->commit();
 
-            // Générer le JWT token
+            // Générer le JWT token et le stocker dans l'utilisateur pour la sérialisation
             $token = $this->jwtManager->create($user);
 
-            return [
-                'success' => true,
-                'token' => $token,
-                'user' => [
-                    'id' => $user->getId(),
-                    'email' => $user->getEmail(),
-                    'firstName' => $user->getFirstName(),
-                    'lastName' => $user->getLastName(),
-                    'phone' => $user->getPhone(),
-                ]
-            ];
+            // Ajouter le token à l'utilisateur pour la réponse
+            $user->setJwtToken($token);
+
+            return $user;
 
         } catch (\Exception $e) {
             $this->entityManager->rollback();

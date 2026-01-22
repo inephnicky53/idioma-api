@@ -10,7 +10,7 @@ use App\Enum\Currency;
 use App\Enum\PurchaseType;
 use App\Model\UploadedFileAwareInterface;
 use App\Repository\CourseRepository;
-use App\State\CourseCollectionProvider;
+use App\State\Provider\CourseCollectionProvider;
 use DateTime;
 use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
