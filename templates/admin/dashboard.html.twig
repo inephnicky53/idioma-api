@@ -1,3 +1,4 @@
+
 {% extends '@EasyAdmin/layout.html.twig' %}
 
 {% block content_title %}
@@ -296,6 +297,10 @@
                             <a href="{{ ea_url().setAction('new').setController('App\\Controller\\Admin\\CheckInCrudController') }}" class="action-btn btn-warning">
                                 <i class="fa fa-sign-in-alt"></i>
                                 <span>Nouveau check-in</span>
+                            </a>
+                            <a href="{{ ea_url().setAction('index').setController('App\\Controller\\Admin\\TranslationRequestCrudController') }}" class="action-btn btn-warning">
+                                <i class="fa fa-language"></i>
+                                <span>Voir les demandes de traduction</span>
                             </a>
                         </div>
                     </div>

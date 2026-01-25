@@ -14,9 +14,9 @@ use App\Enum\PaymentMethod;
 use App\Enum\PaymentProvider;
 use App\Enum\PaymentStatus;
 use App\Enum\PurchaseType;
-use App\Exception\PaymentException;
 use App\Repository\PaymentRepository;
 use App\State\Processor\PaymentProcessor;
+use App\State\Provider\PendingCoursePaymentProvider;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -28,24 +28,31 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: PaymentRepository::class)]
 #[ORM\HasLifecycleCallbacks]
 #[ApiResource(
+    shortName: 'Payment',
     operations: [
         new GetCollection(
+            normalizationContext: ['groups' => ['payment:read']],
             security: "is_granted('ROLE_USER')"
         ),
+        new GetCollection(
+            uriTemplate: '/payments/pending-courses',
+            description: 'Récupère les paiements de cours en attente',
+            normalizationContext: ['groups' => ['payment:read']],
+            security: "is_granted('ROLE_USER')",
+            provider: PendingCoursePaymentProvider::class
+        ),
         new Get(
-            security: "is_granted('ROLE_USER')"
+            normalizationContext: ['groups' => ['payment:read']],
+            security: "is_granted('ROLE_USER') and object.getUser() == user"
         ),
         new Post(
             security: "is_granted('ROLE_USER')",
-            validationContext: ['groups' => ['Default']],
+            validationContext: ['groups' => ['Default', 'payment:create']],
             input: CreatePaymentDto::class,
             processor: PaymentProcessor::class
         ),
-        new Patch(
-            security: "is_granted('ROLE_ADMIN')"
-        )
     ],
-    normalizationContext: ['groups' => ['payment:read']],
+    paginationEnabled: true
 )]
 class Payment
 {
@@ -60,7 +67,6 @@ class Payment
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['payment:read'])]
     private ?User $user = null;
-
     #[ORM\Column(length: 20, enumType: PurchaseType::class)]
     #[Groups(['payment:read'])]
     private PurchaseType $purchaseType = PurchaseType::SUBSCRIPTION_CLUB;
@@ -91,10 +97,6 @@ class Payment
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['payment:read', 'payment:write'])]
     private ?PaymentMethod $paymentMethod = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['payment:read'])]
-    private ?string $transactionId = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     #[Groups(['payment:read'])]
@@ -291,17 +293,6 @@ class Payment
     public function setPaymentMethod(?PaymentMethod $paymentMethod): static
     {
         $this->paymentMethod = $paymentMethod;
-        return $this;
-    }
-
-    public function getTransactionId(): ?string
-    {
-        return $this->transactionId;
-    }
-
-    public function setTransactionId(?string $transactionId): static
-    {
-        $this->transactionId = $transactionId;
         return $this;
     }
 

@@ -6,12 +6,16 @@ use App\Entity\CheckIn;
 use App\Entity\ContactMessage;
 use App\Entity\Course;
 use App\Entity\CourseVideo;
+use App\Entity\News;
+use App\Entity\NewsletterSubscription;
 use App\Entity\Payment;
 use App\Entity\Rate;
 use App\Entity\Subscription;
 use App\Entity\SubscriptionPlan;
 use App\Entity\TimeSlot;
 use App\Entity\User;
+use App\Entity\TranslationRequest;
+use App\Repository\TranslationRequestRepository;
 use App\Service\DashboardStatsService;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
@@ -25,7 +29,8 @@ class DashboardController extends AbstractDashboardController
 {
     public function __construct(
         private DashboardStatsService $statsService,
-        private RequestStack $requestStack
+        private RequestStack $requestStack,
+        private TranslationRequestRepository $translationRequestRepository
     ) {}
 
     public function index(): Response
@@ -34,9 +39,13 @@ class DashboardController extends AbstractDashboardController
         $period = $request ? $request->query->get('period', 'today') : 'today';
         $stats = $this->statsService->getStats($period);
 
+        // Statistiques des demandes de traduction
+        $translationStats = $this->translationRequestRepository->count([]);
+
         return $this->render('admin/dashboard.html.twig', [
             'stats' => $stats,
             'period' => $period,
+            'translationStats' => $translationStats,
         ]);
     }
 
@@ -71,6 +80,7 @@ class DashboardController extends AbstractDashboardController
 
         yield MenuItem::section('Contact');
         yield MenuItem::linkToCrud('Messages de Contact', 'fas fa-envelope', ContactMessage::class);
+        yield MenuItem::linkToCrud('Demandes de Traduction', 'fas fa-language', TranslationRequest::class);
 
         yield MenuItem::section('Configuration');
         yield MenuItem::linkToCrud('Taux de change', 'fas fa-exchange-alt', Rate::class);
@@ -82,5 +92,9 @@ class DashboardController extends AbstractDashboardController
 
         yield MenuItem::section('API');
         yield MenuItem::linkToUrl('Documentation API', 'fas fa-book', '/api/docs');
+
+        yield MenuItem::section('Actualités');
+        yield MenuItem::linkToCrud('Actualités', 'fas fa-newspaper', News::class);
+        yield MenuItem::linkToCrud('Newsletter', 'fas fa-envelope', NewsletterSubscription::class);
     }
 }

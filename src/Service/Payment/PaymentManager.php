@@ -86,11 +86,10 @@ readonly class PaymentManager
         $phone = $dto->phone ? PaymentMethod::formatPhoneNumber($dto->phone) : null;
 
         $payment->setPaymentMethod($paymentMethod);
-        $payment->setTransactionId(strtoupper(uniqid('PAY_')));
+        $payment->setReference(strtoupper(uniqid('PAY_')));
         $payment->setStatus(PaymentStatus::INIT);
         $payment->setIsSmsSend(false);
         $payment->setPhone($phone);
-        $payment->setReference($dto->reference);
 
         // Persister
         $this->entityManager->persist($payment);

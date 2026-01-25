@@ -1,0 +1,36 @@
+/* Translation Request Status Badges */
+.badge-lg {
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+}
+
+.badge i {
+    margin-right: 0.25rem;
+}
+
+/* Translation Request Cards */
+.translation-card {
+    border-left: 4px solid #6366f1;
+    transition: all 0.3s ease;
+}
+
+.translation-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.translation-card.pending {
+    border-left-color: #fbbf24;
+}
+
+.translation-card.in-progress {
+    border-left-color: #3b82f6;
+}
+
+.translation-card.completed {
+    border-left-color: #10b981;
+}
+
+.translation-card.cancelled {
+    border-left-color: #6b7280;
+}

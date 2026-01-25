@@ -42,17 +42,17 @@ class CallbackController extends AbstractController
         $this->logger->info('FlexPay callback received', ['data' => $data]);
 
         // Validation des données
-        if (!$data || !isset($data['orderNumber'])) {
+        if (!$data || !isset($data['reference'])) {
             $this->logger->error('FlexPay callback: Invalid data', ['data' => $data]);
             return new JsonResponse(['error' => 'Invalid callback data'], Response::HTTP_BAD_REQUEST);
         }
 
         // Rechercher le paiement
         $payment = $this->entityManager->getRepository(Payment::class)
-            ->findOneBy(['transactionId' => $data['orderNumber']]);
+            ->findOneBy(['reference' => $data['reference']]);
 
         if (!$payment) {
-            $this->logger->warning('FlexPay callback: Payment not found', ['orderNumber' => $data['orderNumber']]);
+            $this->logger->warning('FlexPay callback: Payment not found', ['reference' => $data['reference']]);
             return new JsonResponse(['error' => 'Payment not found'], Response::HTTP_NOT_FOUND);
         }
 

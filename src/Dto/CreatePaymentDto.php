@@ -43,11 +43,6 @@ final class CreatePaymentDto
          * Numéro de téléphone (obligatoire pour MOBILE)
          */
         public ?string $phone = null,
-
-        /**
-         * Référence externe (optionnel pour BANK)
-         */
-        public ?string $reference = null,
     ) {}
 
     /**
