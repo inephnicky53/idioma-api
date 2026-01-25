@@ -32,7 +32,6 @@ readonly class UserRegisterProcessor implements ProcessorInterface
         private PaymentManager              $paymentManager,
         private RateService                 $rateService,
         private LoggerInterface             $logger,
-        private RequestStack                $requestStack,
     ) {}
 
     /**
@@ -205,7 +204,7 @@ readonly class UserRegisterProcessor implements ProcessorInterface
         $payment->setUser($user);
         $payment->setSubscriptionPlan($plan);
         $payment->setPaymentMethod($data->getPaymentMethodEnum());
-        $payment->setTransactionId(strtoupper(uniqid('PAY_')));
+        $payment->setReference(strtoupper(uniqid('PAY_')));
         $payment->setStatus(PaymentStatus::INIT);
         $payment->setIsSmsSend(false);
 
@@ -259,7 +258,7 @@ readonly class UserRegisterProcessor implements ProcessorInterface
         $clubPlan = $this->entityManager->getRepository(SubscriptionPlan::class)->findOneBy(['type' => 'club']);
         if (!$clubPlan) {
             $clubPlan = new SubscriptionPlan();
-            $clubPlan->setName('Club Plan');
+            $clubPlan->setName('Idioma English Club');
             $clubPlan->setDescription('Plan Club');
             $clubPlan->setPrice(50.00);
             $clubPlan->setDurationDays(30);
