@@ -13,6 +13,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ImageField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\MoneyField;
@@ -120,8 +121,14 @@ class CourseCrudController extends AbstractCrudController
             ->setUploadedFileNamePattern('[randomhash].[extension]')
             ->setHelp('Image affichée dans la liste des cours');
 
-        yield TextField::new('ebookPath', 'Fichier Ebook')
-            ->setHelp('Chemin vers le fichier PDF (ex: /uploads/ebooks/cours1.pdf)');
+        yield Field::new('ebookPath', 'Fichier Ebook (PDF)')
+            ->setFormType(\EasyCorp\Bundle\EasyAdminBundle\Form\Type\FileUploadType::class)
+            ->setFormTypeOptions([
+                'upload_dir' => 'public/uploads/ebooks/',
+                'upload_new' => fn ($file) => uniqid() . '.' . $file->guessExtension(),
+            ])
+            ->setRequired(false)
+            ->setHelp('Fichier PDF du cours (max 50MB)');
 
         yield TextField::new('ebookTitle', 'Titre de l\'Ebook')
             ->setHelp('Titre affiché pour l\'ebook');

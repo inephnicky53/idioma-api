@@ -6,6 +6,7 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use App\Repository\CoursePurchaseRepository;
+use App\State\Provider\CoursePurchaseCollectionProvider;
 use DateTime;
 use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
@@ -17,7 +18,11 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ORM\UniqueConstraint(name: 'unique_user_course', columns: ['user_id', 'course_id'])]
 #[ApiResource(
     operations: [
-        new GetCollection(security: "is_granted('ROLE_USER')"),
+        new GetCollection(
+            normalizationContext: ['groups' => ['course_purchase:read']],
+            security: "is_granted('ROLE_USER')",
+            provider: CoursePurchaseCollectionProvider::class
+        ),
         new Get(security: "is_granted('ROLE_USER')"),
     ],
     normalizationContext: ['groups' => ['course_purchase:read']],

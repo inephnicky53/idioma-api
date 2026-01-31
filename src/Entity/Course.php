@@ -34,24 +34,24 @@ class Course implements PayableInterface, UploadedFileAwareInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['course:read', 'payment:read'])]
+    #[Groups(['course:read', 'payment:read', 'course_purchase:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Le titre est requis')]
-    #[Groups(['course:read', 'payment:read'])]
+    #[Groups(['course:read', 'payment:read', 'course_purchase:read'])]
     private ?string $title = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['course:read'])]
+    #[Groups(['course:read', 'course_purchase:read'])]
     private ?string $titleEn = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['course:read'])]
+    #[Groups(['course:read', 'course_purchase:read'])]
     private ?string $description = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['course:read'])]
+    #[Groups(['course:read', 'course_purchase:read'])]
     private ?string $descriptionEn = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
@@ -65,15 +65,15 @@ class Course implements PayableInterface, UploadedFileAwareInterface
     private Currency $currency = Currency::USD;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['course:read'])]
+    #[Groups(['course:read', 'course_purchase:read'])]
     private ?string $thumbnail = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['course:read'])]
+    #[Groups(['course:read', 'course_purchase:read'])]
     private ?string $ebookPath = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['course:read'])]
+    #[Groups(['course:read', 'course_purchase:read'])]
     private ?string $ebookTitle = null;
 
     #[ORM\Column]
@@ -94,7 +94,7 @@ class Course implements PayableInterface, UploadedFileAwareInterface
     /** @var Collection<int, CourseVideo> */
     #[ORM\OneToMany(targetEntity: CourseVideo::class, mappedBy: 'course', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['position' => 'ASC'])]
-    #[Groups(['course:read'])]
+    #[Groups(['course:read', 'course_purchase:read'])]
     private Collection $videos;
 
     /** @var Collection<int, CoursePurchase> */
@@ -298,13 +298,13 @@ class Course implements PayableInterface, UploadedFileAwareInterface
         return $this->purchases;
     }
 
-    #[Groups(['course:read'])]
+    #[Groups(['course:read', 'course_purchase:read'])]
     public function getVideoCount(): int
     {
         return $this->videos->count();
     }
 
-    #[Groups(['course:read'])]
+    #[Groups(['course:read', 'course_purchase:read'])]
     public function getTotalDuration(): int
     {
         $total = 0;
@@ -326,6 +326,7 @@ class Course implements PayableInterface, UploadedFileAwareInterface
     {
         return [
             'thumbnail' => 'thumbnail',
+            'ebookPath' => 'ebookPath',
         ];
     }
 

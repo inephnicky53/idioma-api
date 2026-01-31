@@ -12,11 +12,14 @@ use DateTime;
 use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 #[ORM\Entity(repositoryClass: CourseVideoRepository::class)]
 #[ORM\HasLifecycleCallbacks]
+#[Vich\Uploadable]
 #[ApiResource(
     operations: [
         new GetCollection(security: "is_granted('ROLE_USER')"),
@@ -59,10 +62,16 @@ class CourseVideo implements UploadedFileAwareInterface
     #[Groups(['course_video:read'])]
     private ?string $description = null;
 
-    #[ORM\Column(length: 500)]
-    #[Assert\NotBlank(message: 'Le fichier vidéo est requis')]
+    #[ORM\Column(length: 500, nullable: true)]
     #[Groups(['course_video:read'])]
     private ?string $videoFile = null;
+
+    /**
+     * Fichier vidéo pour Vich Uploader
+     * Cette propriété n'est pas persistée en base de données
+     */
+    #[Vich\UploadableField(mapping: 'course_videos', fileNameProperty: 'videoFile')]
+    private ?File $videoFileUpload = null;
 
     #[ORM\Column(nullable: true)]
     #[Groups(['course_video:read', 'course:read'])]
@@ -151,7 +160,7 @@ class CourseVideo implements UploadedFileAwareInterface
         return $this->videoFile;
     }
 
-    public function setVideoFile(string $videoFile): static
+    public function setVideoFile(?string $videoFile): static
     {
         $this->videoFile = $videoFile;
         return $this;
@@ -160,13 +169,13 @@ class CourseVideo implements UploadedFileAwareInterface
     /**
      * URL de streaming pour l'API (ne pas exposer le chemin réel)
      */
-    #[Groups(['course_video:read'])]
+    #[Groups(['course_video:read', 'course:read'])]
     public function getStreamUrl(): ?string
     {
         if (!$this->videoFile || !$this->id) {
             return null;
         }
-        return '/api/courses/videos/' . $this->id . '/stream';
+        return '/api/course_videos/' . $this->id . '/stream';
     }
 
     // ========== UploadedFileAwareInterface Implementation ==========
@@ -262,5 +271,24 @@ class CourseVideo implements UploadedFileAwareInterface
         $minutes = floor($this->duration / 60);
         $seconds = $this->duration % 60;
         return sprintf('%02d:%02d', $minutes, $seconds);
+    }
+
+    // ========== Vich Uploader Methods ==========
+
+    public function getVideoFileUpload(): ?File
+    {
+        return $this->videoFileUpload;
+    }
+
+    public function setVideoFileUpload(?File $videoFileUpload): static
+    {
+        $this->videoFileUpload = $videoFileUpload;
+
+        // Marquer l'entité comme modifiée pour que Doctrine la persiste
+        if ($videoFileUpload) {
+            $this->updatedAt = new DateTime();
+        }
+
+        return $this;
     }
 }

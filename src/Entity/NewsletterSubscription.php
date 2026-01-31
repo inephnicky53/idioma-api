@@ -102,6 +102,12 @@ class NewsletterSubscription
         return $this->createdAt;
     }
 
+    public function setCreatedAt(?DateTimeInterface $createdAt): static
+    {
+        $this->createdAt = $createdAt;
+        return $this;
+    }
+
     public function getUnsubscribedAt(): ?DateTimeInterface
     {
         return $this->unsubscribedAt;

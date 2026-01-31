@@ -8,6 +8,7 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
 use App\Contract\PayableInterface;
+use App\State\Processor\ValidatePaymentProcessor;
 use App\Dto\CreatePaymentDto;
 use App\Enum\Currency;
 use App\Enum\PaymentMethod;
@@ -23,7 +24,6 @@ use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: PaymentRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -39,6 +39,7 @@ use Symfony\Component\Validator\Constraints as Assert;
             description: 'Récupère les paiements de cours en attente',
             normalizationContext: ['groups' => ['payment:read']],
             security: "is_granted('ROLE_USER')",
+            name: 'get_pending_course_payments',
             provider: PendingCoursePaymentProvider::class
         ),
         new Get(
@@ -50,6 +51,14 @@ use Symfony\Component\Validator\Constraints as Assert;
             validationContext: ['groups' => ['Default', 'payment:create']],
             input: CreatePaymentDto::class,
             processor: PaymentProcessor::class
+        ),
+        new Patch(
+            uriTemplate: '/payments/{id}/validate',
+            description: 'Valider un paiement (admin uniquement) - marque comme complété et active l\'achat',
+            normalizationContext: ['groups' => ['payment:read']],
+            security: "is_granted('ROLE_ADMIN')",
+            name: 'validate_payment',
+            processor: ValidatePaymentProcessor::class
         ),
     ],
     paginationEnabled: true

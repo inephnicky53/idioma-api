@@ -124,7 +124,8 @@ class PaymentCrudController extends AbstractCrudController
             ->add(Crud::PAGE_DETAIL, $validateCashPayment)
             ->add(Crud::PAGE_DETAIL, $rejectPayment)
             ->add(Crud::PAGE_INDEX, $validateCashPayment)
-            ->reorder(Crud::PAGE_INDEX, [Action::DETAIL, 'validateCashPayment', Action::EDIT, Action::DELETE]);
+            ->disable(Action::DELETE) // Les paiements ne doivent pas être supprimés (raisons légales/comptables)
+            ->reorder(Crud::PAGE_INDEX, [Action::DETAIL, 'validateCashPayment', Action::EDIT]);
     }
 
     public function configureFields(string $pageName): iterable

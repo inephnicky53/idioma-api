@@ -34,8 +34,15 @@ class VichUploaderFileNormalizer implements NormalizerInterface, NormalizerAware
         /** @var UploadedFileAwareInterface $object */
         foreach ($object->getFilePropertyMapping() as $key => $value) {
             if (isset($data[$key]) && $data[$key]) {
-                // Construire l'URL absolue du fichier
-                $relativePath = self::UPLOAD_BASE_PATH . $this->getUploadDir($object) . '/' . $data[$key];
+                $filePath = $data[$key];
+
+                // Si le chemin commence déjà par /uploads/, l'utiliser directement
+                if (str_starts_with($filePath, '/uploads/')) {
+                    $relativePath = $filePath;
+                } else {
+                    // Sinon, construire l'URL avec le répertoire approprié
+                    $relativePath = self::UPLOAD_BASE_PATH . $this->getUploadDir($object, $key) . '/' . $filePath;
+                }
 
                 // Obtenir l'URL complète avec le domaine
                 $request = $this->requestStack->getCurrentRequest();
@@ -72,11 +79,16 @@ class VichUploaderFileNormalizer implements NormalizerInterface, NormalizerAware
     }
 
     /**
-     * Détermine le répertoire d'upload basé sur le type d'entité
+     * Détermine le répertoire d'upload basé sur le type d'entité et la propriété
      */
-    private function getUploadDir(object $object): string
+    private function getUploadDir(object $object, string $propertyName = ''): string
     {
         $className = (new \ReflectionClass($object))->getShortName();
+
+        // Cas spécial pour les ebooks
+        if ($propertyName === 'ebookPath') {
+            return 'ebooks';
+        }
 
         return match($className) {
             'Course' => 'courses',

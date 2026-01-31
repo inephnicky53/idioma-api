@@ -6,6 +6,7 @@
     "require": {
         "php": ">=8.2",
         "ext-ctype": "*",
+        "ext-fileinfo": "*",
         "ext-iconv": "*",
         "api-platform/core": "^4.1",
         "doctrine/doctrine-bundle": "^2.15",
@@ -29,7 +30,8 @@
         "symfony/security-bundle": "7.3.*",
         "symfony/serializer": "7.3.*",
         "symfony/validator": "7.3.*",
-        "symfony/yaml": "7.3.*"
+        "symfony/yaml": "7.3.*",
+        "vich/uploader-bundle": "^2.9"
     },
     "config": {
         "allow-plugins": {

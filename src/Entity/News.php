@@ -66,9 +66,18 @@ class News
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $updatedAt = null;
 
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[Groups(['news:read'])]
+    private ?\DateTimeInterface $sentAt = null;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    #[Groups(['news:read'])]
+    private bool $isSentToNewsletter = false;
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
+        $this->isSentToNewsletter = false;
     }
 
     #[ORM\PreUpdate]
@@ -162,5 +171,27 @@ class News
     public function getUpdatedAt(): ?\DateTimeInterface
     {
         return $this->updatedAt;
+    }
+
+    public function getSentAt(): ?\DateTimeInterface
+    {
+        return $this->sentAt;
+    }
+
+    public function setSentAt(?\DateTimeInterface $sentAt): static
+    {
+        $this->sentAt = $sentAt;
+        return $this;
+    }
+
+    public function isSentToNewsletter(): bool
+    {
+        return $this->isSentToNewsletter;
+    }
+
+    public function setIsSentToNewsletter(bool $isSentToNewsletter): static
+    {
+        $this->isSentToNewsletter = $isSentToNewsletter;
+        return $this;
     }
 }

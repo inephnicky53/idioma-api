@@ -52,7 +52,7 @@ class NewsletterSubscriptionCrudController extends AbstractCrudController
         yield BooleanField::new('isActive', 'Actif')
             ->renderAsSwitch(false);
 
-        yield DateTimeField::new('subscribedAt', 'Abonné le')
+        yield DateTimeField::new('createdAt', 'Abonné le')
             ->setFormat('dd/MM/yyyy HH:mm');
 
         yield DateTimeField::new('unsubscribedAt', 'Désabonné le')

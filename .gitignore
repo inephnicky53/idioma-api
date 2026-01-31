@@ -1,4 +1,5 @@
 public/error_log
+/public/uploads/
 
 ###> symfony/framework-bundle ###
 /.env.local

@@ -19,6 +19,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\HttpFoundation\File\File;
 
 class CourseVideoCrudController extends AbstractCrudController
 {
@@ -102,11 +103,16 @@ class CourseVideoCrudController extends AbstractCrudController
             ->setHelp('Description optionnelle de la vidéo')
             ->hideOnIndex();
 
-        yield Field::new('videoFile', 'Fichier vidéo')
-            ->setFormType(\EasyCorp\Bundle\EasyAdminBundle\Form\Type\FileUploadType::class)
+        yield Field::new('videoFileUpload', 'Fichier vidéo')
+            ->setFormType(FileType::class)
             ->setFormTypeOptions([
-                'upload_dir' => 'public/uploads/videos/',
-                'upload_new' => fn ($file) => uniqid() . '.' . $file->guessExtension(),
+                'required' => $pageName === Crud::PAGE_NEW,
+                'mapped' => true,
+                'label' => 'Fichier vidéo',
+                'help' => 'Formats acceptés: MP4, WebM, MOV (max 500MB)',
+                'attr' => [
+                    'accept' => 'video/mp4,video/webm,video/quicktime',
+                ],
             ])
             ->setRequired($pageName === Crud::PAGE_NEW)
             ->setHelp('Formats acceptés: MP4, WebM, MOV (max 500MB)');

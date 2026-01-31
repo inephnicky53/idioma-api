@@ -12,3 +12,9 @@ api_login_check:
 api_refresh_token:
     path: /api/token/refresh
     methods: ['POST']
+
+# Course video upload endpoint
+api_course_video_upload:
+    path: /api/courses/{courseId}/videos/upload
+    controller: App\Controller\Api\CourseVideoUploadAction
+    methods: ['POST']
