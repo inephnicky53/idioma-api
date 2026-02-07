@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use App\Repository\CoursePurchaseRepository;
@@ -24,6 +25,11 @@ use Symfony\Component\Serializer\Annotation\Groups;
             provider: CoursePurchaseCollectionProvider::class
         ),
         new Get(security: "is_granted('ROLE_USER')"),
+        new Delete(
+            description: 'Supprimer un achat de cours (utilisateur ou admin)',
+            security: "is_granted('ROLE_USER') and object.getUser() == user or is_granted('ROLE_ADMIN')",
+            name: 'delete_course_purchase'
+        ),
     ],
     normalizationContext: ['groups' => ['course_purchase:read']],
 )]

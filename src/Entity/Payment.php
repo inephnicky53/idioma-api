@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
@@ -68,6 +69,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
             security: "is_granted('ROLE_USER') and object.getUser() == user or is_granted('ROLE_ADMIN')",
             name: 'check_transaction',
             processor: CheckTransactionProcessor::class
+        ),
+        new Delete(
+            uriTemplate: '/payments/{id}/cancel',
+            description: 'Annuler un paiement en attente (utilisateur ou admin)',
+            security: "is_granted('ROLE_USER') and object.getUser() == user or is_granted('ROLE_ADMIN')",
+            name: 'cancel_payment'
         ),
     ],
     paginationEnabled: true
