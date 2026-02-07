@@ -9,6 +9,7 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
 use App\Contract\PayableInterface;
 use App\State\Processor\ValidatePaymentProcessor;
+use App\State\Processor\CheckTransactionProcessor;
 use App\Dto\CreatePaymentDto;
 use App\Enum\Currency;
 use App\Enum\PaymentMethod;
@@ -59,6 +60,14 @@ use Symfony\Component\Serializer\Annotation\Groups;
             security: "is_granted('ROLE_ADMIN')",
             name: 'validate_payment',
             processor: ValidatePaymentProcessor::class
+        ),
+        new Patch(
+            uriTemplate: '/payments/{id}/check-transaction',
+            description: 'Vérifier le statut d\'une transaction auprès du provider de paiement',
+            normalizationContext: ['groups' => ['payment:read']],
+            security: "is_granted('ROLE_USER') and object.getUser() == user or is_granted('ROLE_ADMIN')",
+            name: 'check_transaction',
+            processor: CheckTransactionProcessor::class
         ),
     ],
     paginationEnabled: true
