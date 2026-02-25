@@ -1,29 +1,22 @@
 <?php
 
-
 namespace App\Service;
-
 
 use App\Entity\Payment;
 use App\Enum\PaymentStatus;
-use App\Enum\PurchaseType;
-use App\Enum\TransactionStatus;
-use App\Enum\TransactionType;
+use App\Service\Payment\PaymentManager;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 
 class CheckTransaction
 {
-    private EntityManagerInterface $em;
-    private OperatorProcess $process;
-
     public function __construct(
-        EntityManagerInterface $em,
-        OperatorProcess $process)
-    {
-        $this->em = $em;
-        $this->process = $process;
-    }
+        private EntityManagerInterface $em,
+        private OperatorProcess $process,
+        private PaymentManager $paymentManager,
+        private LoggerInterface $logger
+    ) {}
 
     /**
      * Vérifie une seule transaction et retourne le résultat
@@ -34,75 +27,90 @@ class CheckTransaction
         return $this->process->check($payment);
     }
 
-    public function all(): int
+    /**
+     * Traite une transaction vérifiée et met à jour son statut
+     * S'inspire du CallbackController pour la cohérence
+     */
+    private function processPaymentResult(Payment $payment, array $body): void
     {
-        $txRepository = $this->em->getRepository(Payment::class);
-        $txs = $txRepository->findWaitingsResults();
-        $i = 0;
-        //dd($txs);
-        foreach ($txs as $payment) {
-            /** @var Payment $payment */
-            $body = $this->process->check($payment);
-            //dd($payment,$body);
-            if ($body !== false) {
-            //if (1) {
-                if (isset($body['payment']) && $body['payment']['status'] === '0') {
-                //if (1) {
-                    $payment->setStatus(PaymentStatus::COMPLETED);
-                    $type = $payment->getPurchaseType();
-                    if ($type === PurchaseType::SUBSCRIPTION_CLUB)
-                        $this->process->sendResult($payment);
-                    if ($type === TransactionType::CLUB_MEMBERSHIP)
-                        $this->process->sendPalmaresLink($payment);
-                } else {
-                    //$process->sendResult($payment);
-                    $payment->setStatus(TransactionStatus::FAILED);
-                }
-                $payment->setMessage($body['message']);
-                $payment->setResponsedAt(new DateTimeImmutable());
-
-                $this->em->persist($payment);
-                $this->em->flush();
-
-                $i++;
-            }
+        // Vérifier que le paiement n'est pas déjà dans un état final
+        if ($payment->getStatus()->isFinal()) {
+            $this->logger->info('Payment already in final state', [
+                'paymentId' => $payment->getId(),
+                'status' => $payment->getStatus()->value
+            ]);
+            return;
         }
-        return $i;
+
+        // Convertir le code FlexPay en statut
+        $code = $body['payment']['status'] ?? $body['code'] ?? null;
+        $newStatus = PaymentStatus::fromFlexPayCode((string) $code);
+        $payment->setStatus($newStatus);
+        $payment->setResponsedAt(new DateTimeImmutable());
+
+        // Ajouter les détails de la réponse
+        if (isset($body['message'])) {
+            $existingNotes = $payment->getNotes() ?? '';
+            $payment->setNotes(trim($existingNotes . "\nVérification: " . $body['message']));
+        }
+
+        // Si paiement réussi, activer l'achat (abonnement ou cours)
+        if ($newStatus->isSuccess()) {
+            $this->paymentManager->activatePurchase($payment);
+        }
+
+        $this->em->persist($payment);
+        $this->em->flush();
+
+        $this->logger->info('Payment processed', [
+            'paymentId' => $payment->getId(),
+            'status' => $payment->getStatus()->value,
+            'purchaseActivated' => $newStatus->isSuccess()
+        ]);
     }
 
-    public function allWaitings(TransactionStatus|string $status = null, $is_sms_send = true, int $max_result = null)
+    /**
+     * Vérifie tous les paiements en attente (WAIT)
+     * Retourne le nombre de paiements vérifiés
+     */
+    public function checkAllPendingPayments(): int
     {
-        $status = $status ?? TransactionStatus::PENDING;
-        $txRepository = $this->em->getRepository(Transaction::class);
-        $txs = $txRepository->findWaitingsAllResults($status, $is_sms_send, $max_result);
-        $i = 0;
-        foreach ($txs as $transaction) {
-            /** @var Transaction $transaction */
-            $body = $this->process->check($transaction);
+        $paymentRepository = $this->em->getRepository(Payment::class);
+        $pendingPayments = $paymentRepository->findBy(['status' => PaymentStatus::WAIT]);
 
-            if ($body !== false) {
-                if (isset($body['transaction']) && $body['transaction']['status'] === '0') {
-                    $transaction->setStatus(TransactionStatus::SUCCESS);
-                        //dd($transaction);
-                    $type = $transaction->getTransactionType();
-                    if ($type === TransactionType::RESULTAT)
-                        $this->process->sendResult($transaction);
-                    if ($type === TransactionType::DIPLOMA)
-                        $this->process->sendOnProcessDiploma($transaction);
+        $this->logger->info('Starting check for pending payments', ['count' => count($pendingPayments)]);
+
+        $processedCount = 0;
+
+        foreach ($pendingPayments as $payment) {
+            try {
+                $body = $this->checkSinglePayment($payment);
+
+                if ($body !== false) {
+                    $this->processPaymentResult($payment, $body);
+                    $processedCount++;
                 } else {
-                    //$process->sendResult($transaction);
-                    $transaction->setStatus(TransactionStatus::FAILED);
+                    $this->logger->warning('Failed to check payment', ['paymentId' => $payment->getId()]);
                 }
-                $transaction->setMessage($body['message']);
-                $transaction->setResponsedAt(new DateTimeImmutable());
-
-                $this->em->persist($transaction);
-                $this->em->flush();
-
-                $i++;
+            } catch (\Exception $e) {
+                $this->logger->error('Error checking payment', [
+                    'paymentId' => $payment->getId(),
+                    'error' => $e->getMessage()
+                ]);
             }
         }
-        return $i;
+
+        $this->logger->info('Pending payments check completed', ['processed' => $processedCount]);
+
+        return $processedCount;
+    }
+
+    /**
+     * Alias pour checkAllPendingPayments (compatibilité)
+     */
+    public function all(): int
+    {
+        return $this->checkAllPendingPayments();
     }
 
 }

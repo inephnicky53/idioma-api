@@ -16,6 +16,7 @@ use App\Entity\TimeSlot;
 use App\Entity\User;
 use App\Entity\TranslationRequest;
 use App\Repository\TranslationRequestRepository;
+use App\Service\CheckTransaction;
 use App\Service\DashboardStatsService;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
@@ -23,6 +24,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
 
 #[AdminDashboard(routePath: '/admin', routeName: 'admin_dashboard')]
 class DashboardController extends AbstractDashboardController
@@ -30,7 +32,8 @@ class DashboardController extends AbstractDashboardController
     public function __construct(
         private DashboardStatsService $statsService,
         private RequestStack $requestStack,
-        private TranslationRequestRepository $translationRequestRepository
+        private TranslationRequestRepository $translationRequestRepository,
+        private CheckTransaction $checkTransaction
     ) {}
 
     public function index(): Response
@@ -47,6 +50,29 @@ class DashboardController extends AbstractDashboardController
             'period' => $period,
             'translationStats' => $translationStats,
         ]);
+    }
+
+    /**
+     * Vérifie toutes les transactions en attente (WAIT)
+     */
+    #[Route('/admin/check-all-pending-payments', name: 'admin_check_all_pending_payments', methods: ['POST'])]
+    public function checkAllPendingPayments(): Response
+    {
+        try {
+            $processedCount = $this->checkTransaction->checkAllPendingPayments();
+
+            $this->addFlash('success', sprintf(
+                '%d transaction(s) vérifiée(s) avec succès.',
+                $processedCount
+            ));
+        } catch (\Exception $e) {
+            $this->addFlash('danger', sprintf(
+                'Erreur lors de la vérification des transactions: %s',
+                $e->getMessage()
+            ));
+        }
+
+        return $this->redirectToRoute('admin_dashboard');
     }
 
     public function configureDashboard(): Dashboard

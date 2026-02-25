@@ -13,6 +13,7 @@ use App\Service\CheckTransaction;
 use App\Service\Payment\PaymentManager;
 use App\Trait\FrenchActionsTrait;
 use DateTime;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
@@ -338,8 +339,7 @@ class PaymentCrudController extends AbstractCrudController
                 if (isset($body['payment']) && $body['payment']['status'] === '0') {
                     // Transaction réussie
                     $payment->setStatus(PaymentStatus::COMPLETED);
-                    $payment->setMessage($body['message'] ?? 'Vérification réussie');
-                    $payment->setResponsedAt(new \DateTimeImmutable());
+                    $payment->setResponsedAt(new DateTimeImmutable());
 
                     // Activer l'achat via le PaymentManager
                     $this->paymentManager->activatePurchase($payment);
@@ -353,8 +353,8 @@ class PaymentCrudController extends AbstractCrudController
                 } else {
                     // Transaction échouée
                     $payment->setStatus(PaymentStatus::FAILED);
-                    $payment->setMessage($body['message'] ?? 'Vérification échouée');
-                    $payment->setResponsedAt(new \DateTimeImmutable());
+                    //$payment->setMessage($body['message'] ?? 'Vérification échouée');
+                    $payment->setResponsedAt(new DateTimeImmutable());
 
                     $this->entityManager->flush();
 
