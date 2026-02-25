@@ -9,6 +9,7 @@ use App\Enum\Currency;
 use App\Enum\PaymentMethod;
 use App\Enum\PaymentStatus;
 use App\Enum\PurchaseType;
+use App\Service\CheckTransaction;
 use App\Service\Payment\PaymentManager;
 use App\Trait\FrenchActionsTrait;
 use DateTime;
@@ -45,7 +46,8 @@ class PaymentCrudController extends AbstractCrudController
     public function __construct(
         private EntityManagerInterface $entityManager,
         private AdminUrlGenerator $adminUrlGenerator,
-        private PaymentManager $paymentManager
+        private PaymentManager $paymentManager,
+        private CheckTransaction $checkTransaction
     ) {}
 
     public static function getEntityFqcn(): string
@@ -119,13 +121,24 @@ class PaymentCrudController extends AbstractCrudController
             ->setCssClass('btn btn-danger')
             ->displayIf(fn (Payment $payment) => !$payment->getStatus()->isFinal());
 
+        // Action pour vérifier une transaction en attente
+        $checkTransaction = Action::new('checkTransaction', 'Vérifier', 'fa fa-sync-alt')
+            ->linkToCrudAction('checkTransaction')
+            ->setCssClass('btn btn-info')
+            ->displayIf(fn (Payment $payment) =>
+                $payment->getStatus() === PaymentStatus::PENDING &&
+                in_array($payment->getPaymentMethod(), [PaymentMethod::MOBILE, PaymentMethod::BANK])
+            );
+
         return $this->configureFrenchActions($actions)
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
             ->add(Crud::PAGE_DETAIL, $validateCashPayment)
             ->add(Crud::PAGE_DETAIL, $rejectPayment)
+            ->add(Crud::PAGE_DETAIL, $checkTransaction)
             ->add(Crud::PAGE_INDEX, $validateCashPayment)
+            ->add(Crud::PAGE_INDEX, $checkTransaction)
             ->disable(Action::DELETE) // Les paiements ne doivent pas être supprimés (raisons légales/comptables)
-            ->reorder(Crud::PAGE_INDEX, [Action::DETAIL, 'validateCashPayment', Action::EDIT]);
+            ->reorder(Crud::PAGE_INDEX, [Action::DETAIL, 'validateCashPayment', 'checkTransaction', Action::EDIT]);
     }
 
     public function configureFields(string $pageName): iterable
@@ -296,6 +309,73 @@ class PaymentCrudController extends AbstractCrudController
         $this->entityManager->flush();
 
         $this->addFlash('info', sprintf('Paiement #%d rejeté.', $payment->getId()));
+
+        return $this->redirectToDetail($payment);
+    }
+
+    /**
+     * Action pour vérifier une transaction en attente
+     */
+    public function checkTransaction(AdminContext $context, Request $request): Response
+    {
+        $payment = $this->getPaymentFromContext($context, $request);
+
+        if (!$payment) {
+            $this->addFlash('danger', 'Paiement introuvable.');
+            return $this->redirectToIndex();
+        }
+
+        if ($payment->getStatus() !== PaymentStatus::PENDING) {
+            $this->addFlash('warning', 'Seuls les paiements en attente peuvent être vérifiés.');
+            return $this->redirectToDetail($payment);
+        }
+
+        try {
+            // Utiliser le service CheckTransaction pour vérifier la transaction
+            $body = $this->checkTransaction->checkSinglePayment($payment);
+
+            if ($body !== false) {
+                if (isset($body['payment']) && $body['payment']['status'] === '0') {
+                    // Transaction réussie
+                    $payment->setStatus(PaymentStatus::COMPLETED);
+                    $payment->setMessage($body['message'] ?? 'Vérification réussie');
+                    $payment->setResponsedAt(new \DateTimeImmutable());
+
+                    // Activer l'achat via le PaymentManager
+                    $this->paymentManager->activatePurchase($payment);
+
+                    $this->entityManager->flush();
+
+                    $this->addFlash('success', sprintf(
+                        'Transaction #%d vérifiée avec succès. Statut: COMPLÉTÉE.',
+                        $payment->getId()
+                    ));
+                } else {
+                    // Transaction échouée
+                    $payment->setStatus(PaymentStatus::FAILED);
+                    $payment->setMessage($body['message'] ?? 'Vérification échouée');
+                    $payment->setResponsedAt(new \DateTimeImmutable());
+
+                    $this->entityManager->flush();
+
+                    $this->addFlash('danger', sprintf(
+                        'Transaction #%d vérifiée. Statut: ÉCHOUÉE. Message: %s',
+                        $payment->getId(),
+                        $body['message'] ?? 'Erreur inconnue'
+                    ));
+                }
+            } else {
+                $this->addFlash('warning', sprintf(
+                    'Impossible de vérifier la transaction #%d. Veuillez réessayer plus tard.',
+                    $payment->getId()
+                ));
+            }
+        } catch (\Exception $e) {
+            $this->addFlash('danger', sprintf(
+                'Erreur lors de la vérification: %s',
+                $e->getMessage()
+            ));
+        }
 
         return $this->redirectToDetail($payment);
     }

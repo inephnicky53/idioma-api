@@ -39,14 +39,14 @@ class OperatorProcess
 
     /**
      * @throws PaymentException
-     */
+     *
     public function createTransaction(TransactionType $demande_type, $demande): Payment
     {
         $provider = $this->getProvider();
         return $provider->createTransaction($demande, 1, array_merge($this->options, [
             'demande_type' => $demande_type
         ]));
-    }
+    }*/
 
     /**
      * @throws PaymentException

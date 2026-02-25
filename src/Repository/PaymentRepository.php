@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Payment;
 use App\Entity\User;
+use DateTime;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -34,7 +35,7 @@ class PaymentRepository extends ServiceEntityRepository
 
     public function getTotalRevenueToday(): float
     {
-        $today = new \DateTime();
+        $today = new DateTime();
         $today->setTime(0, 0, 0);
         $tomorrow = (clone $today)->modify('+1 day');
 
@@ -54,7 +55,7 @@ class PaymentRepository extends ServiceEntityRepository
 
     public function getTotalRevenueThisWeek(): float
     {
-        $today = new \DateTime();
+        $today = new DateTime();
         $startOfWeek = (clone $today)->modify('monday this week')->setTime(0, 0, 0);
         $endOfWeek = (clone $startOfWeek)->modify('+7 days');
 
@@ -74,8 +75,8 @@ class PaymentRepository extends ServiceEntityRepository
 
     public function getTotalRevenueThisMonth(): float
     {
-        $today = new \DateTime();
-        $startOfMonth = (clone $today)->modify('first day of this month')->setTime(0, 0, 0);
+        $today = new DateTime();
+        $startOfMonth = (clone $today)->modify('first day of this month')->setTime(0, 0);
         $endOfMonth = (clone $today)->modify('last day of this month')->setTime(23, 59, 59);
 
         $result = $this->createQueryBuilder('p')
@@ -92,7 +93,7 @@ class PaymentRepository extends ServiceEntityRepository
         return (float) ($result['total'] ?? 0);
     }
 
-    public function getCompletedPaymentsCount(\DateTime $startDate, \DateTime $endDate): int
+    public function getCompletedPaymentsCount(DateTime $startDate, DateTime $endDate): int
     {
         return (int) $this->createQueryBuilder('p')
             ->select('COUNT(p.id)')
