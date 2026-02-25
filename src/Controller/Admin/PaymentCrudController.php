@@ -131,6 +131,12 @@ class PaymentCrudController extends AbstractCrudController
                 in_array($payment->getPaymentMethod(), [PaymentMethod::MOBILE, PaymentMethod::BANK])
             );
 
+        // Action pour vérifier toutes les transactions en attente
+        $checkAllPendingPayments = Action::new('checkAllPendingPayments', 'Vérifier toutes les transactions', 'fa fa-sync-alt')
+            ->linkToCrudAction('checkAllPendingPayments')
+            ->setCssClass('btn btn-danger')
+            ->createAsGlobalAction();
+
         return $this->configureFrenchActions($actions)
             ->add(Crud::PAGE_INDEX, Action::DETAIL)
             ->add(Crud::PAGE_DETAIL, $validateCashPayment)
@@ -138,6 +144,7 @@ class PaymentCrudController extends AbstractCrudController
             ->add(Crud::PAGE_DETAIL, $checkTransaction)
             ->add(Crud::PAGE_INDEX, $validateCashPayment)
             ->add(Crud::PAGE_INDEX, $checkTransaction)
+            ->add(Crud::PAGE_INDEX, $checkAllPendingPayments)
             ->disable(Action::DELETE) // Les paiements ne doivent pas être supprimés (raisons légales/comptables)
             ->reorder(Crud::PAGE_INDEX, [Action::DETAIL, 'validateCashPayment', 'checkTransaction', Action::EDIT]);
     }
@@ -402,6 +409,28 @@ class PaymentCrudController extends AbstractCrudController
         }
 
         return null;
+    }
+
+    /**
+     * Action pour vérifier toutes les transactions en attente
+     */
+    public function checkAllPendingPayments(): Response
+    {
+        try {
+            $processedCount = $this->checkTransaction->checkAllPendingPayments();
+
+            $this->addFlash('success', sprintf(
+                '%d transaction(s) vérifiée(s) avec succès.',
+                $processedCount
+            ));
+        } catch (\Exception $e) {
+            $this->addFlash('danger', sprintf(
+                'Erreur lors de la vérification des transactions: %s',
+                $e->getMessage()
+            ));
+        }
+
+        return $this->redirectToIndex();
     }
 
     /**
