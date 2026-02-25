@@ -126,7 +126,7 @@ class PaymentCrudController extends AbstractCrudController
             ->linkToCrudAction('checkTransaction')
             ->setCssClass('btn btn-info')
             ->displayIf(fn (Payment $payment) =>
-                $payment->getStatus() === PaymentStatus::PENDING &&
+                $payment->getStatus() === PaymentStatus::WAIT &&
                 in_array($payment->getPaymentMethod(), [PaymentMethod::MOBILE, PaymentMethod::BANK])
             );
 
@@ -325,7 +325,7 @@ class PaymentCrudController extends AbstractCrudController
             return $this->redirectToIndex();
         }
 
-        if ($payment->getStatus() !== PaymentStatus::PENDING) {
+        if ($payment->getStatus() !== PaymentStatus::WAIT) {
             $this->addFlash('warning', 'Seuls les paiements en attente peuvent être vérifiés.');
             return $this->redirectToDetail($payment);
         }
