@@ -302,6 +302,12 @@
                                 <i class="fa fa-language"></i>
                                 <span>Voir les demandes de traduction</span>
                             </a>
+                            <form method="POST" action="{{ path('admin_check_all_pending_payments') }}" style="display: contents;">
+                                <button type="submit" class="action-btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir vérifier toutes les transactions en attente ?');">
+                                    <i class="fa fa-sync-alt"></i>
+                                    <span>Vérifier les transactions</span>
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -546,6 +552,10 @@
         .action-btn.btn-warning {
             background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
             color: #333;
+        }
+
+        .action-btn.btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
         }
 
         .action-btn:hover {
