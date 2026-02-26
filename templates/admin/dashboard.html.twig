@@ -92,6 +92,61 @@
             </div>
         </div>
 
+        <!-- Section Paiements CASH -->
+        <div class="section-title mb-3">
+            <h4><i class="fa fa-money-bill"></i> Paiements en Espèces (CASH)</h4>
+        </div>
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card warning">
+                    <div class="card-icon">
+                        <i class="fa fa-money-bill"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">CASH Aujourd'hui</h6>
+                        <h2 class="card-value">{{ stats.payments.cashPaymentsToday }}</h2>
+                        <p class="card-subtitle">Total</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card info">
+                    <div class="card-icon">
+                        <i class="fa fa-hourglass-half"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">CASH en Attente</h6>
+                        <h2 class="card-value">{{ stats.payments.cashWaitPaymentsToday }}</h2>
+                        <p class="card-subtitle">Aujourd'hui</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card success">
+                    <div class="card-icon">
+                        <i class="fa fa-check-circle"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">CASH Complétés</h6>
+                        <h2 class="card-value">{{ stats.payments.cashCompletedPaymentsToday }}</h2>
+                        <p class="card-subtitle">Aujourd'hui</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card primary">
+                    <div class="card-icon">
+                        <i class="fa fa-calendar-alt"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">CASH Ce Mois</h6>
+                        <h2 class="card-value">{{ stats.payments.cashPaymentsThisMonth }}</h2>
+                        <p class="card-subtitle">Total du mois</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Section Abonnements -->
         <div class="section-title mb-3">
             <h4><i class="fa fa-ticket"></i> Abonnements</h4>

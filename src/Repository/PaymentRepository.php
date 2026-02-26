@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Payment;
 use App\Entity\User;
+use App\Enum\PaymentMethod;
 use App\Enum\PaymentStatus;
 use DateTime;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -130,6 +131,52 @@ class PaymentRepository extends ServiceEntityRepository
             ->andWhere('p.createdAt >= :start')
             ->andWhere('p.createdAt <= :end')
             ->setParameter('status', PaymentStatus::FAILED)
+            ->setParameter('start', $startDate)
+            ->setParameter('end', $endDate)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function getCashPaymentsCount(DateTime $startDate, DateTime $endDate): int
+    {
+        return (int) $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->where('p.paymentMethod = :method')
+            ->andWhere('p.createdAt >= :start')
+            ->andWhere('p.createdAt <= :end')
+            ->setParameter('method', PaymentMethod::CASH)
+            ->setParameter('start', $startDate)
+            ->setParameter('end', $endDate)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function getCashWaitPaymentsCount(DateTime $startDate, DateTime $endDate): int
+    {
+        return (int) $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->where('p.paymentMethod = :method')
+            ->andWhere('p.status = :status')
+            ->andWhere('p.createdAt >= :start')
+            ->andWhere('p.createdAt <= :end')
+            ->setParameter('method', PaymentMethod::CASH)
+            ->setParameter('status', PaymentStatus::WAIT)
+            ->setParameter('start', $startDate)
+            ->setParameter('end', $endDate)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function getCashCompletedPaymentsCount(DateTime $startDate, DateTime $endDate): int
+    {
+        return (int) $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->where('p.paymentMethod = :method')
+            ->andWhere('p.status = :status')
+            ->andWhere('p.paidAt >= :start')
+            ->andWhere('p.paidAt <= :end')
+            ->setParameter('method', PaymentMethod::CASH)
+            ->setParameter('status', PaymentStatus::COMPLETED)
             ->setParameter('start', $startDate)
             ->setParameter('end', $endDate)
             ->getQuery()

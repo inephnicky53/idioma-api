@@ -96,6 +96,18 @@ class DashboardStatsService
         $failedPaymentsToday = $this->paymentRepository->getFailedPaymentsCount($today, $today);
         $failedPaymentsThisMonth = $this->paymentRepository->getFailedPaymentsCount($startOfMonth, $today);
 
+        // Paiements CASH (tous les statuts)
+        $cashPaymentsToday = $this->paymentRepository->getCashPaymentsCount($today, $today);
+        $cashPaymentsThisMonth = $this->paymentRepository->getCashPaymentsCount($startOfMonth, $today);
+
+        // Paiements CASH en attente (WAIT)
+        $cashWaitPaymentsToday = $this->paymentRepository->getCashWaitPaymentsCount($today, $today);
+        $cashWaitPaymentsThisMonth = $this->paymentRepository->getCashWaitPaymentsCount($startOfMonth, $today);
+
+        // Paiements CASH complétés
+        $cashCompletedPaymentsToday = $this->paymentRepository->getCashCompletedPaymentsCount($today, $today);
+        $cashCompletedPaymentsThisMonth = $this->paymentRepository->getCashCompletedPaymentsCount($startOfMonth, $today);
+
         return [
             'paymentsToday' => $paymentsToday,
             'paymentsYesterday' => $paymentsYesterday,
@@ -107,6 +119,12 @@ class DashboardStatsService
             'waitPaymentsThisMonth' => $waitPaymentsThisMonth,
             'failedPaymentsToday' => $failedPaymentsToday,
             'failedPaymentsThisMonth' => $failedPaymentsThisMonth,
+            'cashPaymentsToday' => $cashPaymentsToday,
+            'cashPaymentsThisMonth' => $cashPaymentsThisMonth,
+            'cashWaitPaymentsToday' => $cashWaitPaymentsToday,
+            'cashWaitPaymentsThisMonth' => $cashWaitPaymentsThisMonth,
+            'cashCompletedPaymentsToday' => $cashCompletedPaymentsToday,
+            'cashCompletedPaymentsThisMonth' => $cashCompletedPaymentsThisMonth,
         ];
     }
 
