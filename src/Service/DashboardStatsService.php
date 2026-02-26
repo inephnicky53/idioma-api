@@ -82,49 +82,69 @@ class DashboardStatsService
 
     private function getPaymentStats(\DateTime $today, \DateTime $yesterday, \DateTime $startOfWeek, \DateTime $startOfLastWeek, \DateTime $startOfMonth, \DateTime $startOfLastMonth, string $period = 'today'): array
     {
+        // Déterminer les dates en fonction du filtre period
+        $startDate = $today;
+        $endDate = $today;
+        $comparisonStartDate = $yesterday;
+        $comparisonEndDate = $yesterday;
+
+        if ($period === 'week') {
+            $startDate = $startOfWeek;
+            $endDate = $today;
+            $comparisonStartDate = $startOfLastWeek;
+            $comparisonEndDate = (clone $startOfLastWeek)->modify('+7 days');
+        } elseif ($period === 'month') {
+            $startDate = $startOfMonth;
+            $endDate = $today;
+            $comparisonStartDate = $startOfLastMonth;
+            $comparisonEndDate = (clone $startOfLastMonth)->modify('last day of this month');
+        }
+
         // Paiements complétés (anciennement "revenu")
-        $paymentsToday = $this->paymentRepository->getCompletedPaymentsCount($today, $today);
-        $paymentsYesterday = $this->paymentRepository->getCompletedPaymentsCount($yesterday, $yesterday);
-        $paymentsThisMonth = $this->paymentRepository->getCompletedPaymentsCount($startOfMonth, $today);
-        $paymentsLastMonth = $this->paymentRepository->getCompletedPaymentsCount($startOfLastMonth, (clone $startOfLastMonth)->modify('last day of this month'));
+        $paymentsCurrent = $this->paymentRepository->getCompletedPaymentsCount($startDate, $endDate);
+        $paymentsComparison = $this->paymentRepository->getCompletedPaymentsCount($comparisonStartDate, $comparisonEndDate);
 
         // Paiements en attente (WAIT)
-        $waitPaymentsToday = $this->paymentRepository->getWaitPaymentsCount($today, $today);
-        $waitPaymentsThisMonth = $this->paymentRepository->getWaitPaymentsCount($startOfMonth, $today);
+        $waitPaymentsCurrent = $this->paymentRepository->getWaitPaymentsCount($startDate, $endDate);
 
         // Paiements échoués (FAILED)
-        $failedPaymentsToday = $this->paymentRepository->getFailedPaymentsCount($today, $today);
-        $failedPaymentsThisMonth = $this->paymentRepository->getFailedPaymentsCount($startOfMonth, $today);
+        $failedPaymentsCurrent = $this->paymentRepository->getFailedPaymentsCount($startDate, $endDate);
 
         // Paiements CASH (tous les statuts)
-        $cashPaymentsToday = $this->paymentRepository->getCashPaymentsCount($today, $today);
-        $cashPaymentsThisMonth = $this->paymentRepository->getCashPaymentsCount($startOfMonth, $today);
+        $cashPaymentsCurrent = $this->paymentRepository->getCashPaymentsCount($startDate, $endDate);
 
         // Paiements CASH en attente (WAIT)
-        $cashWaitPaymentsToday = $this->paymentRepository->getCashWaitPaymentsCount($today, $today);
-        $cashWaitPaymentsThisMonth = $this->paymentRepository->getCashWaitPaymentsCount($startOfMonth, $today);
+        $cashWaitPaymentsCurrent = $this->paymentRepository->getCashWaitPaymentsCount($startDate, $endDate);
 
         // Paiements CASH complétés
-        $cashCompletedPaymentsToday = $this->paymentRepository->getCashCompletedPaymentsCount($today, $today);
-        $cashCompletedPaymentsThisMonth = $this->paymentRepository->getCashCompletedPaymentsCount($startOfMonth, $today);
+        $cashCompletedPaymentsCurrent = $this->paymentRepository->getCashCompletedPaymentsCount($startDate, $endDate);
 
         return [
-            'paymentsToday' => $paymentsToday,
-            'paymentsYesterday' => $paymentsYesterday,
-            'paymentsTodayVsYesterday' => $paymentsYesterday > 0 ? round((($paymentsToday - $paymentsYesterday) / $paymentsYesterday) * 100, 2) : 0,
-            'paymentsThisMonth' => $paymentsThisMonth,
-            'paymentsLastMonth' => $paymentsLastMonth,
-            'paymentsThisMonthVsLastMonth' => $paymentsLastMonth > 0 ? round((($paymentsThisMonth - $paymentsLastMonth) / $paymentsLastMonth) * 100, 2) : 0,
-            'waitPaymentsToday' => $waitPaymentsToday,
-            'waitPaymentsThisMonth' => $waitPaymentsThisMonth,
-            'failedPaymentsToday' => $failedPaymentsToday,
-            'failedPaymentsThisMonth' => $failedPaymentsThisMonth,
-            'cashPaymentsToday' => $cashPaymentsToday,
-            'cashPaymentsThisMonth' => $cashPaymentsThisMonth,
-            'cashWaitPaymentsToday' => $cashWaitPaymentsToday,
-            'cashWaitPaymentsThisMonth' => $cashWaitPaymentsThisMonth,
-            'cashCompletedPaymentsToday' => $cashCompletedPaymentsToday,
-            'cashCompletedPaymentsThisMonth' => $cashCompletedPaymentsThisMonth,
+            'paymentsCurrent' => $paymentsCurrent,
+            'paymentsComparison' => $paymentsComparison,
+            'paymentsVsComparison' => $paymentsComparison > 0 ? round((($paymentsCurrent - $paymentsComparison) / $paymentsComparison) * 100, 2) : 0,
+            'waitPaymentsCurrent' => $waitPaymentsCurrent,
+            'failedPaymentsCurrent' => $failedPaymentsCurrent,
+            'cashPaymentsCurrent' => $cashPaymentsCurrent,
+            'cashWaitPaymentsCurrent' => $cashWaitPaymentsCurrent,
+            'cashCompletedPaymentsCurrent' => $cashCompletedPaymentsCurrent,
+            // Garder les anciennes clés pour la rétrocompatibilité
+            'paymentsToday' => $paymentsCurrent,
+            'paymentsYesterday' => $paymentsComparison,
+            'paymentsTodayVsYesterday' => $paymentsComparison > 0 ? round((($paymentsCurrent - $paymentsComparison) / $paymentsComparison) * 100, 2) : 0,
+            'paymentsThisMonth' => $paymentsCurrent,
+            'paymentsLastMonth' => $paymentsComparison,
+            'paymentsThisMonthVsLastMonth' => $paymentsComparison > 0 ? round((($paymentsCurrent - $paymentsComparison) / $paymentsComparison) * 100, 2) : 0,
+            'waitPaymentsToday' => $waitPaymentsCurrent,
+            'waitPaymentsThisMonth' => $waitPaymentsCurrent,
+            'failedPaymentsToday' => $failedPaymentsCurrent,
+            'failedPaymentsThisMonth' => $failedPaymentsCurrent,
+            'cashPaymentsToday' => $cashPaymentsCurrent,
+            'cashPaymentsThisMonth' => $cashPaymentsCurrent,
+            'cashWaitPaymentsToday' => $cashWaitPaymentsCurrent,
+            'cashWaitPaymentsThisMonth' => $cashWaitPaymentsCurrent,
+            'cashCompletedPaymentsToday' => $cashCompletedPaymentsCurrent,
+            'cashCompletedPaymentsThisMonth' => $cashCompletedPaymentsCurrent,
         ];
     }
 

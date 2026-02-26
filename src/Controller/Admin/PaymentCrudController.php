@@ -276,6 +276,7 @@ class PaymentCrudController extends AbstractCrudController
         // Mettre à jour le statut
         $payment->setStatus(PaymentStatus::COMPLETED);
         $payment->setPaidAt(new DateTime());
+        $payment->setResponsedAt(new DateTimeImmutable());
         $payment->setNotes(($payment->getNotes() ?? '') . "\nValidé manuellement le " . date('d/m/Y H:i'));
 
         // Activer l'achat via le PaymentManager (gère abonnement et cours)
@@ -312,6 +313,7 @@ class PaymentCrudController extends AbstractCrudController
         }
 
         $payment->setStatus(PaymentStatus::REJECTED);
+        $payment->setResponsedAt(new DateTimeImmutable());
         $payment->setNotes(($payment->getNotes() ?? '') . "\nRejeté manuellement le " . date('d/m/Y H:i'));
 
         $this->entityManager->flush();

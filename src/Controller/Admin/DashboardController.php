@@ -41,6 +41,7 @@ class DashboardController extends AbstractDashboardController
 
         // Statistiques des demandes de traduction
         $translationStats = $this->translationRequestRepository->count();
+        
 
         return $this->render('admin/dashboard.html.twig', [
             'stats' => $stats,
