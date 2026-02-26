@@ -270,6 +270,7 @@ readonly class PaymentManager
     public function complete(Payment $payment): void
     {
         $payment->setStatus(PaymentStatus::COMPLETED);
+        $payment->setPaidAt(new DateTime());
         $this->entityManager->persist($payment);
         $this->entityManager->flush();
     }

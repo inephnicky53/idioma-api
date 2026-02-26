@@ -54,8 +54,9 @@ class CheckTransaction
             $payment->setNotes(trim($existingNotes . "\nVérification: " . $body['message']));
         }
 
-        // Si paiement réussi, activer l'achat (abonnement ou cours)
+        // Si paiement réussi, activer l'achat (abonnement ou cours) et définir paidAt
         if ($newStatus->isSuccess()) {
+            $payment->setPaidAt(new DateTimeImmutable());
             $this->paymentManager->activatePurchase($payment);
         }
 
