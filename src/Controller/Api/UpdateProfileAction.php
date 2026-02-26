@@ -12,7 +12,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
-#[Route('/auth/profile', name: 'api_update_profile', methods: ['PATCH'])]
+#[Route('/api/auth/profile', name: 'api_update_profile', methods: ['PATCH'])]
 class UpdateProfileAction extends AbstractController
 {
     public function __construct(
