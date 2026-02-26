@@ -67,8 +67,8 @@ readonly class FlexPayProvider implements PaymentProviderInterface
                 $data = $response->toArray();
 
                 // Mettre à jour le transactionId avec celui de FlexPay
-                if (isset($data['provider_reference'])) {
-                    $payment->setProviderReference($data['provider_reference']);
+                if (isset($data['orderNumber'])) {
+                    $payment->setProviderReference($data['orderNumber']);
                 }
 
                 if (($data['code'] ?? '') === "0") {
@@ -106,7 +106,12 @@ readonly class FlexPayProvider implements PaymentProviderInterface
             return false;
         }
 
-        $response = $this->httpClient->request('GET', $this->flexpayEndpoint . '/check/' . $payment->getReference());
+        $response = $this->httpClient->request('GET', $this->flexpayEndpoint . '/check/' . $payment->getProviderReference(), [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . $this->flexpayToken
+            ],
+        ]);
 
         return $response->toArray();
     }
