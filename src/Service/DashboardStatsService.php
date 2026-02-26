@@ -83,21 +83,21 @@ class DashboardStatsService
     private function getPaymentStats(\DateTime $today, \DateTime $yesterday, \DateTime $startOfWeek, \DateTime $startOfLastWeek, \DateTime $startOfMonth, \DateTime $startOfLastMonth, string $period = 'today'): array
     {
         // Déterminer les dates en fonction du filtre period
-        $startDate = $today;
-        $endDate = $today;
-        $comparisonStartDate = $yesterday;
-        $comparisonEndDate = $yesterday;
+        $startDate = (clone $today)->setTime(0, 0, 0);
+        $endDate = (clone $today)->setTime(23, 59, 59);
+        $comparisonStartDate = (clone $yesterday)->setTime(0, 0, 0);
+        $comparisonEndDate = (clone $yesterday)->setTime(23, 59, 59);
 
         if ($period === 'week') {
-            $startDate = $startOfWeek;
-            $endDate = $today;
-            $comparisonStartDate = $startOfLastWeek;
-            $comparisonEndDate = (clone $startOfLastWeek)->modify('+7 days');
+            $startDate = (clone $startOfWeek)->setTime(0, 0, 0);
+            $endDate = (clone $today)->setTime(23, 59, 59);
+            $comparisonStartDate = (clone $startOfLastWeek)->setTime(0, 0, 0);
+            $comparisonEndDate = (clone $startOfLastWeek)->modify('+7 days')->setTime(23, 59, 59);
         } elseif ($period === 'month') {
-            $startDate = $startOfMonth;
-            $endDate = $today;
-            $comparisonStartDate = $startOfLastMonth;
-            $comparisonEndDate = (clone $startOfLastMonth)->modify('last day of this month');
+            $startDate = (clone $startOfMonth)->setTime(0, 0, 0);
+            $endDate = (clone $today)->setTime(23, 59, 59);
+            $comparisonStartDate = (clone $startOfLastMonth)->setTime(0, 0, 0);
+            $comparisonEndDate = (clone $startOfLastMonth)->modify('last day of this month')->setTime(23, 59, 59);
         }
 
         // Paiements complétés (anciennement "revenu")
