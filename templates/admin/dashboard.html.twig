@@ -157,49 +157,6 @@
             <div class="col-md-3">
                 <div class="dashboard-card stat-card success">
                     <div class="card-icon">
-                        <i class="fa fa-money-bill"></i>
-                    </div>
-                    <div class="card-content">
-                        <h6 class="card-label">Revenu Aujourd'hui</h6>
-                        <h2 class="card-value">{{ stats.payments.revenueToday|number_format(2, ',', ' ') }} €</h2>
-                        <p class="card-subtitle {% if stats.payments.revenueTodayVsYesterday >= 0 %}text-success{% else %}text-danger{% endif %}">
-                            {% if stats.payments.revenueTodayVsYesterday >= 0 %}
-                                <i class="fa fa-arrow-up"></i> {{ stats.payments.revenueTodayVsYesterday }}%
-                            {% else %}
-                                <i class="fa fa-arrow-down"></i> {{ stats.payments.revenueTodayVsYesterday|abs }}%
-                            {% endif %}
-                            vs hier
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="dashboard-card stat-card info">
-                    <div class="card-icon">
-                        <i class="fa fa-calendar-week"></i>
-                    </div>
-                    <div class="card-content">
-                        <h6 class="card-label">Revenu Cette Semaine</h6>
-                        <h2 class="card-value">{{ stats.payments.revenueThisWeek|number_format(2, ',', ' ') }} €</h2>
-                        <p class="card-subtitle">7 derniers jours</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="dashboard-card stat-card primary">
-                    <div class="card-icon">
-                        <i class="fa fa-calendar-alt"></i>
-                    </div>
-                    <div class="card-content">
-                        <h6 class="card-label">Revenu Ce Mois</h6>
-                        <h2 class="card-value">{{ stats.payments.revenueThisMonth|number_format(2, ',', ' ') }} €</h2>
-                        <p class="card-subtitle">Depuis le 1er du mois</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="dashboard-card stat-card warning">
-                    <div class="card-icon">
                         <i class="fa fa-receipt"></i>
                     </div>
                     <div class="card-content">
@@ -212,6 +169,49 @@
                                 <i class="fa fa-arrow-down"></i> {{ stats.payments.paymentsTodayVsYesterday|abs }}%
                             {% endif %}
                             vs hier
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card info">
+                    <div class="card-icon">
+                        <i class="fa fa-hourglass-half"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">Paiements en Attente</h6>
+                        <h2 class="card-value">{{ stats.payments.waitPaymentsToday }}</h2>
+                        <p class="card-subtitle">Aujourd'hui</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card danger">
+                    <div class="card-icon">
+                        <i class="fa fa-times-circle"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">Paiements Échoués</h6>
+                        <h2 class="card-value">{{ stats.payments.failedPaymentsToday }}</h2>
+                        <p class="card-subtitle">Aujourd'hui</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="dashboard-card stat-card primary">
+                    <div class="card-icon">
+                        <i class="fa fa-calendar-alt"></i>
+                    </div>
+                    <div class="card-content">
+                        <h6 class="card-label">Paiements Ce Mois</h6>
+                        <h2 class="card-value">{{ stats.payments.paymentsThisMonth }}</h2>
+                        <p class="card-subtitle {% if stats.payments.paymentsThisMonthVsLastMonth >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {% if stats.payments.paymentsThisMonthVsLastMonth >= 0 %}
+                                <i class="fa fa-arrow-up"></i> {{ stats.payments.paymentsThisMonthVsLastMonth }}%
+                            {% else %}
+                                <i class="fa fa-arrow-down"></i> {{ stats.payments.paymentsThisMonthVsLastMonth|abs }}%
+                            {% endif %}
+                            vs mois dernier
                         </p>
                     </div>
                 </div>

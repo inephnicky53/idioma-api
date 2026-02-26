@@ -82,28 +82,31 @@ class DashboardStatsService
 
     private function getPaymentStats(\DateTime $today, \DateTime $yesterday, \DateTime $startOfWeek, \DateTime $startOfLastWeek, \DateTime $startOfMonth, \DateTime $startOfLastMonth, string $period = 'today'): array
     {
-        $revenueToday = $this->paymentRepository->getTotalRevenueToday();
-        $revenueYesterday = $this->paymentRepository->getTotalRevenueToday();
-        $revenueThisWeek = $this->paymentRepository->getTotalRevenueThisWeek();
-        $revenueThisMonth = $this->paymentRepository->getTotalRevenueThisMonth();
-
+        // Paiements complétés (anciennement "revenu")
         $paymentsToday = $this->paymentRepository->getCompletedPaymentsCount($today, $today);
         $paymentsYesterday = $this->paymentRepository->getCompletedPaymentsCount($yesterday, $yesterday);
         $paymentsThisMonth = $this->paymentRepository->getCompletedPaymentsCount($startOfMonth, $today);
         $paymentsLastMonth = $this->paymentRepository->getCompletedPaymentsCount($startOfLastMonth, (clone $startOfLastMonth)->modify('last day of this month'));
 
+        // Paiements en attente (WAIT)
+        $waitPaymentsToday = $this->paymentRepository->getWaitPaymentsCount($today, $today);
+        $waitPaymentsThisMonth = $this->paymentRepository->getWaitPaymentsCount($startOfMonth, $today);
+
+        // Paiements échoués (FAILED)
+        $failedPaymentsToday = $this->paymentRepository->getFailedPaymentsCount($today, $today);
+        $failedPaymentsThisMonth = $this->paymentRepository->getFailedPaymentsCount($startOfMonth, $today);
+
         return [
-            'revenueToday' => $revenueToday,
-            'revenueYesterday' => $revenueYesterday,
-            'revenueTodayVsYesterday' => $revenueYesterday > 0 ? round((($revenueToday - $revenueYesterday) / $revenueYesterday) * 100, 2) : 0,
-            'revenueThisWeek' => $revenueThisWeek,
-            'revenueThisMonth' => $revenueThisMonth,
             'paymentsToday' => $paymentsToday,
             'paymentsYesterday' => $paymentsYesterday,
             'paymentsTodayVsYesterday' => $paymentsYesterday > 0 ? round((($paymentsToday - $paymentsYesterday) / $paymentsYesterday) * 100, 2) : 0,
             'paymentsThisMonth' => $paymentsThisMonth,
             'paymentsLastMonth' => $paymentsLastMonth,
             'paymentsThisMonthVsLastMonth' => $paymentsLastMonth > 0 ? round((($paymentsThisMonth - $paymentsLastMonth) / $paymentsLastMonth) * 100, 2) : 0,
+            'waitPaymentsToday' => $waitPaymentsToday,
+            'waitPaymentsThisMonth' => $waitPaymentsThisMonth,
+            'failedPaymentsToday' => $failedPaymentsToday,
+            'failedPaymentsThisMonth' => $failedPaymentsThisMonth,
         ];
     }
 

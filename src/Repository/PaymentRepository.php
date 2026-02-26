@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Payment;
 use App\Entity\User;
+use App\Enum\PaymentStatus;
 use DateTime;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -25,12 +26,12 @@ class PaymentRepository extends ServiceEntityRepository
 
     public function findCompletedByUser(User $user): array
     {
-        return $this->findBy(['user' => $user, 'status' => 'completed'], ['paidAt' => 'DESC']);
+        return $this->findBy(['user' => $user, 'status' => PaymentStatus::COMPLETED], ['paidAt' => 'DESC']);
     }
 
     public function findPendingByUser(User $user): array
     {
-        return $this->findBy(['user' => $user, 'status' => 'pending']);
+        return $this->findBy(['user' => $user, 'status' => PaymentStatus::WAIT]);
     }
 
     public function getTotalRevenueToday(): float
@@ -44,7 +45,7 @@ class PaymentRepository extends ServiceEntityRepository
             ->where('p.status = :status')
             ->andWhere('p.paidAt >= :today')
             ->andWhere('p.paidAt < :tomorrow')
-            ->setParameter('status', 'completed')
+            ->setParameter('status', PaymentStatus::COMPLETED)
             ->setParameter('today', $today)
             ->setParameter('tomorrow', $tomorrow)
             ->getQuery()
@@ -64,7 +65,7 @@ class PaymentRepository extends ServiceEntityRepository
             ->where('p.status = :status')
             ->andWhere('p.paidAt >= :start')
             ->andWhere('p.paidAt < :end')
-            ->setParameter('status', 'completed')
+            ->setParameter('status', PaymentStatus::COMPLETED)
             ->setParameter('start', $startOfWeek)
             ->setParameter('end', $endOfWeek)
             ->getQuery()
@@ -84,7 +85,7 @@ class PaymentRepository extends ServiceEntityRepository
             ->where('p.status = :status')
             ->andWhere('p.paidAt >= :start')
             ->andWhere('p.paidAt <= :end')
-            ->setParameter('status', 'completed')
+            ->setParameter('status', PaymentStatus::COMPLETED)
             ->setParameter('start', $startOfMonth)
             ->setParameter('end', $endOfMonth)
             ->getQuery()
@@ -100,7 +101,35 @@ class PaymentRepository extends ServiceEntityRepository
             ->where('p.status = :status')
             ->andWhere('p.paidAt >= :start')
             ->andWhere('p.paidAt <= :end')
-            ->setParameter('status', 'completed')
+            ->setParameter('status', PaymentStatus::COMPLETED)
+            ->setParameter('start', $startDate)
+            ->setParameter('end', $endDate)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function getWaitPaymentsCount(DateTime $startDate, DateTime $endDate): int
+    {
+        return (int) $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->where('p.status = :status')
+            ->andWhere('p.createdAt >= :start')
+            ->andWhere('p.createdAt <= :end')
+            ->setParameter('status', PaymentStatus::WAIT)
+            ->setParameter('start', $startDate)
+            ->setParameter('end', $endDate)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function getFailedPaymentsCount(DateTime $startDate, DateTime $endDate): int
+    {
+        return (int) $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->where('p.status = :status')
+            ->andWhere('p.createdAt >= :start')
+            ->andWhere('p.createdAt <= :end')
+            ->setParameter('status', PaymentStatus::FAILED)
             ->setParameter('start', $startDate)
             ->setParameter('end', $endDate)
             ->getQuery()
