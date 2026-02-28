@@ -38,7 +38,7 @@ class DashboardController extends AbstractDashboardController
         $request = $this->requestStack->getCurrentRequest();
         $period = $request ? $request->query->get('period', 'today') : 'today';
         $stats = $this->statsService->getStats($period);
-        dd($stats, $period);
+        //dd($stats, $period);
 
         // Statistiques des demandes de traduction
         $translationStats = $this->translationRequestRepository->count();

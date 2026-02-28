@@ -1,4 +1,5 @@
-public/error_log
+error_log
+/public/error_log
 /public/uploads/
 
 ###> symfony/framework-bundle ###
