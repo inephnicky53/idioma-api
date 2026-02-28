@@ -108,15 +108,29 @@ class VideoManager
 
         $response = new StreamedResponse(function () use ($videoPath, $start, $length) {
             $handle = fopen($videoPath, 'rb');
+            if (!$handle) {
+                throw new \RuntimeException('Impossible d\'ouvrir le fichier vidéo');
+            }
+
             fseek($handle, $start);
             $remaining = $length;
-            $chunkSize = 8192;
+            // Augmenter la taille du chunk pour un meilleur débit (256KB au lieu de 8KB)
+            $chunkSize = 262144; // 256 * 1024 bytes
 
             while ($remaining > 0 && !feof($handle)) {
                 $read = min($chunkSize, $remaining);
-                echo fread($handle, $read);
-                $remaining -= $read;
+                $data = fread($handle, $read);
+                if ($data === false) {
+                    break;
+                }
+                echo $data;
+                $remaining -= strlen($data);
+                // Flush après chaque chunk pour un streaming progressif
                 flush();
+                // Vérifier si la connexion est toujours active
+                if (connection_aborted()) {
+                    break;
+                }
             }
 
             fclose($handle);
@@ -125,9 +139,23 @@ class VideoManager
         $response->headers->set('Content-Type', $mimeType);
         $response->headers->set('Content-Length', (string) $length);
         $response->headers->set('Accept-Ranges', 'bytes');
-        $response->headers->set('Content-Range', sprintf('bytes %d-%d/%d', $start, $end, $fileSize));
+
+        // Ajouter Content-Range UNIQUEMENT pour les Range Requests (206)
+        if ($statusCode === 206) {
+            $response->headers->set('Content-Range', sprintf('bytes %d-%d/%d', $start, $end, $fileSize));
+        }
+
+        // Headers pour éviter le buffering et le caching
         $response->headers->set('Cache-Control', 'no-cache, no-store, must-revalidate');
         $response->headers->set('Pragma', 'no-cache');
+        $response->headers->set('Expires', '0');
+
+        // Headers pour améliorer la compatibilité du streaming
+        $response->headers->set('Connection', 'keep-alive');
+
+        // NE PAS utiliser Transfer-Encoding: chunked avec Content-Length
+        // Cela cause des conflits et des problèmes de streaming
+        // Laisser Symfony gérer l'encodage automatiquement
 
         return $response;
     }

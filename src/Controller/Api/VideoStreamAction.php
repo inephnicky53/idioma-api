@@ -25,6 +25,10 @@ class VideoStreamAction
 
     public function __invoke(int $id, Request $request): Response
     {
+        // Augmenter le timeout UNIQUEMENT pour le streaming vidéo
+        // Les vidéos longues peuvent prendre du temps à streamer
+        set_time_limit(3600); // 1 heure max pour le streaming
+
         $video = $this->entityManager->getRepository(CourseVideo::class)->find($id);
 
         if (!$video) {
