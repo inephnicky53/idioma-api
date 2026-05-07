@@ -77,6 +77,8 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::section('Cours');
         yield MenuItem::linkToCrud('Cours', 'fas fa-graduation-cap', Course::class);
         yield MenuItem::linkToCrud('Vidéos', 'fas fa-video', CourseVideo::class);
+        yield MenuItem::linkToUrl('Médiathèque Cloudinary', 'fas fa-cloud', 'https://console.cloudinary.com/console/media_library/search?q=')
+            ->setLinkTarget('_blank');
 
         yield MenuItem::section('Présences');
         yield MenuItem::linkToCrud('Check-ins', 'fas fa-sign-in-alt', CheckIn::class);

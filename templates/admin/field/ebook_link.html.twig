@@ -1,0 +1,7 @@
+{% if value %}
+    <a href="{{ asset('uploads/ebooks/' ~ value) }}" target="_blank" class="btn btn-sm btn-link">
+        <i class="fa fa-file-pdf-o"></i> Voir l'Ebook ({{ value }})
+    </a>
+{% else %}
+    <span class="text-muted">Aucun fichier</span>
+{% endif %}

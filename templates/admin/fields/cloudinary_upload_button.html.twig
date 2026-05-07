@@ -1,0 +1,17 @@
+{# @var field \EasyCorp\Bundle\EasyAdminBundle\Dto\FieldDto #}
+{# @var entity \EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto #}
+<div class="form-widget">
+    <div class="mb-2">
+        <button type="button" id="cloudinary-upload-widget" class="btn btn-primary">
+            <i class="fas fa-cloud-upload-alt"></i> Sélectionner une vidéo (Cloudinary)
+        </button>
+        <div class="form-help">Cliquez sur le bouton pour envoyer votre vidéo directement sur Cloudinary.</div>
+    </div>
+    
+    <div id="upload-progress-container" style="display:none; margin-top: 10px;">
+        <div class="progress" style="height: 20px;">
+            <div id="upload-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+        </div>
+        <small id="upload-status-text" class="text-muted">Préparation de l'envoi...</small>
+    </div>
+</div>

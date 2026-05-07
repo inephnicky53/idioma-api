@@ -73,6 +73,10 @@ class CourseVideo implements UploadedFileAwareInterface
     #[Vich\UploadableField(mapping: 'course_videos', fileNameProperty: 'videoFile')]
     private ?File $videoFileUpload = null;
 
+    #[ORM\Column(length: 500, nullable: true)]
+    #[Groups(['course_video:read', 'course:read'])]
+    private ?string $cloudinaryUrl = null;
+
     #[ORM\Column(nullable: true)]
     #[Groups(['course_video:read', 'course:read'])]
     private ?int $duration = null;
@@ -172,9 +176,15 @@ class CourseVideo implements UploadedFileAwareInterface
     #[Groups(['course_video:read', 'course:read'])]
     public function getStreamUrl(): ?string
     {
+        if ($this->cloudinaryUrl) {
+            return $this->cloudinaryUrl;
+        }
+        
         if (!$this->videoFile || !$this->id) {
             return null;
         }
+
+        // Le Normalizer transformera ce chemin relatif en URL absolue
         return '/api/course_videos/' . $this->id . '/stream';
     }
 
@@ -185,6 +195,17 @@ class CourseVideo implements UploadedFileAwareInterface
         return [
             'thumbnail' => 'thumbnail',
         ];
+    }
+
+    public function getCloudinaryUrl(): ?string
+    {
+        return $this->cloudinaryUrl;
+    }
+
+    public function setCloudinaryUrl(?string $cloudinaryUrl): static
+    {
+        $this->cloudinaryUrl = $cloudinaryUrl;
+        return $this;
     }
 
     public function getDuration(): ?int

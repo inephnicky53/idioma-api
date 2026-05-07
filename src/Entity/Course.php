@@ -17,11 +17,14 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 #[ORM\Entity(repositoryClass: CourseRepository::class)]
 #[ORM\HasLifecycleCallbacks]
+#[Vich\Uploadable]
 #[ApiResource(
     operations: [
         new GetCollection(provider: CourseCollectionProvider::class),
@@ -71,6 +74,12 @@ class Course implements PayableInterface, UploadedFileAwareInterface
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['course:read', 'course_purchase:read'])]
     private ?string $ebookPath = null;
+
+    /**
+     * @Vich\UploadableField(mapping="course_ebooks", fileNameProperty="ebookPath")
+     */
+    #[Vich\UploadableField(mapping: 'course_ebooks', fileNameProperty: 'ebookPath')]
+    private ?File $ebookFile = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['course:read', 'course_purchase:read'])]
@@ -204,6 +213,20 @@ class Course implements PayableInterface, UploadedFileAwareInterface
     {
         $this->ebookPath = $ebookPath;
         return $this;
+    }
+
+    public function getEbookFile(): ?File
+    {
+        return $this->ebookFile;
+    }
+
+    public function setEbookFile(?File $ebookFile = null): void
+    {
+        $this->ebookFile = $ebookFile;
+
+        if (null !== $ebookFile) {
+            $this->updatedAt = new DateTime();
+        }
     }
 
     public function getEbookTitle(): ?string

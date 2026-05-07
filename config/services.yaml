@@ -9,6 +9,7 @@ parameters:
     flexpay_merchant_name: '%env(FLEXPAY_MERCHANT_NAME)%'
     flexpay_token: '%env(FLEXPAY_TOKEN)%'
     merchant_name: '%env(MERCHANT_NAME)%'
+    CLOUDINARY_URL: '%env(CLOUDINARY_URL)%'
 
 services:
     # default configuration for services in *this* file
@@ -49,6 +50,14 @@ services:
     App\EventListener\AccessDeniedListener:
         tags:
             - { name: 'kernel.event_listener', event: 'kernel.exception', priority: 50 }
+
+    App\Service\CloudinaryService:
+        arguments:
+            $cloudinaryUrl: '%env(CLOUDINARY_URL)%'
+
+    App\EventListener\VideoUploadListener:
+        tags:
+            - { name: 'vich_uploader.event_listener', event: 'vich_uploader.post_upload', method: 'onVichUploaderPostUpload' }
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

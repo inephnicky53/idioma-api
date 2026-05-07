@@ -93,6 +93,7 @@ class CourseVideoUploadAction
                     'title' => $courseVideo->getTitle(),
                     'titleEn' => $courseVideo->getTitleEn(),
                     'videoFile' => $courseVideo->getVideoFile(),
+                     'cloudinaryUrl' => $courseVideo->getCloudinaryUrl(),
                     'streamUrl' => $courseVideo->getStreamUrl(),
                     'duration' => $courseVideo->getDuration(),
                     'position' => $courseVideo->getPosition(),

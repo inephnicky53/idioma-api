@@ -9,6 +9,7 @@
         "ext-fileinfo": "*",
         "ext-iconv": "*",
         "api-platform/core": "^4.1",
+        "cloudinary/cloudinary_php": "^3.1",
         "doctrine/doctrine-bundle": "^2.15",
         "doctrine/doctrine-migrations-bundle": "^3.4",
         "doctrine/orm": "^3.5",

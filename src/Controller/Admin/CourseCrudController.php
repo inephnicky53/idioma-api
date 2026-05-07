@@ -9,6 +9,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
@@ -79,7 +80,8 @@ class CourseCrudController extends AbstractCrudController
                 ->setChoices(Currency::getChoices());
             yield ImageField::new('thumbnail', 'Image')
                 ->setBasePath('/uploads/courses/');
-            yield TextField::new('ebookPath', 'Chemin Ebook');
+            yield TextField::new('ebookPath', 'Fichier Ebook')
+                ->setTemplatePath('admin/field/ebook_link.html.twig');
             yield TextField::new('ebookTitle', 'Titre Ebook');
             yield IntegerField::new('position', 'Position');
             yield BooleanField::new('isPublished', 'Publié');
@@ -121,11 +123,16 @@ class CourseCrudController extends AbstractCrudController
             ->setUploadedFileNamePattern('[randomhash].[extension]')
             ->setHelp('Image affichée dans la liste des cours');
 
-        yield Field::new('ebookPath', 'Fichier Ebook (PDF)')
-            ->setFormType(\EasyCorp\Bundle\EasyAdminBundle\Form\Type\FileUploadType::class)
+        yield Field::new('ebookFile', 'Fichier Ebook (PDF)')
+            ->setFormType(FileType::class)
             ->setFormTypeOptions([
-                'upload_dir' => 'public/uploads/ebooks/',
-                'upload_new' => fn ($file) => uniqid() . '.' . $file->guessExtension(),
+                'required' => false,
+                'mapped' => true,
+                'label' => 'Fichier Ebook (PDF)',
+                'help' => 'Fichier PDF du cours (max 50MB)',
+                'attr' => [
+                    'accept' => 'application/pdf',
+                ],
             ])
             ->setRequired(false)
             ->setHelp('Fichier PDF du cours (max 50MB)');
