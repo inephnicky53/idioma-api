@@ -17,6 +17,8 @@ use App\Enum\PaymentStatus;
 use App\Enum\PurchaseType;
 use App\Exception\PaymentException;
 use App\Service\RateService;
+use App\Service\EmailService;
+use App\Service\SmsService;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -35,6 +37,8 @@ readonly class PaymentManager
         private LoggerInterface        $logger,
         string                         $provider,
         private ?FlexPayProvider       $flexPayProvider = null,
+        private EmailService           $emailService,
+        private SmsService             $smsService
     ) {
         $this->defaultProvider = PaymentProvider::fromString($provider);
     }
@@ -273,6 +277,9 @@ readonly class PaymentManager
         $payment->setPaidAt(new DateTime());
         $this->entityManager->persist($payment);
         $this->entityManager->flush();
+
+        // Send payment receipt notifications (email only for now)
+        $this->emailService->sendPaymentReceiptEmail($payment);
     }
 
     /**

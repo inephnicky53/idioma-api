@@ -34,7 +34,7 @@ class VichUploaderFileNormalizer implements NormalizerInterface, NormalizerAware
         /** @var UploadedFileAwareInterface $object */
         foreach ($object->getFilePropertyMapping() as $key => $value) {
             if (isset($data[$key]) && $data[$key]) {
-                $filePath = $data[$key];
+                $filePath = trim($data[$key]); // Trim whitespace to fix leading spaces
 
                 // Si le chemin commence déjà par /uploads/, l'utiliser directement
                 if (str_starts_with($filePath, '/uploads/')) {

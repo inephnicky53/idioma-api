@@ -180,6 +180,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $learningGoals = null;
 
+    #[ORM\Column(type: 'string', length: 10, nullable: true)]
+    private ?string $otp = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?DateTimeInterface $otpExpiresAt = null;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $isVerified = false;
+
     // Champs temporaires pour l'inscription avec paiement (non persistés)
     private ?int $subscriptionPlanId = null;
     private ?PaymentMethod $paymentMethod = null;
@@ -598,6 +607,39 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setJwtToken(?string $jwtToken): static
     {
         $this->jwtToken = $jwtToken;
+        return $this;
+    }
+
+    public function getOtp(): ?string
+    {
+        return $this->otp;
+    }
+
+    public function setOtp(?string $otp): static
+    {
+        $this->otp = $otp;
+        return $this;
+    }
+
+    public function getOtpExpiresAt(): ?DateTimeInterface
+    {
+        return $this->otpExpiresAt;
+    }
+
+    public function setOtpExpiresAt(?DateTimeInterface $otpExpiresAt): static
+    {
+        $this->otpExpiresAt = $otpExpiresAt;
+        return $this;
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->isVerified;
+    }
+
+    public function setIsVerified(bool $isVerified): static
+    {
+        $this->isVerified = $isVerified;
         return $this;
     }
 

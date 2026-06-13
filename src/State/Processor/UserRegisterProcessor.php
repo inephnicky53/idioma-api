@@ -32,6 +32,8 @@ readonly class UserRegisterProcessor implements ProcessorInterface
         private PaymentManager              $paymentManager,
         private RateService                 $rateService,
         private LoggerInterface             $logger,
+        private \App\Service\EmailService   $emailService,
+        private \App\Service\SmsService     $smsService,
     ) {}
 
     /**
@@ -119,30 +121,24 @@ readonly class UserRegisterProcessor implements ProcessorInterface
             // Créer l'utilisateur
             $user = $this->createUser($data);
 
-            // Vérifier si c'est une inscription avec paiement
-            if ($data->hasPayment()) {
-                // Vérifier que le plan existe et est actif
-                $plan = $this->entityManager->getRepository(SubscriptionPlan::class)->find($data->subscriptionPlanId);
-                if (!$plan || !$plan->isActive()) {
-                    throw new Exception('Plan d\'abonnement invalide ou inactif');
-                }
+            // Générer et envoyer OTP
+            $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $expiresAt = (new DateTime())->modify('+10 minutes');
+            $user->setOtp($otp);
+            $user->setOtpExpiresAt($expiresAt);
+            $this->entityManager->persist($user);
 
-                // Créer le paiement
-                $payment = $this->createPayment($user, $plan, $data);
+            // Envoyer OTP par email
+            $this->emailService->sendOtpEmail($user, $otp);
 
-                // Traiter le paiement selon la méthode
-                $this->processPayment($payment, $data->getPaymentMethodEnum());
+            // Envoyer OTP par SMS si téléphone disponible
+            if ($user->getPhone()) {
+                $this->smsService->sendOtpSms($user, $otp);
+            }
 
-                $this->logger->info('User registered with payment', [
-                    'userId' => $user->getId(),
-                    'paymentId' => $payment->getId(),
-                    'paymentMethod' => $data->paymentMethod
-                ]);
-            } else {
-                // Inscription simple au club si les champs club sont remplis
-                if ($data->level || $data->participationType) {
-                    $this->createClubSubscription($user, $data);
-                }
+            // Inscription simple (pas de paiement)
+            if ($data->level || $data->participationType) {
+                $this->createClubSubscription($user, $data);
             }
 
             // Commit la transaction

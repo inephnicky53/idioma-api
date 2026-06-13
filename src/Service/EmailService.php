@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\News;
+use App\Entity\Payment;
 use App\Entity\User;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
@@ -134,6 +135,145 @@ HTML;
             <p>Vous pouvez maintenant vous connecter et explorer nos offres d'abonnement.</p>
             <a href="http://localhost:3000/login" class="button">Se connecter</a>
             <p>Si vous avez des questions, n'hésitez pas à nous contacter.</p>
+            <p>Cordialement,<br>L'équipe {$this->appName}</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2025 {$this->appName}. Tous droits réservés.</p>
+        </div>
+    </div>
+</body>
+</html>
+HTML;
+    }
+
+    /**
+ * Send OTP email
+     */
+    public function sendOtpEmail(User $user, string $otp): void
+    {
+        $email = (new Email())
+            ->from('noreply@idioma-club.com')
+            ->to($user->getEmail())
+            ->subject('Votre code de vérification - ' . $this->appName)
+            ->html($this->renderOtpTemplate($user, $otp));
+
+        $this->mailer->send($email);
+    }
+
+    /**
+     * Render OTP email template
+     */
+    private function renderOtpTemplate(User $user, string $otp): string
+    {
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #6c5ce7; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+        .content { background-color: #f9f9f9; padding: 20px; border: 1px solid #ddd; border-radius: 0 0 5px 5px; }
+        .otp-box { font-size: 32px; font-weight: bold; letter-spacing: 10px; text-align: center; padding: 20px; background-color: #ffffff; border: 2px dashed #6c5ce7; border-radius: 10px; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Vérification de compte</h1>
+        </div>
+        <div class="content">
+            <p>Bonjour {$user->getFirstName()},</p>
+            <p>Voici votre code de vérification pour finaliser votre inscription :</p>
+            <div class="otp-box">{$otp}</div>
+            <p>Ce code expire dans 10 minutes.</p>
+            <p>Si vous n'avez pas demandé ce code, ignorez cet email.</p>
+            <p>Cordialement,<br>L'équipe {$this->appName}</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2025 {$this->appName}. Tous droits réservés.</p>
+        </div>
+    </div>
+</body>
+</html>
+HTML;
+    }
+
+    /**
+     * Send payment receipt email
+     */
+    public function sendPaymentReceiptEmail(Payment $payment): void
+    {
+        $user = $payment->getUser();
+        if (!$user) {
+            return;
+        }
+
+        $email = (new Email())
+            ->from('noreply@idioma-club.com')
+            ->to($user->getEmail())
+            ->subject('Reçu de paiement - ' . $this->appName)
+            ->html($this->renderPaymentReceiptTemplate($payment));
+
+        $this->mailer->send($email);
+    }
+
+    /**
+     * Render payment receipt email template
+     */
+    private function renderPaymentReceiptTemplate(Payment $payment): string
+    {
+        $user = $payment->getUser();
+        $amount = $payment->getAmount();
+        $currency = $payment->getCurrency()?->value ?? 'USD';
+        $reference = $payment->getReference();
+        $product = $payment->getSubscriptionPlan()?->getName() ?? $payment->getCourse()?->getName() ?? 'Achat';
+        $paidAt = $payment->getPaidAt()?->format('d/m/Y H:i') ?? date('d/m/Y H:i');
+
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #6c5ce7; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+        .content { background-color: #f9f9f9; padding: 20px; border: 1px solid #ddd; border-radius: 0 0 5px 5px; }
+        .receipt-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .receipt-label { font-weight: bold; color: #555; }
+        .receipt-value { color: #333; }
+        .total { font-size: 20px; font-weight: bold; color: #6c5ce7; margin-top: 20px; }
+        .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Reçu de Paiement</h1>
+        </div>
+        <div class="content">
+            <p>Bonjour {$user?->getFirstName()} {$user?->getLastName()},</p>
+            <p>Merci pour votre paiement ! Voici les détails de votre transaction :</p>
+            <div class="receipt-item">
+                <span class="receipt-label">Produit/Service:</span>
+                <span class="receipt-value">{$product}</span>
+            </div>
+            <div class="receipt-item">
+                <span class="receipt-label">Référence:</span>
+                <span class="receipt-value">{$reference}</span>
+            </div>
+            <div class="receipt-item">
+                <span class="receipt-label">Date:</span>
+                <span class="receipt-value">{$paidAt}</span>
+            </div>
+            <div class="receipt-item">
+                <span class="receipt-label">Montant:</span>
+                <span class="total">{$amount} {$currency}</span>
+            </div>
+            <p style="margin-top: 30px;">Si vous avez des questions, n'hésitez pas à nous contacter.</p>
             <p>Cordialement,<br>L'équipe {$this->appName}</p>
         </div>
         <div class="footer">

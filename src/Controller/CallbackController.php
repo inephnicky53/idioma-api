@@ -34,7 +34,7 @@ class CallbackController extends AbstractController
      * - 1: Échec (paiement refusé)
      * - 2: En cours de traitement
      */
-    #[Route('callback/flexpay', name: 'callback_flexpay', methods: ['POST'])]
+    #[Route('/callback/flexpay', name: 'callback_flexpay', methods: ['POST'])]
     public function flexpayCallback(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -68,7 +68,6 @@ class CallbackController extends AbstractController
         // Convertir le code FlexPay en statut
         $code = $data['code'] ?? null;
         $newStatus = PaymentStatus::fromFlexPayCode((string) $code);
-        $payment->setStatus($newStatus);
         $payment->setResponsedAt(new DateTimeImmutable());
 
         // Ajouter les détails de la réponse
@@ -77,12 +76,14 @@ class CallbackController extends AbstractController
             $payment->setNotes(trim($existingNotes . "\nFlexPay: " . $data['message']));
         }
 
-        // Si paiement réussi, activer l'achat (abonnement ou cours)
+        // Si paiement réussi, complete it and activate purchase
         if ($newStatus->isSuccess()) {
+            $this->paymentManager->complete($payment);
             $this->paymentManager->activatePurchase($payment);
+        } else {
+            $payment->setStatus($newStatus);
+            $this->entityManager->flush();
         }
-
-        $this->entityManager->flush();
 
         $this->logger->info('FlexPay callback processed', [
             'paymentId' => $payment->getId(),

@@ -284,10 +284,16 @@ class Course implements PayableInterface, UploadedFileAwareInterface
         return $this;
     }
 
+    #[ORM\PrePersist]
     #[ORM\PreUpdate]
     public function setUpdatedAtValue(): void
     {
         $this->updatedAt = new DateTime();
+        
+        // Trim ebookPath to remove leading/trailing spaces
+        if ($this->ebookPath !== null) {
+            $this->ebookPath = trim($this->ebookPath);
+        }
     }
 
     /** @return Collection<int, CourseVideo> */
