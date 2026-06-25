@@ -3,6 +3,7 @@
 namespace App\Service\Payment;
 
 use App\Entity\Payment;
+use App\Enum\PaymentMethod;
 use App\Enum\PaymentStatus;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
@@ -24,14 +25,16 @@ readonly class FlexPayProvider implements PaymentProviderInterface
         private HttpClientInterface    $httpClient,
         private ?string                $flexpayToken = null,
         private ?string                $flexpayEndpoint = null,
-        private ?string                $merchantName = null
+        private ?string                $flexpayCardEndpoint = null,
+        private ?string                $merchantName = null,
+        private ?string                $frontendUrl = null
     ) {}
 
     /**
      * Envoie la transaction à FlexPay et met à jour le Payment existant
      *
      * @param $payment Le paiement déjà créé par PaymentManager
-     * @param int $type Type de transaction (1=MOBILE, 2=BANK)
+     * @param int $type Type de transaction (1=MOBILE, 2=BANK/CARD)
      * @param array $options Options additionnelles (phone, etc.)
      */
     public function createTransaction($payment, int $type, array $options): Payment
@@ -40,20 +43,30 @@ readonly class FlexPayProvider implements PaymentProviderInterface
             throw new InvalidArgumentException('Le premier argument doit être une instance de Payment');
         }
 
-        $request = [
-            "merchant" => $this->merchantName,
-            "type" => $type,
-            "phone" => $options['phone'] ?? $payment->getPhone(),
-            "reference" => $payment->getReference(),
-            "amount" => $payment->getAmount(),
-            "currency" => $payment->getCurrency()?->value ?? 'USD',
-            "callbackUrl" => $this->router->generate(
-                'callback_flexpay', [],
-                UrlGeneratorInterface::ABSOLUTE_URL
-            )
-        ];
-
         try {
+            // Check if it's a card payment (type=2 or payment method CARD)
+            if (
+                $type === 2 ||
+                $payment->getPaymentMethod() === PaymentMethod::CARD
+            ) {
+                $this->createCardTransaction($payment, $options);
+                $this->manager->flush();
+                return $payment;
+            }
+
+            $request = [
+                "merchant" => $this->merchantName,
+                "type" => $type,
+                "phone" => $options['phone'] ?? $payment->getPhone(),
+                "reference" => $payment->getReference(),
+                "amount" => $payment->getAmount(),
+                "currency" => $payment->getCurrency()?->value ?? 'USD',
+                "callbackUrl" => $this->router->generate(
+                    'callback_flexpay', [],
+                    UrlGeneratorInterface::ABSOLUTE_URL
+                )
+            ];
+
             $response = $this->httpClient->request('POST', $this->flexpayEndpoint . '/paymentService', [
                 'headers' => [
                     'Content-Type' => 'application/json',
@@ -94,6 +107,70 @@ readonly class FlexPayProvider implements PaymentProviderInterface
     }
 
     /**
+     * Creates a card payment transaction using FlexPay Card API (/v2/pay)
+     */
+    private function createCardTransaction(Payment $payment, array $options): Payment
+    {
+        $description = $options['description'] ?? 'Paiement Idioma International';
+        
+        $request = [
+            "merchant" => $this->merchantName,
+            "reference" => $payment->getReference(),
+            "amount" => $payment->getAmount(),
+            "currency" => $payment->getCurrency()?->value ?? 'USD',
+            "description" => $description,
+            "callback_url" => $this->router->generate(
+                'callback_flexpay', [],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            ),
+            "approve_url" => $options['approve_url'] ?? $this->frontendUrl,
+            "cancel_url" => $options['cancel_url'] ?? $this->frontendUrl,
+            "decline_url" => $options['decline_url'] ?? $this->frontendUrl
+        ];
+
+        try {
+            $response = $this->httpClient->request('POST', $this->flexpayCardEndpoint . '/v2/pay', [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Authorization' => 'Bearer ' . $this->flexpayToken,
+                ],
+                'json' => $request,
+                'timeout' => 30
+            ]);
+
+            if ($response->getStatusCode() === Response::HTTP_OK) {
+                $data = $response->toArray();
+
+                if (isset($data['orderNumber'])) {
+                    $payment->setProviderReference($data['orderNumber']);
+                }
+
+                if (($data['code'] ?? '') === "0") {
+                    $payment->setStatus(PaymentStatus::WAIT);
+                    // Store the payment URL on the payment entity for the frontend to redirect to
+                    if (isset($data['url'])) {
+                        $payment->setData(['payment_url' => $data['url']]);
+                    }
+                } else {
+                    $payment->setStatus(PaymentStatus::ERROR);
+                    $payment->setNotes($data['message'] ?? 'Erreur FlexPay Card');
+                }
+            } else {
+                $payment->setStatus(PaymentStatus::ERROR);
+                $payment->setNotes('FlexPay Card HTTP Error: ' . $response->getStatusCode());
+            }
+        } catch (TransportExceptionInterface $e) {
+            $payment->setStatus(PaymentStatus::ERROR);
+            $payment->setNotes('FlexPay Card connection error: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            $payment->setStatus(PaymentStatus::ERROR);
+            $payment->setNotes('FlexPay Card unexpected error: ' . $e->getMessage());
+        }
+
+        return $payment;
+    }
+
+    /**
      * @throws TransportExceptionInterface
      * @throws ServerExceptionInterface
      * @throws RedirectionExceptionInterface
@@ -102,7 +179,7 @@ readonly class FlexPayProvider implements PaymentProviderInterface
      */
     public function checkTransaction(Payment $payment): array|bool
     {
-        if (!$payment->getReference()) {
+        if (!$payment->getProviderReference()) {
             return false;
         }
 
@@ -113,7 +190,28 @@ readonly class FlexPayProvider implements PaymentProviderInterface
             ],
         ]);
 
-        return $response->toArray();
+        $data = $response->toArray();
+
+        // Store check transaction details in payment data
+        $paymentData = $payment->getData() ?? [];
+        $paymentData['flexpay_check'] = $data;
+        $payment->setData($paymentData);
+
+        if (isset($data['code']) && $data['code'] === "0" && isset($data['transaction'])) {
+            $transaction = $data['transaction'];
+            $statusCode = $transaction['status'] ?? null;
+            if ($statusCode !== null) {
+                $newStatus = PaymentStatus::fromFlexPayCode((string) $statusCode);
+                $payment->setStatus($newStatus);
+                if (isset($data['message'])) {
+                    $existingNotes = $payment->getNotes() ?? '';
+                    $payment->setNotes(trim($existingNotes . "\nFlexPay Check: " . $data['message']));
+                }
+            }
+        }
+
+        $this->manager->flush();
+        return $data;
     }
 
     public function getName(): string

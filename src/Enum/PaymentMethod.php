@@ -7,14 +7,14 @@ use InvalidArgumentException;
 enum PaymentMethod: string
 {
     case MOBILE = 'MOBILE';
-    case BANK = 'BANK';
+    case CARD = 'CARD';
     case CASH = 'CASH';
 
     public function getLabel(): string
     {
         return match($this) {
             self::MOBILE => 'Mobile Money',
-            self::BANK => 'Virement Bancaire',
+            self::CARD => 'Carte Bancaire / Virement',
             self::CASH => 'Espèces',
         };
     }
@@ -23,7 +23,7 @@ enum PaymentMethod: string
     {
         return match($this) {
             self::MOBILE => 'Mobile Money',
-            self::BANK => 'Bank Transfer',
+            self::CARD => 'Credit Card / Bank Transfer',
             self::CASH => 'Cash',
         };
     }
@@ -32,7 +32,7 @@ enum PaymentMethod: string
     {
         return match($this) {
             self::MOBILE => 'fa-mobile-alt',
-            self::BANK => 'fa-university',
+            self::CARD => 'fa-credit-card',
             self::CASH => 'fa-money-bill-wave',
         };
     }
@@ -41,7 +41,7 @@ enum PaymentMethod: string
     {
         return match($this) {
             self::MOBILE => 'info',
-            self::BANK => 'primary',
+            self::CARD => 'purple',
             self::CASH => 'success',
         };
     }
@@ -50,7 +50,7 @@ enum PaymentMethod: string
     {
         return match($this) {
             self::MOBILE => '#17a2b8',
-            self::BANK => '#007bff',
+            self::CARD => '#6f42c1',
             self::CASH => '#28a745',
         };
     }
@@ -59,7 +59,7 @@ enum PaymentMethod: string
     {
         return match($this) {
             self::MOBILE => 'Paiement via Mobile Money (Vodacom, Airtel, Orange, Africell)',
-            self::BANK => 'Virement bancaire ou carte de crédit',
+            self::CARD => 'Paiement par carte bancaire ou virement bancaire via FlexPay',
             self::CASH => 'Paiement en espèces au bureau',
         };
     }
@@ -85,7 +85,7 @@ enum PaymentMethod: string
     {
         return [
             self::MOBILE->getLabel() => self::MOBILE->value,
-            self::BANK->getLabel() => self::BANK->value,
+            self::CARD->getLabel() => self::CARD->value,
             self::CASH->getLabel() => self::CASH->value,
         ];
     }
@@ -99,7 +99,8 @@ enum PaymentMethod: string
     {
         return match($operator) {
             self::MOBILE->value => self::MOBILE,
-            self::BANK->value => self::BANK,
+            'BANK' => self::CARD,
+            self::CARD->value => self::CARD,
             self::CASH->value => self::CASH,
             default => throw new InvalidArgumentException('Opérateur invalide: ' . $operator),
         };
@@ -109,7 +110,8 @@ enum PaymentMethod: string
     {
         return match(strtoupper($value)) {
             'MOBILE' => self::MOBILE,
-            'BANK' => self::BANK,
+            'BANK' => self::CARD,
+            'CARD' => self::CARD,
             'CASH' => self::CASH,
             default => throw new InvalidArgumentException('Méthode de paiement invalide: ' . $value),
         };

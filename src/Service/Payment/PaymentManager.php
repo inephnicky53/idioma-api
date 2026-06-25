@@ -137,7 +137,7 @@ readonly class PaymentManager
 
         $type = match ($operator) {
             PaymentMethod::MOBILE => 1,
-            PaymentMethod::BANK => 2,
+            PaymentMethod::CARD => 2,
             default => throw new PaymentException("Méthode de paiement non supportée: " . $operator->value)
         };
 

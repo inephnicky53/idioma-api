@@ -6,16 +6,24 @@
 parameters:
     payment_provider: '%env(PAYMENT_PROVIDER)%'
     flexpay_endpoint: '%env(FLEXPAY_ENDPOINT)%'
+    flexpay_card_endpoint: '%env(FLEXPAY_CARD_ENDPOINT)%'
     flexpay_merchant_name: '%env(FLEXPAY_MERCHANT_NAME)%'
     flexpay_token: '%env(FLEXPAY_TOKEN)%'
     merchant_name: '%env(MERCHANT_NAME)%'
     CLOUDINARY_URL: '%env(CLOUDINARY_URL)%'
+    video_provider: '%env(VIDEO_PROVIDER)%'
+    app_email_no_reply: '%env(APP_EMAIL_NO_REPLY)%'
+    frontend_url: '%env(FRONTEND_URL)%'
 
 services:
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        bind:
+            $videoProvider: '%video_provider%'
+            $appEmailNoReply: '%app_email_no_reply%'
+            $frontendUrl: '%frontend_url%'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -36,7 +44,9 @@ services:
         arguments:
             $flexpayToken: '%flexpay_token%'
             $flexpayEndpoint: '%flexpay_endpoint%'
+            $flexpayCardEndpoint: '%flexpay_card_endpoint%'
             $merchantName: '%flexpay_merchant_name%'
+            $frontendUrl: '%frontend_url%'
 
     App\Service\Payment\PaymentManager:
         arguments:
@@ -55,9 +65,18 @@ services:
         arguments:
             $cloudinaryUrl: '%env(CLOUDINARY_URL)%'
 
+    App\Service\VimeoService:
+        arguments:
+            $clientId: '%env(VIMEO_CLIENT_ID)%'
+            $clientSecret: '%env(VIMEO_CLIENT_SECRET)%'
+            $accessToken: '%env(VIMEO_ACCESS_TOKEN)%'
+
     App\EventListener\VideoUploadListener:
         tags:
             - { name: 'vich_uploader.event_listener', event: 'vich_uploader.post_upload', method: 'onVichUploaderPostUpload' }
+
+    App\Contract\VideoStorageInterface:
+        alias: App\Service\VideoStorageFactory
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

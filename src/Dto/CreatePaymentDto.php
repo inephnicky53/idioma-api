@@ -17,7 +17,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
  *
  * Champs requis selon la méthode de paiement:
  * - MOBILE: phone (obligatoire), operator (obligatoire)
- * - BANK: reference (optionnel, peut être ajouté après)
+ * - CARD: aucun champ obligatoire
  * - CASH: notes (optionnel)
  */
 #[Assert\Callback('validate')]
@@ -34,7 +34,7 @@ final class CreatePaymentDto
         public ?Currency     $currency = null,
 
         /**
-         * Méthode de paiement: MOBILE, BANK, CASH
+         * Méthode de paiement: MOBILE, CARD, CASH
          */
         #[Assert\NotBlank(message: 'La méthode de paiement est requise')]
         public ?string       $paymentMethod = null,
@@ -50,9 +50,9 @@ final class CreatePaymentDto
      */
     public function validate(ExecutionContextInterface $context): void
     {
-        match ($this->paymentMethod) {
+        match (strtoupper($this->paymentMethod)) {
             'MOBILE' => $this->validateMobile($context),
-            'BANK' => $this->validateBank($context),
+            'CARD', 'BANK' => $this->validateCardOrBank($context),
             'CASH' => $this->validateCash($context),
             default => null,
         };
@@ -80,12 +80,12 @@ final class CreatePaymentDto
     }
 
     /**
-     * Validation pour paiement BANK
+     * Validation pour paiement CARD/BANK
      */
-    private function validateBank(ExecutionContextInterface $context): void
+    private function validateCardOrBank(ExecutionContextInterface $context): void
     {
-        // Pas de champ obligatoire pour BANK
-        // La référence peut être ajoutée après le virement
+        // No extra fields needed for card/bank payments
+        // We just need to recognize it as a valid method
     }
 
     /**

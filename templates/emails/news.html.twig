@@ -1,0 +1,23 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block content %}
+<mj-section>
+  <mj-column>
+    <mj-text font-size="20px" font-weight="bold">
+      Nouvelle Annonce
+    </mj-text>
+    <mj-text font-size="24px" color="#3b82f6">
+      {{ news.title }}
+    </mj-text>
+    <mj-text>
+      {{ news.excerpt ?: news.content|striptags|slice(0, 200) ~ '...' }}
+    </mj-text>
+    <mj-button href="{{ frontendUrl }}/blog" background-color="#3b82f6" font-weight="bold">
+      Lire la suite
+    </mj-button>
+    <mj-text font-size="12px" color="#6b7280">
+      Vous recevez cet email car vous êtes abonné à notre newsletter.
+    </mj-text>
+  </mj-column>
+</mj-section>
+{% endblock %}

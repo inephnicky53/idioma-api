@@ -161,6 +161,10 @@ class Payment
     #[Groups(['payment:read'])]
     private ?PaymentProvider $provider = PaymentProvider::FLEXPAY;
 
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    #[Groups(['payment:read'])]
+    private ?array $data = null;
+
     public function __construct()
     {
         $this->createdAt = new DateTime();
@@ -446,6 +450,17 @@ class Payment
     public function setProvider(?PaymentProvider $provider): void
     {
         $this->provider = $provider;
+    }
+
+    public function getData(): ?array
+    {
+        return $this->data;
+    }
+
+    public function setData(?array $data): static
+    {
+        $this->data = $data;
+        return $this;
     }
 }
 

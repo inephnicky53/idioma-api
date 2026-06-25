@@ -1,0 +1,27 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block content %}
+<mj-section>
+  <mj-column>
+    <mj-text font-size="20px" font-weight="bold">
+      Reçu de Paiement
+    </mj-text>
+    <mj-text>
+      Bonjour {{ user.firstName }} {{ user.lastName }}, merci pour votre paiement ! Voici les détails de votre transaction :
+    </mj-text>
+    <mj-divider border-color="#e5e7eb"></mj-divider>
+    <mj-text>
+      <strong>Produit/Service:</strong> {{ payment.subscriptionPlan?.name ?: payment.course?.title ?: 'Achat' }}
+    </mj-text>
+    <mj-text>
+      <strong>Référence:</strong> {{ payment.reference }}
+    </mj-text>
+    <mj-text>
+      <strong>Date:</strong> {{ payment.paidAt?.format('d/m/Y H:i') ?: 'now'|date('d/m/Y H:i') }}
+    </mj-text>
+    <mj-text font-size="20px" color="#3b82f6">
+      <strong>Montant:</strong> {{ payment.amount }} {{ payment.currency?.value ?: 'USD' }}
+    </mj-text>
+  </mj-column>
+</mj-section>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block content %}
+<mj-section>
+  <mj-column>
+    <mj-text font-size="20px" font-weight="bold">
+      Bonjour {{ user.firstName }} !
+    </mj-text>
+    <mj-text>
+      Merci de vous être inscrit sur Idioma. Veuillez vérifier votre adresse email en cliquant sur le bouton ci-dessous.
+    </mj-text>
+    <mj-button href="{{ verificationLink }}" background-color="#3b82f6" font-weight="bold">
+      Vérifier mon email
+    </mj-button>
+    <mj-text font-size="14px" color="#6b7280">
+      Si vous n'avez pas créé de compte sur Idioma, vous pouvez ignorer cet email.
+    </mj-text>
+  </mj-column>
+</mj-section>
+{% endblock %}

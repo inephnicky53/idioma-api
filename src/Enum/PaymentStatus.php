@@ -92,20 +92,20 @@ enum PaymentStatus: string
     }
 
     /**
-     * Description du statut
+     * Description du statut (pour les administrateurs)
      */
     public function getDescription(): string
     {
         return match($this) {
-            self::INIT => 'Le paiement a été créé mais pas encore envoyé au processeur',
-            self::WAIT => 'En attente de confirmation du paiement par l\'utilisateur',
-            self::PROCESS => 'Le paiement est en cours de traitement',
-            self::COMPLETED => 'Le paiement a été effectué avec succès',
-            self::FAILED => 'Le paiement a échoué (erreur technique ou timeout)',
-            self::REJECTED => 'Le paiement a été rejeté manuellement par un administrateur',
-            self::ERROR => 'Une erreur technique s\'est produite',
-            self::REFUNDED => 'Le paiement a été remboursé',
-            self::CANCELLED => 'Le paiement a été annulé par l\'utilisateur',
+            self::INIT => 'Paiement créé mais pas encore envoyé à FlexPay',
+            self::WAIT => 'En attente que l\'utilisateur confirme le paiement (mobile money, banque ou carte)',
+            self::PROCESS => 'Paiement en cours de traitement par FlexPay ou en attente de remboursement',
+            self::COMPLETED => 'Paiement accepté et validé par FlexPay (succès) - produit activé',
+            self::FAILED => 'Paiement refusé par FlexPay, solde insuffisant ou erreur utilisateur',
+            self::REJECTED => 'Paiement rejeté manuellement par un administrateur Idioma',
+            self::ERROR => 'Erreur technique lors de la communication avec FlexPay',
+            self::REFUNDED => 'Paiement remboursé à l\'utilisateur par FlexPay',
+            self::CANCELLED => 'Paiement annulé par le marchand (Idioma) ou par l\'utilisateur',
         };
     }
 
@@ -171,7 +171,10 @@ enum PaymentStatus: string
         return match ($code) {
             '0' => self::COMPLETED,  // Succès
             '1' => self::FAILED,     // Échec
-            '2' => self::PROCESS,    // En cours
+            '2' => self::WAIT,       // En attente
+            '3' => self::PROCESS,    // Remboursement en cours
+            '4' => self::REFUNDED,   // Remboursé
+            '5' => self::CANCELLED,  // Annulé par marchand
             default => self::ERROR,
         };
     }

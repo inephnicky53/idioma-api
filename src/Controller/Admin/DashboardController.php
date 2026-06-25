@@ -21,6 +21,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -30,7 +31,8 @@ class DashboardController extends AbstractDashboardController
     public function __construct(
         private DashboardStatsService $statsService,
         private RequestStack $requestStack,
-        private TranslationRequestRepository $translationRequestRepository
+        private TranslationRequestRepository $translationRequestRepository,
+        private ParameterBagInterface $parameterBag
     ) {}
 
     public function index(): Response
@@ -64,6 +66,8 @@ class DashboardController extends AbstractDashboardController
 
     public function configureMenuItems(): iterable
     {
+        $videoProvider = $this->parameterBag->get('video_provider');
+
         yield MenuItem::linkToDashboard('Tableau de Bord', 'fa fa-home');
 
         yield MenuItem::section('Gestion des Utilisateurs');
@@ -77,8 +81,16 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::section('Cours');
         yield MenuItem::linkToCrud('Cours', 'fas fa-graduation-cap', Course::class);
         yield MenuItem::linkToCrud('Vidéos', 'fas fa-video', CourseVideo::class);
-        yield MenuItem::linkToUrl('Médiathèque Cloudinary', 'fas fa-cloud', 'https://console.cloudinary.com/console/media_library/search?q=')
-            ->setLinkTarget('_blank');
+
+        if ($videoProvider === 'cloudinary') {
+            yield MenuItem::linkToUrl('Médiathèque Cloudinary', 'fas fa-cloud', 'https://console.cloudinary.com/console/media_library/search?q=')
+                ->setLinkTarget('_blank');
+        }
+
+        if ($videoProvider === 'vimeo') {
+            yield MenuItem::linkToUrl('Médiathèque Vimeo', 'fab fa-vimeo', 'https://vimeo.com/manage/videos')
+                ->setLinkTarget('_blank');
+        }
 
         yield MenuItem::section('Présences');
         yield MenuItem::linkToCrud('Check-ins', 'fas fa-sign-in-alt', CheckIn::class);

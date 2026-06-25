@@ -2,8 +2,8 @@
 
 namespace App\EventListener;
 
+use App\Contract\VideoStorageInterface;
 use App\Entity\CourseVideo;
-use App\Service\CloudinaryService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Vich\UploaderBundle\Event\Event;
@@ -11,7 +11,7 @@ use Vich\UploaderBundle\Event\Event;
 class VideoUploadListener
 {
     public function __construct(
-        private readonly CloudinaryService $cloudinaryService,
+        private readonly VideoStorageInterface $videoStorage,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger
     ) {}
@@ -25,9 +25,9 @@ class VideoUploadListener
             return;
         }
 
-        // Si l'URL Cloudinary est déjà remplie (via upload direct), on ne fait rien
-        if ($object->getCloudinaryUrl()) {
-            $this->logger->info('VideoUploadListener: Cloudinary URL already exists, skipping automatic upload.');
+        // Si l'URL Cloudinary ou Vimeo URI est déjà remplie, on ne fait rien
+        if ($object->getCloudinaryUrl() || $object->getVimeoUri()) {
+            $this->logger->info('VideoUploadListener: Video URL already exists, skipping automatic upload.');
             return;
         }
 
@@ -47,33 +47,39 @@ class VideoUploadListener
             return;
         }
 
-        // Upload vers Cloudinary
-        $this->logger->info('VideoUploadListener: Starting Cloudinary upload...');
-        $cloudinaryUrl = $this->cloudinaryService->uploadVideo($path);
+        // Upload vers le fournisseur configuré
+        $this->logger->info('VideoUploadListener: Starting upload to configured storage...');
+        $result = $this->videoStorage->uploadVideo($path, [
+            'title' => $object->getTitle(),
+            'description' => $object->getDescription(),
+        ]);
 
-        if ($cloudinaryUrl) {
-            $this->logger->info('VideoUploadListener: Upload successful! URL: ' . $cloudinaryUrl);
-            // Mettre à jour l'objet pour refléter les changements
-            $object->setCloudinaryUrl($cloudinaryUrl);
+        if ($result) {
+            $this->logger->info('VideoUploadListener: Upload successful!');
             
-            // Mettre à jour l'URL Cloudinary et vider le nom du fichier local dans la base de données
-            // car le fichier local sera supprimé.
-            $this->entityManager->createQueryBuilder()
-                ->update(CourseVideo::class, 'cv')
-                ->set('cv.cloudinaryUrl', ':url')
-                ->set('cv.videoFile', ':null')
-                ->where('cv.id = :id')
-                ->setParameter('url', $cloudinaryUrl)
-                ->setParameter('null', null)
-                ->setParameter('id', $object->getId())
-                ->getQuery()
-                ->execute();
+            // Update the entity based on provider
+            $videoProvider = $_ENV['VIDEO_PROVIDER'] ?? 'cloudinary';
+            if ($videoProvider === 'vimeo') {
+                $object->setVimeoUri($result['url']);
+            } else {
+                $object->setCloudinaryUrl($result['url']);
+            }
+
+            if ($result['duration']) {
+                $object->setDuration((int)$result['duration']);
+            }
+
+            if ($result['thumbnail']) {
+                $object->setThumbnail($result['thumbnail']);
+            }
+
+            $this->entityManager->flush();
 
             // Supprimer le fichier local pour libérer de l'espace sur le serveur
             @unlink($path);
             $this->logger->info('VideoUploadListener: Local file deleted.');
         } else {
-            $this->logger->error('VideoUploadListener: Cloudinary upload failed (no URL returned)');
+            $this->logger->error('VideoUploadListener: Upload failed (no result returned)');
         }
     }
 }

@@ -1,0 +1,25 @@
+{% apply mjml %}
+<mjml>
+  <mj-head>
+    <mj-style>
+      .primary { background-color: #3b82f6; }
+      .text-primary { color: #3b82f6; }
+    </mj-style>
+  </mj-head>
+  <mj-body background-color="#f3f4f6">
+    <mj-section>
+      <mj-column>
+        <mj-text font-size="24px" font-weight="bold" align="center">Idioma</mj-text>
+      </mj-column>
+    </mj-section>
+    {% block content %}{% endblock %}
+    <mj-section>
+      <mj-column>
+        <mj-text font-size="12px" align="center" color="#6b7280">
+          &copy; 2025 Idioma. All rights reserved.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
+{% endapply %}

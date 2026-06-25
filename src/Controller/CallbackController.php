@@ -29,10 +29,13 @@ class CallbackController extends AbstractController
     /**
      * Callback FlexPay - appelé automatiquement par FlexPay après traitement
      *
-     * Codes FlexPay:
+     * Codes FlexPay (transaction status):
      * - 0: Succès (paiement approuvé)
      * - 1: Échec (paiement refusé)
-     * - 2: En cours de traitement
+     * - 2: En attente
+     * - 3: Remboursement en cours
+     * - 4: Remboursé
+     * - 5: Annulé par marchand
      */
     #[Route('/callback/flexpay', name: 'callback_flexpay', methods: ['POST'])]
     public function flexpayCallback(Request $request): JsonResponse
@@ -69,6 +72,23 @@ class CallbackController extends AbstractController
         $code = $data['code'] ?? null;
         $newStatus = PaymentStatus::fromFlexPayCode((string) $code);
         $payment->setResponsedAt(new DateTimeImmutable());
+
+        // Storer les détails supplémentaires dans le champ data
+        $paymentData = $payment->getData() ?? [];
+        $paymentData['flexpay_callback'] = [
+            'orderNumber' => $data['orderNumber'] ?? null,
+            'provider_reference' => $data['provider_reference'] ?? null,
+            'amountCustomer' => $data['amountCustomer'] ?? null,
+            'phone' => $data['phone'] ?? null,
+            'channel' => $data['channel'] ?? null,
+            'createdAt' => $data['createdAt'] ?? null,
+        ];
+        $payment->setData($paymentData);
+
+        // Mettre à jour providerReference si disponible
+        if (isset($data['orderNumber'])) {
+            $payment->setProviderReference($data['orderNumber']);
+        }
 
         // Ajouter les détails de la réponse
         if (isset($data['message'])) {

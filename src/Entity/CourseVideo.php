@@ -77,6 +77,10 @@ class CourseVideo implements UploadedFileAwareInterface
     #[Groups(['course_video:read', 'course:read'])]
     private ?string $cloudinaryUrl = null;
 
+    #[ORM\Column(length: 500, nullable: true)]
+    #[Groups(['course_video:read', 'course:read'])]
+    private ?string $vimeoUri = null;
+
     #[ORM\Column(nullable: true)]
     #[Groups(['course_video:read', 'course:read'])]
     private ?int $duration = null;
@@ -179,6 +183,14 @@ class CourseVideo implements UploadedFileAwareInterface
         if ($this->cloudinaryUrl) {
             return $this->cloudinaryUrl;
         }
+
+        if ($this->vimeoUri) {
+            // Convert Vimeo URI to a usable URL (embed or direct)
+            if (str_starts_with($this->vimeoUri, 'http')) {
+                return $this->vimeoUri;
+            }
+            return 'https://vimeo.com' . $this->vimeoUri;
+        }
         
         if (!$this->videoFile || !$this->id) {
             return null;
@@ -205,6 +217,17 @@ class CourseVideo implements UploadedFileAwareInterface
     public function setCloudinaryUrl(?string $cloudinaryUrl): static
     {
         $this->cloudinaryUrl = $cloudinaryUrl;
+        return $this;
+    }
+
+    public function getVimeoUri(): ?string
+    {
+        return $this->vimeoUri;
+    }
+
+    public function setVimeoUri(?string $vimeoUri): static
+    {
+        $this->vimeoUri = $vimeoUri;
         return $this;
     }
 

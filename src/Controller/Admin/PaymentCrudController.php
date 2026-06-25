@@ -204,9 +204,13 @@ class PaymentCrudController extends AbstractCrudController
             FormField::addPanel('Détails de la transaction')->setIcon('fa fa-exchange-alt')
                 ->setHelp('Informations retournées par le processeur de paiement'),
             TextField::new('transactionId')->setLabel('ID Transaction'),
+            TextField::new('providerReference')->setLabel('ID FlexPay'),
             DateTimeField::new('paidAt')->setLabel('Payé le'),
             DateTimeField::new('responsedAt')->setLabel('Réponse callback'),
             TextareaField::new('notes')->setLabel('Notes / Réponse FlexPay'),
+            TextareaField::new('data')->setLabel('Données brutes FlexPay (JSON)')
+                ->setHelp('Données brutes de la réponse FlexPay (callback et vérification)')
+                ->formatValue(fn ($value, Payment $entity) => $value ? json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : ''),
 
             // Section: Métadonnées
             FormField::addPanel('Métadonnées')->setIcon('fa fa-clock'),

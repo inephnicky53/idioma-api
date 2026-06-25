@@ -39,6 +39,12 @@ readonly class CheckTransactionProcessor implements ProcessorInterface
         // Vérifier le statut de la transaction auprès du provider
         $this->paymentManager->check($data);
 
+        // Si paiement réussi et pas encore complété, complétez-le et activez l'achat
+        if ($data->getStatus()->isSuccess() && $data->getPaidAt() === null) {
+            $this->paymentManager->complete($data);
+            $this->paymentManager->activatePurchase($data);
+        }
+
         return $data;
     }
 }

@@ -1,0 +1,20 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block content %}
+<mj-section>
+  <mj-column>
+    <mj-text font-size="20px" font-weight="bold">
+      Bonjour {{ user.firstName }} !
+    </mj-text>
+    <mj-text>
+      Votre code de vérification pour Idioma est :
+    </mj-text>
+    <mj-text font-size="32px" font-weight="bold" align="center">
+      {{ otp }}
+    </mj-text>
+    <mj-text font-size="14px" color="#6b7280">
+      Ce code expire dans 10 minutes.
+    </mj-text>
+  </mj-column>
+</mj-section>
+{% endblock %}

@@ -9,10 +9,22 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use App\Dto\RegisterDto;
+use App\Dto\SendOtpDto;
+use App\Dto\VerifyOtpDto;
+use App\Dto\VerifyEmailDto;
+use App\Dto\ResendEmailVerificationDto;
+use App\Dto\ForgotPasswordDto;
+use App\Dto\ResetPasswordDto;
 use App\Enum\Currency;
 use App\Enum\PaymentMethod;
 use App\Repository\UserRepository;
+use App\State\Processor\SendOtpProcessor;
 use App\State\Processor\UserRegisterProcessor;
+use App\State\Processor\VerifyOtpProcessor;
+use App\State\Processor\VerifyEmailProcessor;
+use App\State\Processor\ResendEmailVerificationProcessor;
+use App\State\Processor\ForgotPasswordProcessor;
+use App\State\Processor\ResetPasswordProcessor;
 use App\State\Provider\RegisterDtoProvider;
 use DateTime;
 use DateTimeInterface;
@@ -47,6 +59,54 @@ use Symfony\Component\Validator\Constraints as Assert;
             name: 'register',
             provider: RegisterDtoProvider::class,
             processor: UserRegisterProcessor::class
+        ),
+        new Post(
+            uriTemplate: '/auth/send-otp',
+            description: 'Envoyer OTP à un utilisateur',
+            input: SendOtpDto::class,
+            validate: false,
+            name: 'send_otp',
+            processor: SendOtpProcessor::class
+        ),
+        new Post(
+            uriTemplate: '/auth/verify-otp',
+            description: 'Vérifier OTP',
+            input: VerifyOtpDto::class,
+            validate: false,
+            name: 'verify_otp',
+            processor: VerifyOtpProcessor::class
+        ),
+        new Post(
+            uriTemplate: '/auth/verify-email',
+            description: 'Vérifier email avec token',
+            input: VerifyEmailDto::class,
+            validate: false,
+            name: 'verify_email',
+            processor: VerifyEmailProcessor::class
+        ),
+        new Post(
+            uriTemplate: '/auth/resend-email-verification',
+            description: 'Renvoyer email de vérification',
+            input: ResendEmailVerificationDto::class,
+            validate: false,
+            name: 'resend_email_verification',
+            processor: ResendEmailVerificationProcessor::class
+        ),
+        new Post(
+            uriTemplate: '/auth/forgot-password',
+            description: 'Demander un email de réinitialisation de mot de passe',
+            input: ForgotPasswordDto::class,
+            validate: false,
+            name: 'forgot_password',
+            processor: ForgotPasswordProcessor::class
+        ),
+        new Post(
+            uriTemplate: '/auth/reset-password',
+            description: 'Réinitialiser le mot de passe avec un token',
+            input: ResetPasswordDto::class,
+            validate: false,
+            name: 'reset_password',
+            processor: ResetPasswordProcessor::class
         ),
         new Patch(
             normalizationContext: ['groups' => ['user:read']],
@@ -180,14 +240,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $learningGoals = null;
 
-    #[ORM\Column(type: 'string', length: 10, nullable: true)]
-    private ?string $otp = null;
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $emailVerificationToken = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?DateTimeInterface $otpExpiresAt = null;
+    private ?DateTimeInterface $emailVerificationTokenExpiresAt = null;
 
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
-    private bool $isVerified = false;
+    private bool $isEmailVerified = false;
+
+    #[ORM\Column(type: 'string', length: 10, nullable: true)]
+    private ?string $phoneOtp = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?DateTimeInterface $phoneOtpExpiresAt = null;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $isPhoneVerified = false;
 
     // Champs temporaires pour l'inscription avec paiement (non persistés)
     private ?int $subscriptionPlanId = null;
@@ -610,36 +679,69 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getOtp(): ?string
+    public function getEmailVerificationToken(): ?string
     {
-        return $this->otp;
+        return $this->emailVerificationToken;
     }
 
-    public function setOtp(?string $otp): static
+    public function setEmailVerificationToken(?string $emailVerificationToken): static
     {
-        $this->otp = $otp;
+        $this->emailVerificationToken = $emailVerificationToken;
         return $this;
     }
 
-    public function getOtpExpiresAt(): ?DateTimeInterface
+    public function getEmailVerificationTokenExpiresAt(): ?DateTimeInterface
     {
-        return $this->otpExpiresAt;
+        return $this->emailVerificationTokenExpiresAt;
     }
 
-    public function setOtpExpiresAt(?DateTimeInterface $otpExpiresAt): static
+    public function setEmailVerificationTokenExpiresAt(?DateTimeInterface $emailVerificationTokenExpiresAt): static
     {
-        $this->otpExpiresAt = $otpExpiresAt;
+        $this->emailVerificationTokenExpiresAt = $emailVerificationTokenExpiresAt;
         return $this;
     }
 
-    public function isVerified(): bool
+    public function isEmailVerified(): bool
     {
-        return $this->isVerified;
+        return $this->isEmailVerified;
     }
 
-    public function setIsVerified(bool $isVerified): static
+    public function setIsEmailVerified(bool $isEmailVerified): static
     {
-        $this->isVerified = $isVerified;
+        $this->isEmailVerified = $isEmailVerified;
+        return $this;
+    }
+
+    public function getPhoneOtp(): ?string
+    {
+        return $this->phoneOtp;
+    }
+
+    public function setPhoneOtp(?string $phoneOtp): static
+    {
+        $this->phoneOtp = $phoneOtp;
+        return $this;
+    }
+
+    public function getPhoneOtpExpiresAt(): ?DateTimeInterface
+    {
+        return $this->phoneOtpExpiresAt;
+    }
+
+    public function setPhoneOtpExpiresAt(?DateTimeInterface $phoneOtpExpiresAt): static
+    {
+        $this->phoneOtpExpiresAt = $phoneOtpExpiresAt;
+        return $this;
+    }
+
+    public function isPhoneVerified(): bool
+    {
+        return $this->isPhoneVerified;
+    }
+
+    public function setIsPhoneVerified(bool $isPhoneVerified): static
+    {
+        $this->isPhoneVerified = $isPhoneVerified;
         return $this;
     }
 
