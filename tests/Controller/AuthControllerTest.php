@@ -46,8 +46,8 @@ class AuthControllerTest extends WebTestCase
             'firstName' => 'Test',
             'lastName' => 'User'
         ]));
-        // API Platform returns 500 for unique constraint violations
-        $this->assertResponseStatusCodeSame(500);
+        // Le processor détecte l'email déjà utilisé et renvoie 409 Conflict
+        $this->assertResponseStatusCodeSame(409);
     }
 
     public function testLoginSuccess(): void
