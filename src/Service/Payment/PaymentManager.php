@@ -102,39 +102,57 @@ readonly class PaymentManager
         $this->entityManager->persist($payment);
         $this->entityManager->flush();
 
-        // Traiter le paiement selon la méthode (pas pour CASH)
-        if ($paymentMethod !== PaymentMethod::CASH) {
-            // Traitement synchrone auprès du provider (FlexPay).
-            $this->process($payment, [
-                'provider' => $this->defaultProvider,
-                'operator' => $paymentMethod,
-                'phone' => $phone,
-            ]);
-
-            // Mobile money : la confirmation se fait sur le téléphone de l'utilisateur.
-            // On attend la résolution (polling FlexPay /check) jusqu'à un timeout, puis on
-            // renvoie le statut final au front. La carte, elle, redirige (pas d'attente ici).
-            if ($paymentMethod === PaymentMethod::MOBILE
-                && $payment->getStatus() === PaymentStatus::WAIT) {
-                $this->awaitResolution($payment);
-            }
-        } else {
+        // Paiement en espèces : aucun provider externe, on reste en attente
+        // d'un encaissement manuel au bureau.
+        if ($paymentMethod === PaymentMethod::CASH) {
             $payment->setStatus(PaymentStatus::WAIT);
             $this->entityManager->persist($payment);
             $this->entityManager->flush();
+            return $payment;
         }
+
+        // Ouvre la transaction chez le provider (open transaction).
+        $this->process($payment, [
+            'provider' => $this->defaultProvider,
+            'operator' => $paymentMethod,
+            'phone' => $phone
+        ]);
+
+        // Paiement par carte : l'utilisateur doit être redirigé vers la page de
+        // paiement hébergée par FlexPay. On rend la main immédiatement pour que
+        // le frontend effectue la redirection ; la confirmation arrivera ensuite
+        // via le callback (puis la page de confirmation).
+        if ($paymentMethod === PaymentMethod::CARD) {
+            return $payment;
+        }
+
+        // Mobile money : on attend de façon synchrone la résolution de la
+        // transaction afin de répondre directement au frontend (qui attend la
+        // réponse) avec le statut final.
+        $this->waitForResolution($payment);
 
         return $payment;
     }
 
     /**
-     * Attend la résolution d'un paiement mobile money en interrogeant FlexPay (/check)
-     * à intervalle régulier, jusqu'à un timeout. À la résolution réussie, le paiement
-     * est complété et l'achat activé (idempotent vis-à-vis du callback grâce à paidAt).
-     * En cas de timeout, le statut reste non final : le callback finalisera plus tard.
+     * Attend que le paiement atteigne un état final (succès / échec) puis rend
+     * la main, de sorte que la requête POST /payments réponde directement avec
+     * le résultat. Combine deux mécanismes :
+     *  - la relecture en base, alimentée par le callback FlexPay qui s'exécute
+     *    dans une autre requête HTTP ;
+     *  - une vérification active auprès de FlexPay (filet de sécurité si le
+     *    callback tarde ou n'arrive jamais, par ex. en local).
+     *
+     * NB: PAYMENT_WAIT_TIMEOUT doit rester inférieur au timeout du reverse
+     * proxy / serveur web pour éviter une coupure prématurée de la requête.
      */
-    private function awaitResolution(Payment $payment): void
+    private function waitForResolution(Payment $payment): void
     {
+        if ($payment->getStatus()->isFinal()) {
+            $this->finalizeIfSuccessful($payment);
+            return;
+        }
+
         // S'assurer que la limite d'exécution PHP couvre l'attente (php.ini par défaut: 30s).
         // Ne couvre pas le timeout du serveur web : garder PAYMENT_WAIT_TIMEOUT en dessous.
         @set_time_limit($this->paymentWaitTimeout + 15);
@@ -144,24 +162,49 @@ readonly class PaymentManager
         while (time() < $deadline) {
             sleep($this->paymentPollInterval);
 
+            // 1) Relecture en base : capte la mise à jour faite par le callback.
             try {
-                $this->check($payment);
+                $this->entityManager->refresh($payment);
             } catch (\Throwable $e) {
-                $this->logger->warning('Payment wait: vérification FlexPay échouée', [
+                $this->logger->warning('Payment refresh during wait failed', [
                     'paymentId' => $payment->getId(),
                     'error' => $e->getMessage(),
                 ]);
-                continue;
             }
 
             if ($payment->getStatus()->isFinal()) {
-                if ($payment->getStatus()->isSuccess() && $payment->getPaidAt() === null) {
-                    $this->complete($payment);
-                    $this->activatePurchase($payment);
-                    $this->entityManager->flush();
-                }
-                return;
+                break;
             }
+
+            // 2) Vérification active auprès de FlexPay (au cas où le callback tarde).
+            try {
+                $this->check($payment);
+            } catch (\Throwable $e) {
+                $this->logger->warning('Payment check during wait failed', [
+                    'paymentId' => $payment->getId(),
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            if ($payment->getStatus()->isFinal()) {
+                break;
+            }
+        }
+
+        $this->finalizeIfSuccessful($payment);
+    }
+
+    /**
+     * Marque le paiement comme complété et active l'achat s'il a réussi et que
+     * cela n'a pas déjà été fait par le callback. Idempotent grâce à `paidAt`
+     * (positionné par complete()).
+     */
+    private function finalizeIfSuccessful(Payment $payment): void
+    {
+        if ($payment->getStatus()->isSuccess() && $payment->getPaidAt() === null) {
+            $this->complete($payment);
+            $this->activatePurchase($payment);
+            $this->entityManager->flush();
         }
     }
 
@@ -240,6 +283,7 @@ readonly class PaymentManager
 
         if ($existingSubscription) {
             // Prolonger l'abonnement existant
+            /** @var DateTime $currentEndDate */
             $currentEndDate = $existingSubscription->getEndDate();
             $newEndDate = (clone $currentEndDate)->modify('+' . $plan->getDurationDays() . ' days');
             $existingSubscription->setEndDate($newEndDate);

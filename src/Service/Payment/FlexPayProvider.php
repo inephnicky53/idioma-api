@@ -113,6 +113,18 @@ readonly class FlexPayProvider implements PaymentProviderInterface
     {
         $description = $options['description'] ?? 'Paiement Idioma International';
 
+        // URLs de redirection vers la page de confirmation du frontend.
+        // FlexPay redirige l'utilisateur vers l'une d'elles selon l'issue du
+        // paiement par carte (approuvé / annulé / refusé).
+        $confirmationBase = rtrim((string) $this->frontendUrl, '/') . '/payment/confirmation';
+        $reference = $payment->getReference();
+        $confirmationUrl = static function (string $status) use ($confirmationBase, $reference): string {
+            return $confirmationBase . '?' . http_build_query([
+                'reference' => $reference,
+                'status' => $status,
+            ]);
+        };
+
         $request = [
             // L'API carte FlexPay (/v2/pay) attend le token dans le corps JSON
             // (champ "authorization"), en plus de l'en-tête HTTP. Cf. documentation V2.
@@ -126,9 +138,9 @@ readonly class FlexPayProvider implements PaymentProviderInterface
                 'callback_flexpay', [],
                 UrlGeneratorInterface::ABSOLUTE_URL
             ),
-            "approve_url" => $options['approve_url'] ?? $this->frontendUrl,
-            "cancel_url" => $options['cancel_url'] ?? $this->frontendUrl,
-            "decline_url" => $options['decline_url'] ?? $this->frontendUrl
+            "approve_url" => $options['approve_url'] ?? $confirmationUrl('approved'),
+            "cancel_url" => $options['cancel_url'] ?? $confirmationUrl('cancelled'),
+            "decline_url" => $options['decline_url'] ?? $confirmationUrl('declined')
         ];
 
         try {
@@ -151,9 +163,11 @@ readonly class FlexPayProvider implements PaymentProviderInterface
                 if (($data['code'] ?? '') === "0") {
                     $payment->setStatus(PaymentStatus::WAIT);
                     // Store the payment URL on the payment entity for the frontend to redirect to.
-                    // Clé en camelCase pour correspondre à ce que lit le frontend (payment.data.paymentUrl).
+                    // Clé `paymentUrl` (camelCase) pour correspondre au type PaymentData côté frontend.
                     if (isset($data['url'])) {
-                        $payment->setData(['paymentUrl' => $data['url']]);
+                        $paymentData = $payment->getData() ?? [];
+                        $paymentData['paymentUrl'] = $data['url'];
+                        $payment->setData($paymentData);
                     }
                 } else {
                     $payment->setStatus(PaymentStatus::ERROR);
