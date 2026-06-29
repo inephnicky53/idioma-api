@@ -7,6 +7,8 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use App\Repository\CheckInRepository;
+use App\State\Processor\CheckInProcessor;
+use App\State\Processor\CheckoutProcessor;
 use DateTime;
 use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
@@ -17,9 +19,28 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: CheckInRepository::class)]
 #[ApiResource(
     operations: [
-        new GetCollection(),
-        new Get(),
-        new Post()
+        // Collection filtrée par CurrentUserExtension : chacun ne voit que ses check-ins.
+        new GetCollection(
+            security: "is_granted('ROLE_USER')"
+        ),
+        new Get(
+            security: "is_granted('ROLE_USER') and object.getUser() == user or is_granted('ROLE_ADMIN')"
+        ),
+        // Création : l'utilisateur et l'heure sont posés côté serveur, et l'abonnement
+        // actif est vérifié (CheckInProcessor). Empêche un check-in sans abonnement.
+        new Post(
+            security: "is_granted('ROLE_USER')",
+            processor: CheckInProcessor::class
+        ),
+        // Check-out : action sur un check-in existant (vérifie la propriété).
+        new Post(
+            uriTemplate: '/check_ins/{id}/checkout',
+            security: "is_granted('ROLE_USER') and object.getUser() == user or is_granted('ROLE_ADMIN')",
+            input: false,
+            read: true,
+            processor: CheckoutProcessor::class,
+            name: 'checkin_checkout'
+        )
     ],
     normalizationContext: ['groups' => ['checkin:read']],
     denormalizationContext: ['groups' => ['checkin:write']]
@@ -32,19 +53,21 @@ class CheckIn
     #[Groups(['checkin:read'])]
     private ?int $id = null;
 
+    // Posé côté serveur par CheckInProcessor (jamais accepté depuis la requête).
     #[ORM\ManyToOne(inversedBy: 'checkIns')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Assert\NotNull(message: 'User cannot be null')]
-    #[Groups(['checkin:read', 'checkin:write'])]
+    #[Groups(['checkin:read'])]
     private ?User $user = null;
 
+    // Posé par le constructeur / le processor.
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Assert\NotNull(message: 'Check-in time cannot be null')]
-    #[Groups(['checkin:read', 'checkin:write'])]
+    #[Groups(['checkin:read'])]
     private ?DateTimeInterface $checkedInAt = null;
 
+    // Posé par l'opération de check-out.
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    #[Groups(['checkin:read', 'checkin:write'])]
+    #[Groups(['checkin:read'])]
     private ?DateTimeInterface $checkedOutAt = null;
 
     #[ORM\Column(length: 255, nullable: true)]

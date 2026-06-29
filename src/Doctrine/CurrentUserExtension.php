@@ -5,6 +5,7 @@ namespace App\Doctrine;
 use ApiPlatform\Doctrine\Orm\Extension\QueryCollectionExtensionInterface;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
+use App\Entity\CheckIn;
 use App\Entity\Payment;
 use App\Entity\Subscription;
 use App\Entity\User;
@@ -25,6 +26,7 @@ final class CurrentUserExtension implements QueryCollectionExtensionInterface
     private const OWNED_RESOURCES = [
         Payment::class,
         Subscription::class,
+        CheckIn::class,
     ];
 
     public function __construct(private readonly Security $security) {}
