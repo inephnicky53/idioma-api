@@ -112,8 +112,11 @@ readonly class FlexPayProvider implements PaymentProviderInterface
     private function createCardTransaction(Payment $payment, array $options): Payment
     {
         $description = $options['description'] ?? 'Paiement Idioma International';
-        
+
         $request = [
+            // L'API carte FlexPay (/v2/pay) attend le token dans le corps JSON
+            // (champ "authorization"), en plus de l'en-tête HTTP. Cf. documentation V2.
+            "authorization" => "Bearer " . $this->flexpayToken,
             "merchant" => $this->merchantName,
             "reference" => $payment->getReference(),
             "amount" => $payment->getAmount(),

@@ -1,0 +1,9 @@
+{
+  "name": "idioma-api-assets",
+  "description": "Outils Node pour l'API Idioma (binaire MJML pour le rendu des emails)",
+  "private": true,
+  "license": "proprietary",
+  "dependencies": {
+    "mjml": "^4.15.3"
+  }
+}

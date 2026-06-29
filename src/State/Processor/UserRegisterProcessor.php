@@ -124,8 +124,8 @@ readonly class UserRegisterProcessor implements ProcessorInterface
             // Générer et envoyer OTP
             $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
             $expiresAt = (new DateTime())->modify('+10 minutes');
-            $user->setOtp($otp);
-            $user->setOtpExpiresAt($expiresAt);
+            $user->setPhoneOtp($otp);
+            $user->setPhoneOtpExpiresAt($expiresAt);
             $this->entityManager->persist($user);
 
             // Envoyer OTP par email

@@ -20,3 +20,6 @@ error_log
 /phpunit.xml
 /.phpunit.cache/
 ###< phpunit/phpunit ###
+
+# Node (binaire MJML pour le rendu des emails)
+/node_modules/
