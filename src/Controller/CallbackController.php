@@ -100,6 +100,7 @@ class CallbackController extends AbstractController
         if ($newStatus->isSuccess()) {
             $this->paymentManager->complete($payment);
             $this->paymentManager->activatePurchase($payment);
+            $this->entityManager->flush();
         } else {
             $payment->setStatus($newStatus);
             $this->entityManager->flush();
