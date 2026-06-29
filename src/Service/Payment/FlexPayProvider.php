@@ -147,9 +147,10 @@ readonly class FlexPayProvider implements PaymentProviderInterface
 
                 if (($data['code'] ?? '') === "0") {
                     $payment->setStatus(PaymentStatus::WAIT);
-                    // Store the payment URL on the payment entity for the frontend to redirect to
+                    // Store the payment URL on the payment entity for the frontend to redirect to.
+                    // Clé en camelCase pour correspondre à ce que lit le frontend (payment.data.paymentUrl).
                     if (isset($data['url'])) {
-                        $payment->setData(['payment_url' => $data['url']]);
+                        $payment->setData(['paymentUrl' => $data['url']]);
                     }
                 } else {
                     $payment->setStatus(PaymentStatus::ERROR);

@@ -47,10 +47,18 @@ class CloudinaryService implements VideoStorageInterface
         try {
             $result = $this->cloudinary->uploadApi()->upload($filePath, $options);
             $this->logger->info('Cloudinary upload successful', ['file' => $filePath]);
-            
+
+            // Cloudinary ne renvoie pas d'URL de miniature pour les vidéos :
+            // on la dérive du public_id (une frame de la vidéo en JPG).
+            $cloudName = $this->cloudinary->configuration->cloud->cloudName;
+            $publicId = $result['public_id'] ?? null;
+            $thumbnail = $publicId
+                ? "https://res.cloudinary.com/{$cloudName}/video/upload/{$publicId}.jpg"
+                : null;
+
             return [
                 'url' => $result['secure_url'] ?? null,
-                'thumbnail' => $result['thumbnail_url'] ?? null,
+                'thumbnail' => $thumbnail,
                 'duration' => $result['duration'] ?? null,
             ];
         } catch (\Exception $e) {
@@ -71,7 +79,9 @@ class CloudinaryService implements VideoStorageInterface
             return null;
         }
 
-        return "https://res.cloudinary.com/" . $this->cloudinary->getCloudName() . "/video/upload/" . $videoId;
+        $cloudName = $this->cloudinary->configuration->cloud->cloudName;
+
+        return "https://res.cloudinary.com/" . $cloudName . "/video/upload/" . $videoId;
     }
 
     /**

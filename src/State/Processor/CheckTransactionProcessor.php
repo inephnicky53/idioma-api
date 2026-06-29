@@ -6,6 +6,7 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Payment;
 use App\Service\Payment\PaymentManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
@@ -17,7 +18,8 @@ readonly class CheckTransactionProcessor implements ProcessorInterface
 {
     public function __construct(
         private PaymentManager $paymentManager,
-        private Security $security
+        private Security $security,
+        private EntityManagerInterface $entityManager
     ) {}
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): Payment
@@ -43,6 +45,10 @@ readonly class CheckTransactionProcessor implements ProcessorInterface
         if ($data->getStatus()->isSuccess() && $data->getPaidAt() === null) {
             $this->paymentManager->complete($data);
             $this->paymentManager->activatePurchase($data);
+            // activatePurchase() ne fait que persist() : flush explicite requis pour
+            // enregistrer l'abonnement / l'achat (le processor custom remplace le
+            // persist par défaut d'API Platform).
+            $this->entityManager->flush();
         }
 
         return $data;

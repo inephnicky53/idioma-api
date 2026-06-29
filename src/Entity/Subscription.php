@@ -19,10 +19,23 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\HasLifecycleCallbacks]
 #[ApiResource(
     operations: [
-        new GetCollection(),
-        new Get(),
-        new Post(),
-        new Patch()
+        // Collection filtrée par CurrentUserExtension : chaque utilisateur ne voit
+        // que ses propres abonnements (les admins voient tout).
+        new GetCollection(
+            security: "is_granted('ROLE_USER')"
+        ),
+        new Get(
+            security: "is_granted('ROLE_USER') and object.getUser() == user or is_granted('ROLE_ADMIN')"
+        ),
+        // Les abonnements sont créés côté serveur après paiement (PaymentManager).
+        // L'écriture directe est réservée aux administrateurs pour éviter qu'un
+        // utilisateur ne s'octroie un abonnement actif sans payer.
+        new Post(
+            security: "is_granted('ROLE_ADMIN')"
+        ),
+        new Patch(
+            security: "is_granted('ROLE_ADMIN')"
+        )
     ],
     normalizationContext: ['groups' => ['subscription:read']],
     denormalizationContext: ['groups' => ['subscription:write']]

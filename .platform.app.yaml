@@ -25,7 +25,17 @@ web:
 
 mounts:
     "/var/cache": { source: local, source_path: var/cache }
-    
+
+
+# Worker Messenger : traite les paiements (FlexPay) et les emails de reçu en arrière-plan.
+# Redémarre périodiquement pour libérer la mémoire (bonne pratique pour les workers long-running).
+workers:
+    messenger:
+        commands:
+            start: |
+                php bin/console messenger:consume async failed --time-limit=3600 --memory-limit=128M
+        mounts:
+            "/var/cache": { source: local, source_path: var/cache }
 
 hooks:
     build: |

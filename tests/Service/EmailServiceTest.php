@@ -16,7 +16,9 @@ class EmailServiceTest extends KernelTestCase
     {
         self::bootKernel();
         $this->mailer = self::getContainer()->get(MailerInterface::class);
-        $this->emailService = new EmailService($this->mailer);
+        // Récupère le service déjà câblé par le conteneur (mailer, twig, emails, urls...)
+        // plutôt que de l'instancier à la main avec une signature obsolète.
+        $this->emailService = self::getContainer()->get(EmailService::class);
     }
 
     public function testSendPasswordResetEmail(): void
@@ -41,9 +43,11 @@ class EmailServiceTest extends KernelTestCase
         $user->setFirstName('Test');
         $user->setLastName('User');
 
+        $verificationToken = bin2hex(random_bytes(32));
+
         // This should not throw an exception
-        $this->emailService->sendWelcomeEmail($user);
-        
+        $this->emailService->sendWelcomeEmail($user, $verificationToken);
+
         $this->assertTrue(true);
     }
 }

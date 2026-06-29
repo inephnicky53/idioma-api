@@ -9,6 +9,7 @@ use App\Enum\PaymentMethod;
 use App\Enum\PurchaseType;
 use App\Service\Payment\PaymentManager;
 use App\State\Processor\CheckTransactionProcessor;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -18,12 +19,18 @@ class CheckTransactionProcessorTest extends TestCase
     private CheckTransactionProcessor $processor;
     private PaymentManager $paymentManager;
     private Security $security;
+    private EntityManagerInterface $entityManager;
 
     protected function setUp(): void
     {
         $this->paymentManager = $this->createMock(PaymentManager::class);
         $this->security = $this->createMock(Security::class);
-        $this->processor = new CheckTransactionProcessor($this->paymentManager, $this->security);
+        $this->entityManager = $this->createMock(EntityManagerInterface::class);
+        $this->processor = new CheckTransactionProcessor(
+            $this->paymentManager,
+            $this->security,
+            $this->entityManager
+        );
     }
 
     public function testProcessWithValidPayment(): void

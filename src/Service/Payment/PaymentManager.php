@@ -16,13 +16,15 @@ use App\Enum\PaymentProvider;
 use App\Enum\PaymentStatus;
 use App\Enum\PurchaseType;
 use App\Exception\PaymentException;
+use App\Message\ProcessPaymentMessage;
+use App\Message\SendPaymentReceiptMessage;
 use App\Service\RateService;
-use App\Service\EmailService;
 use App\Service\SmsService;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
@@ -36,9 +38,9 @@ readonly class PaymentManager
         private Security               $security,
         private LoggerInterface        $logger,
         string                         $provider,
-        private ?FlexPayProvider       $flexPayProvider = null,
-        private EmailService           $emailService,
-        private SmsService             $smsService
+        private ?FlexPayProvider       $flexPayProvider,
+        private SmsService             $smsService,
+        private MessageBusInterface    $messageBus
     ) {
         $this->defaultProvider = PaymentProvider::fromString($provider);
     }
@@ -101,11 +103,16 @@ readonly class PaymentManager
 
         // Traiter le paiement selon la méthode (pas pour CASH)
         if ($paymentMethod !== PaymentMethod::CASH) {
-            $this->process($payment, [
-                'provider' => $this->defaultProvider,
-                'operator' => $paymentMethod,
-                'phone' => $phone
-            ]);
+            // Le paiement reste à l'état INIT : l'appel au provider externe (FlexPay)
+            // est délégué à un worker asynchrone pour ne pas bloquer la requête HTTP.
+            // Le front suit l'évolution du statut par polling, puis le callback FlexPay
+            // finalise le paiement.
+            $this->messageBus->dispatch(new ProcessPaymentMessage(
+                paymentId: $payment->getId(),
+                paymentMethod: $paymentMethod->value,
+                phone: $phone,
+                provider: $this->defaultProvider->value,
+            ));
         } else {
             $payment->setStatus(PaymentStatus::WAIT);
             $this->entityManager->persist($payment);
@@ -278,8 +285,10 @@ readonly class PaymentManager
         $this->entityManager->persist($payment);
         $this->entityManager->flush();
 
-        // Send payment receipt notifications (email only for now)
-        $this->emailService->sendPaymentReceiptEmail($payment);
+        // Envoi du reçu en arrière-plan pour ne pas bloquer le callback / la requête courante
+        $this->messageBus->dispatch(new SendPaymentReceiptMessage(
+            paymentId: $payment->getId(),
+        ));
     }
 
     /**

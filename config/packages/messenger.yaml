@@ -1,0 +1,30 @@
+framework:
+    messenger:
+        # Les messages dont le traitement échoue après tous les retries sont envoyés ici
+        failure_transport: failed
+
+        transports:
+            # Transport asynchrone principal (table Doctrine messenger_messages)
+            async:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                retry_strategy:
+                    max_retries: 3
+                    delay: 2000
+                    multiplier: 2
+                    max_delay: 30000
+            # File des messages définitivement en échec (rejouables manuellement)
+            failed: 'doctrine://default?queue_name=failed'
+            # Transport synchrone (exécution immédiate, utile pour les tests)
+            sync: 'sync://'
+
+        routing:
+            # Traitement du paiement auprès du provider (FlexPay) en arrière-plan
+            'App\Message\ProcessPaymentMessage': async
+            # Envoi de l'email de reçu en arrière-plan
+            'App\Message\SendPaymentReceiptMessage': async
+
+when@test:
+    framework:
+        messenger:
+            transports:
+                async: 'in-memory://'

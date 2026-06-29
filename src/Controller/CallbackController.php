@@ -68,9 +68,8 @@ class CallbackController extends AbstractController
             return new JsonResponse(['success' => true, 'message' => 'Payment already processed']);
         }
 
-        // Convertir le code FlexPay en statut
+        // Code annoncé dans le corps du callback (NON fiable : conservé pour audit uniquement).
         $code = $data['code'] ?? null;
-        $newStatus = PaymentStatus::fromFlexPayCode((string) $code);
         $payment->setResponsedAt(new DateTimeImmutable());
 
         // Storer les détails supplémentaires dans le champ data
@@ -96,19 +95,43 @@ class CallbackController extends AbstractController
             $payment->setNotes(trim($existingNotes . "\nFlexPay: " . $data['message']));
         }
 
-        // Si paiement réussi, complete it and activate purchase
-        if ($newStatus->isSuccess()) {
+        // SÉCURITÉ : on ne fait pas confiance au code annoncé dans le callback
+        // (n'importe qui connaissant une référence pourrait forger un faux succès).
+        // On vérifie le statut réel directement auprès de FlexPay via son API /check,
+        // authentifiée par notre token. C'est cette vérification qui fait autorité.
+        try {
+            $this->paymentManager->check($payment);
+        } catch (\Throwable $e) {
+            $this->logger->error('FlexPay callback: verification failed', [
+                'paymentId' => $payment->getId(),
+                'reference' => $data['reference'],
+                'error' => $e->getMessage(),
+            ]);
+            // Vérification impossible : on ne débloque rien. Le statut reste non final
+            // et sera résolu par le polling frontend, un prochain callback ou un admin.
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Verification pending',
+            ], Response::HTTP_ACCEPTED);
+        }
+
+        // Statut désormais à jour depuis FlexPay : on n'accorde l'accès que s'il est réussi.
+        $verifiedStatus = $payment->getStatus();
+        if ($verifiedStatus->isSuccess()) {
             $this->paymentManager->complete($payment);
             $this->paymentManager->activatePurchase($payment);
+            // activatePurchase() ne fait que persist() : un flush explicite est requis
+            // pour réellement enregistrer l'abonnement / l'achat de cours.
+            $this->entityManager->flush();
         } else {
-            $payment->setStatus($newStatus);
             $this->entityManager->flush();
         }
 
         $this->logger->info('FlexPay callback processed', [
             'paymentId' => $payment->getId(),
-            'status' => $payment->getStatus()->value,
-            'subscriptionActivated' => $newStatus->isSuccess()
+            'announcedCode' => $code,
+            'verifiedStatus' => $verifiedStatus->value,
+            'purchaseActivated' => $verifiedStatus->isSuccess()
         ]);
 
         return new JsonResponse([

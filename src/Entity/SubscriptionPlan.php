@@ -25,11 +25,14 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\HasLifecycleCallbacks]
 #[ApiResource(
     operations: [
+        // Lecture publique : les offres/tarifs sont affichés sur le site public.
         new GetCollection(),
         new Get(),
-        new Post(),
-        new Patch(),
-        new Delete()
+        // Écriture réservée aux administrateurs : empêche un utilisateur de modifier
+        // les prix ou de supprimer les offres.
+        new Post(security: "is_granted('ROLE_ADMIN')"),
+        new Patch(security: "is_granted('ROLE_ADMIN')"),
+        new Delete(security: "is_granted('ROLE_ADMIN')")
     ],
     normalizationContext: ['groups' => ['subscriptionplan:read']],
     denormalizationContext: ['groups' => ['subscriptionplan:write']]
