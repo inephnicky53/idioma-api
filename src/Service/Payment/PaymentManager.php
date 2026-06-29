@@ -16,7 +16,6 @@ use App\Enum\PaymentProvider;
 use App\Enum\PaymentStatus;
 use App\Enum\PurchaseType;
 use App\Exception\PaymentException;
-use App\Message\ProcessPaymentMessage;
 use App\Message\SendPaymentReceiptMessage;
 use App\Service\RateService;
 use App\Service\SmsService;
@@ -40,7 +39,9 @@ readonly class PaymentManager
         string                         $provider,
         private ?FlexPayProvider       $flexPayProvider,
         private SmsService             $smsService,
-        private MessageBusInterface    $messageBus
+        private MessageBusInterface    $messageBus,
+        private int                    $paymentWaitTimeout = 45,
+        private int                    $paymentPollInterval = 3
     ) {
         $this->defaultProvider = PaymentProvider::fromString($provider);
     }
@@ -103,16 +104,20 @@ readonly class PaymentManager
 
         // Traiter le paiement selon la méthode (pas pour CASH)
         if ($paymentMethod !== PaymentMethod::CASH) {
-            // Le paiement reste à l'état INIT : l'appel au provider externe (FlexPay)
-            // est délégué à un worker asynchrone pour ne pas bloquer la requête HTTP.
-            // Le front suit l'évolution du statut par polling, puis le callback FlexPay
-            // finalise le paiement.
-            $this->messageBus->dispatch(new ProcessPaymentMessage(
-                paymentId: $payment->getId(),
-                paymentMethod: $paymentMethod->value,
-                phone: $phone,
-                provider: $this->defaultProvider->value,
-            ));
+            // Traitement synchrone auprès du provider (FlexPay).
+            $this->process($payment, [
+                'provider' => $this->defaultProvider,
+                'operator' => $paymentMethod,
+                'phone' => $phone,
+            ]);
+
+            // Mobile money : la confirmation se fait sur le téléphone de l'utilisateur.
+            // On attend la résolution (polling FlexPay /check) jusqu'à un timeout, puis on
+            // renvoie le statut final au front. La carte, elle, redirige (pas d'attente ici).
+            if ($paymentMethod === PaymentMethod::MOBILE
+                && $payment->getStatus() === PaymentStatus::WAIT) {
+                $this->awaitResolution($payment);
+            }
         } else {
             $payment->setStatus(PaymentStatus::WAIT);
             $this->entityManager->persist($payment);
@@ -120,6 +125,44 @@ readonly class PaymentManager
         }
 
         return $payment;
+    }
+
+    /**
+     * Attend la résolution d'un paiement mobile money en interrogeant FlexPay (/check)
+     * à intervalle régulier, jusqu'à un timeout. À la résolution réussie, le paiement
+     * est complété et l'achat activé (idempotent vis-à-vis du callback grâce à paidAt).
+     * En cas de timeout, le statut reste non final : le callback finalisera plus tard.
+     */
+    private function awaitResolution(Payment $payment): void
+    {
+        // S'assurer que la limite d'exécution PHP couvre l'attente (php.ini par défaut: 30s).
+        // Ne couvre pas le timeout du serveur web : garder PAYMENT_WAIT_TIMEOUT en dessous.
+        @set_time_limit($this->paymentWaitTimeout + 15);
+
+        $deadline = time() + $this->paymentWaitTimeout;
+
+        while (time() < $deadline) {
+            sleep($this->paymentPollInterval);
+
+            try {
+                $this->check($payment);
+            } catch (\Throwable $e) {
+                $this->logger->warning('Payment wait: vérification FlexPay échouée', [
+                    'paymentId' => $payment->getId(),
+                    'error' => $e->getMessage(),
+                ]);
+                continue;
+            }
+
+            if ($payment->getStatus()->isFinal()) {
+                if ($payment->getStatus()->isSuccess() && $payment->getPaidAt() === null) {
+                    $this->complete($payment);
+                    $this->activatePurchase($payment);
+                    $this->entityManager->flush();
+                }
+                return;
+            }
+        }
     }
 
     /**

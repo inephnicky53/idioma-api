@@ -18,8 +18,6 @@ framework:
             sync: 'sync://'
 
         routing:
-            # Traitement du paiement auprès du provider (FlexPay) en arrière-plan
-            'App\Message\ProcessPaymentMessage': async
             # Envoi de l'email de reçu en arrière-plan
             'App\Message\SendPaymentReceiptMessage': async
 

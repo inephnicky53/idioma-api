@@ -52,6 +52,10 @@ services:
         arguments:
             $provider: '%payment_provider%'
             $flexPayProvider: '@App\Service\Payment\FlexPayProvider'
+            # Attente synchrone de la résolution du mobile money (secondes).
+            # À garder sous le timeout du serveur web / proxy.
+            $paymentWaitTimeout: '%env(int:PAYMENT_WAIT_TIMEOUT)%'
+            $paymentPollInterval: '%env(int:PAYMENT_POLL_INTERVAL)%'
 
     App\EventListener\ConflictExceptionListener:
         tags:
