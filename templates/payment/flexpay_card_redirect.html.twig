@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Redirection vers le paiement sécurisé…</title>
+    <style>
+        body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #1f2937;
+               display: flex; min-height: 100vh; margin: 0; align-items: center; justify-content: center; }
+        .box { text-align: center; }
+        .spinner { width: 40px; height: 40px; margin: 0 auto 16px; border: 4px solid #ede9fe;
+                   border-top-color: #7c3aed; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        button { margin-top: 12px; padding: 10px 20px; background: #7c3aed; color: #fff;
+                 border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <div class="spinner"></div>
+        <p>Redirection vers la page de paiement sécurisée…</p>
+
+        {# Le formulaire POST (form-encoded par défaut) amène le navigateur sur la
+           page de saisie de carte hébergée par FlexPay. Twig échappe chaque valeur. #}
+        <form id="flexpay-form" method="post" action="{{ action }}" accept-charset="UTF-8">
+            {% for name, value in fields %}
+                <input type="hidden" name="{{ name }}" value="{{ value }}">
+            {% endfor %}
+            <noscript>
+                <button type="submit">Continuer vers le paiement</button>
+            </noscript>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('flexpay-form').submit();
+    </script>
+</body>
+</html>

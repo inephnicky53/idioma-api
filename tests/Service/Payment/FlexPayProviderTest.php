@@ -24,7 +24,16 @@ class FlexPayProviderTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
 
         $router = $this->createMock(RouterInterface::class);
-        $router->method('generate')->willReturn('https://api.idioma.test/callback/flexpay');
+        $router->method('generate')->willReturnCallback(
+            static function (string $name, array $params = []): string {
+                if ($name === 'flexpay_card_redirect') {
+                    return 'https://api.idioma.test/payment/card/'
+                        . ($params['reference'] ?? '') . '/' . ($params['nonce'] ?? '');
+                }
+
+                return 'https://api.idioma.test/callback/flexpay';
+            }
+        );
 
         return new FlexPayProvider(
             $em,
@@ -49,20 +58,15 @@ class FlexPayProviderTest extends TestCase
         return $payment;
     }
 
-    public function testCardTransactionMatchesV2Documentation(): void
+    public function testCardTransactionPreparesBackendRedirectWithoutCallingFlexPay(): void
     {
-        $captured = null;
-
-        // Réponse documentée du service de paiement carte V2 (page 7 de la doc)
-        $http = new MockHttpClient(function (string $method, string $url, array $options) use (&$captured) {
-            $captured = ['method' => $method, 'url' => $url, 'options' => $options];
-
-            return new MockResponse(json_encode([
-                'code' => '0',
-                'message' => 'Redirection en cours',
-                'orderNumber' => 'LeR4frf04509172137498452',
-                'url' => 'https://cardpayment.flexpay.cd/pay/abc123',
-            ]), ['http_code' => 200]);
+        // L'API carte FlexPay du marchand ne renvoie pas le JSON `{url}` documenté
+        // (elle rend sa page HTML hébergée). On ne doit donc PAS l'appeler côté
+        // serveur : on prépare une redirection vers notre propre endpoint.
+        $httpCalled = false;
+        $http = new MockHttpClient(function () use (&$httpCalled) {
+            $httpCalled = true;
+            return new MockResponse('', ['http_code' => 200]);
         });
 
         $provider = $this->makeProvider($http);
@@ -70,26 +74,40 @@ class FlexPayProviderTest extends TestCase
 
         $provider->createTransaction($payment, 2, []);
 
-        // URL et méthode conformes à la doc
-        self::assertSame('POST', $captured['method']);
-        self::assertSame('https://cardpayment.flexpay.cd/v2/pay', $captured['url']);
-
-        // Le corps contient bien tous les champs requis par la doc, dont "authorization"
-        $body = json_decode($captured['options']['body'], true);
-        self::assertSame('Bearer TEST_TOKEN', $body['authorization']);
-        self::assertSame('IDIOMA', $body['merchant']);
-        self::assertSame('PAY_TEST001', $body['reference']);
-        self::assertSame('10.00', $body['amount']);
-        self::assertSame('USD', $body['currency']);
-        self::assertArrayHasKey('callback_url', $body);
-        self::assertArrayHasKey('approve_url', $body);
-        self::assertArrayHasKey('cancel_url', $body);
-        self::assertArrayHasKey('decline_url', $body);
-
-        // Effets attendus sur le paiement
+        self::assertFalse($httpCalled, 'La carte ne doit déclencher aucun appel HTTP côté serveur');
         self::assertSame(PaymentStatus::WAIT, $payment->getStatus());
-        self::assertSame('LeR4frf04509172137498452', $payment->getProviderReference());
-        self::assertSame('https://cardpayment.flexpay.cd/pay/abc123', $payment->getData()['paymentUrl']);
+
+        // Un nonce à usage unique est généré et la paymentUrl pointe vers notre backend.
+        $data = $payment->getData() ?? [];
+        self::assertArrayHasKey('cardRedirectNonce', $data);
+        self::assertMatchesRegularExpression('/^[0-9a-f]{32}$/', $data['cardRedirectNonce']);
+        self::assertSame(
+            'https://api.idioma.test/payment/card/PAY_TEST001/' . $data['cardRedirectNonce'],
+            $data['paymentUrl']
+        );
+    }
+
+    public function testBuildCardFormParamsMatchesFlexPayHostedPage(): void
+    {
+        $provider = $this->makeProvider(new MockHttpClient());
+        $payment = $this->makeCardPayment();
+
+        $form = $provider->buildCardFormParams($payment);
+
+        // POST form-encoded vers la page hébergée (et non un appel JSON).
+        self::assertSame('https://cardpayment.flexpay.cd/v2/pay', $form['action']);
+
+        $fields = $form['fields'];
+        self::assertSame('Bearer TEST_TOKEN', $fields['authorization']);
+        self::assertSame('IDIOMA', $fields['merchant']);
+        self::assertSame('PAY_TEST001', $fields['reference']);
+        self::assertSame('10.00', $fields['amount']);
+        self::assertSame('USD', $fields['currency']);
+        self::assertArrayHasKey('callback_url', $fields);
+        self::assertStringContainsString('status=approved', $fields['approve_url']);
+        self::assertStringContainsString('status=cancelled', $fields['cancel_url']);
+        self::assertStringContainsString('status=declined', $fields['decline_url']);
+        self::assertStringContainsString('reference=PAY_TEST001', $fields['approve_url']);
     }
 
     public function testCheckTransactionSuccessMarksCompleted(): void
@@ -146,5 +164,73 @@ class FlexPayProviderTest extends TestCase
 
         // On ne doit surtout pas accorder l'accès : statut inchangé
         self::assertSame(PaymentStatus::WAIT, $payment->getStatus());
+    }
+
+    public function testMobileTransactionWithHtmlErrorPageFailsCleanly(): void
+    {
+        // Le mobile money interroge bien FlexPay côté serveur. Si FlexPay renvoie
+        // une page HTML (statut 200) au lieu du JSON attendu, le décodeur ne doit
+        // pas planter et l'utilisateur ne doit pas voir « Syntax error for … ».
+        $html = '<!DOCTYPE html><html><head><title>Error</title></head><body>Error</body></html>';
+        $http = new MockHttpClient(fn () => new MockResponse($html, [
+            'http_code' => 200,
+            'response_headers' => ['content-type' => 'text/html; charset=UTF-8'],
+        ]));
+
+        $provider = $this->makeProvider($http);
+        $payment = new Payment();
+        $payment->setPaymentMethod(PaymentMethod::MOBILE);
+        $payment->setReference('PAY_TEST_MM');
+        $payment->setAmount('10.00');
+        $payment->setCurrency(Currency::USD);
+        $payment->setPhone('243810000000');
+
+        $provider->createTransaction($payment, 1, ['phone' => '243810000000']);
+
+        self::assertSame(PaymentStatus::ERROR, $payment->getStatus());
+        self::assertStringNotContainsStringIgnoringCase('syntax error', (string) $payment->getNotes());
+        self::assertStringContainsString('indisponible', (string) $payment->getNotes());
+        self::assertArrayHasKey('flexpay_error', $payment->getData() ?? []);
+        self::assertSame(200, $payment->getData()['flexpay_error']['httpStatus']);
+    }
+
+    public function testMissingTokenFailsBeforeAnyHttpCall(): void
+    {
+        $called = false;
+        $http = new MockHttpClient(function () use (&$called) {
+            $called = true;
+            return new MockResponse('', ['http_code' => 200]);
+        });
+
+        $em = $this->createMock(EntityManagerInterface::class);
+        $router = $this->createMock(RouterInterface::class);
+        $router->method('generate')->willReturnCallback(
+            static function (string $name, array $params = []): string {
+                if ($name === 'flexpay_card_redirect') {
+                    return 'https://api.idioma.test/payment/card/'
+                        . ($params['reference'] ?? '') . '/' . ($params['nonce'] ?? '');
+                }
+
+                return 'https://api.idioma.test/callback/flexpay';
+            }
+        );
+
+        $provider = new FlexPayProvider(
+            $em,
+            $router,
+            $http,
+            '', // jeton FlexPay manquant
+            'https://backend.flexpay.cd/api/rest/v1',
+            'https://cardpayment.flexpay.cd',
+            'IDIOMA',
+            'https://idioma.test'
+        );
+        $payment = $this->makeCardPayment();
+
+        $provider->createTransaction($payment, 2, []);
+
+        self::assertFalse($called, 'Aucune requête HTTP ne doit partir sans jeton FlexPay');
+        self::assertSame(PaymentStatus::ERROR, $payment->getStatus());
+        self::assertStringContainsString('configuration', strtolower((string) $payment->getNotes()));
     }
 }
