@@ -24,6 +24,8 @@ security:
             pattern: ^/api/login_check
             stateless: true
             provider: app_user_provider
+            # Applique UserChecker au login (compte actif + vérifié par OTP)
+            user_checker: App\Security\UserChecker
             json_login:
                 check_path: /api/login_check
                 username_path: email
@@ -57,6 +59,8 @@ security:
         - { path: ^/api/token/refresh, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/refresh, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/send-otp, roles: PUBLIC_ACCESS }
+        - { path: ^/api/auth/verify-otp, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/forgot-password, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/reset-password, roles: PUBLIC_ACCESS }
         #- { path: ^/api, roles: ROLE_USER }

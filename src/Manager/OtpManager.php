@@ -4,7 +4,7 @@ namespace App\Manager;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
-use App\Service\SmsService;
+use App\Service\EmailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -14,31 +14,37 @@ class OtpManager
     public function __construct(
         private EntityManagerInterface $entityManager,
         private UserRepository $userRepository,
-        private SmsService $smsService
+        // L'OTP est envoyé par email tant que l'API SMS n'est pas branchée.
+        // TODO: réintroduire l'envoi SMS (SmsService) une fois l'API configurée.
+        private EmailService $emailService
     ) {
     }
 
     /**
-     * Generates and sends phone OTP to a user
+     * Finds a user by identifier (email or phone) and (re)sends an OTP by email.
      */
     public function sendPhoneOtp(string $identifier): void
     {
-        // Find user by phone (primary) or email
-        $user = $this->userRepository->findOneBy(['phone' => $identifier]);
+        // Find user by email (primary) or phone
+        $user = $this->userRepository->findOneBy(['email' => $identifier]);
         if (!$user) {
-            $user = $this->userRepository->findOneBy(['email' => $identifier]);
+            $user = $this->userRepository->findOneBy(['phone' => $identifier]);
         }
 
         if (!$user) {
             throw new NotFoundHttpException('Utilisateur non trouvé');
         }
 
-        if (!$user->getPhone()) {
-            throw new BadRequestHttpException('Aucun numéro de téléphone associé à ce compte');
-        }
+        $this->generateAndSendOtp($user);
+    }
 
-        // Generate 4-digit OTP
-        $otp = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+    /**
+     * Generates a 4-digit OTP for a user, stores it (10 min validity) and sends it by email.
+     * Single source of truth for OTP delivery (registration + resend).
+     */
+    public function generateAndSendOtp(User $user): void
+    {
+        $otp = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
         $expiresAt = (new \DateTime())->modify('+10 minutes');
 
         $user->setPhoneOtp($otp);
@@ -46,8 +52,7 @@ class OtpManager
         $this->entityManager->persist($user);
         $this->entityManager->flush();
 
-        // Send via SMS only
-        $this->smsService->sendOtpSms($user, $otp);
+        $this->emailService->sendOtpEmail($user, $otp);
     }
 
     /**
@@ -76,8 +81,10 @@ class OtpManager
             throw new BadRequestHttpException('Code OTP expiré');
         }
 
-        // Mark as verified and clear OTP
+        // Mark as verified and clear OTP. L'OTP étant délivré par email, on valide
+        // aussi l'email : c'est ce flag qui ouvre le login (UserChecker).
         $user->setIsPhoneVerified(true);
+        $user->setIsEmailVerified(true);
         $user->setPhoneOtp(null);
         $user->setPhoneOtpExpiresAt(null);
 

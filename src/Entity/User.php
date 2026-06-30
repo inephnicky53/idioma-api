@@ -247,6 +247,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?DateTimeInterface $emailVerificationTokenExpiresAt = null;
 
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    #[Groups(['user:read'])]
     private bool $isEmailVerified = false;
 
     #[ORM\Column(type: 'string', length: 10, nullable: true)]

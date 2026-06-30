@@ -16,6 +16,7 @@ use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 readonly class FlexPayProvider implements PaymentProviderInterface
 {
@@ -41,6 +42,16 @@ readonly class FlexPayProvider implements PaymentProviderInterface
     {
         if (!$payment instanceof Payment) {
             throw new InvalidArgumentException('Le premier argument doit être une instance de Payment');
+        }
+
+        // Sans jeton FlexPay, l'API renvoie une page d'erreur HTML : on échoue
+        // proprement plutôt que de laisser le décodeur JSON planter plus loin.
+        if (empty($this->flexpayToken)) {
+            $payment->setStatus(PaymentStatus::ERROR);
+            $payment->setNotes('Paiement momentanément indisponible (configuration FlexPay manquante).');
+            $this->recordRawError($payment, 'flexpay_error', 0, 'FLEXPAY_TOKEN manquant');
+            $this->manager->flush();
+            return $payment;
         }
 
         try {

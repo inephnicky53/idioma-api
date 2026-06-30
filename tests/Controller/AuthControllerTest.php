@@ -2,6 +2,7 @@
 
 namespace App\Tests\Controller;
 
+use App\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class AuthControllerTest extends WebTestCase
@@ -23,6 +24,71 @@ class AuthControllerTest extends WebTestCase
         $this->assertArrayHasKey('id', $response);
         $this->assertArrayHasKey('email', $response);
         $this->assertEquals($email, $response['email']);
+        // L'inscription ne connecte plus : aucun token n'est délivré avant vérification OTP
+        $this->assertArrayNotHasKey('token', $response);
+        $this->assertArrayNotHasKey('jwtToken', $response);
+
+        // Le compte est créé non vérifié (la vérification se fait via l'OTP)
+        $user = static::getContainer()->get('doctrine')->getManager()
+            ->getRepository(User::class)->findOneBy(['email' => $email]);
+        $this->assertNotNull($user);
+        $this->assertFalse($user->isEmailVerified());
+    }
+
+    public function testRegisterThenVerifyOtpReturnsToken(): void
+    {
+        $client = static::createClient();
+        $email = 'otp_' . time() . '@example.com';
+
+        $client->request('POST', '/api/auth/register', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'email' => $email,
+            'password' => 'Test123!@',
+            'firstName' => 'Otp',
+            'lastName' => 'User'
+        ]));
+        $this->assertResponseStatusCodeSame(201);
+
+        // Le mailer est null en test : on lit l'OTP directement en base.
+        $user = static::getContainer()->get('doctrine')->getManager()
+            ->getRepository(User::class)->findOneBy(['email' => $email]);
+        $this->assertNotNull($user);
+        $otp = $user->getPhoneOtp();
+        $this->assertNotNull($otp);
+        $this->assertSame(4, strlen($otp));
+
+        $client->request('POST', '/api/auth/verify-otp', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'identifier' => $email,
+            'otp' => $otp,
+        ]));
+        $this->assertResponseIsSuccessful();
+        $res = json_decode($client->getResponse()->getContent(), true);
+        $this->assertTrue($res['verified']);
+        $this->assertArrayHasKey('token', $res);
+        $this->assertNotEmpty($res['token']);
+        $this->assertArrayHasKey('refreshToken', $res);
+        $this->assertNotEmpty($res['refreshToken']);
+    }
+
+    public function testLoginBlockedBeforeVerification(): void
+    {
+        $client = static::createClient();
+        $email = 'unverified_' . time() . '@example.com';
+        $password = 'Test123!@';
+
+        $client->request('POST', '/api/auth/register', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'email' => $email,
+            'password' => $password,
+            'firstName' => 'Unverified',
+            'lastName' => 'User'
+        ]));
+        $this->assertResponseStatusCodeSame(201);
+
+        // Tant que l'OTP n'est pas vérifié, le login doit être refusé (UserChecker)
+        $client->request('POST', '/api/login_check', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'email' => $email,
+            'password' => $password,
+        ]));
+        $this->assertResponseStatusCodeSame(401);
     }
 
     public function testRegisterDuplicateEmail(): void

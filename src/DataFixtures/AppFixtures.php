@@ -92,6 +92,7 @@ class AppFixtures extends Fixture
         $admin->setPhone('+33612345678');
         $admin->setRoles(['ROLE_ADMIN']);
         $admin->setPassword($this->passwordHasher->hashPassword($admin, 'Admin123!@'));
+        $admin->setIsEmailVerified(true);
         $manager->persist($admin);
         $users['admin'] = $admin;
 
@@ -104,6 +105,7 @@ class AppFixtures extends Fixture
             $user->setPhone("+3361234567{$i}");
             $user->setRoles(['ROLE_USER']);
             $user->setPassword($this->passwordHasher->hashPassword($user, 'User123!@'));
+            $user->setIsEmailVerified(true);
             $manager->persist($user);
             $users["user{$i}"] = $user;
         }

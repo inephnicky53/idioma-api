@@ -12,12 +12,12 @@ use App\Entity\User;
 use App\Enum\Currency;
 use App\Enum\PaymentMethod;
 use App\Enum\PaymentStatus;
+use App\Manager\OtpManager;
 use App\Service\Payment\PaymentManager;
 use App\Service\RateService;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
-use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -28,12 +28,10 @@ readonly class UserRegisterProcessor implements ProcessorInterface
     public function __construct(
         private EntityManagerInterface      $entityManager,
         private UserPasswordHasherInterface $passwordHasher,
-        private JWTTokenManagerInterface    $jwtManager,
         private PaymentManager              $paymentManager,
         private RateService                 $rateService,
         private LoggerInterface             $logger,
-        private \App\Service\EmailService   $emailService,
-        private \App\Service\SmsService     $smsService,
+        private OtpManager                  $otpManager,
     ) {}
 
     /**
@@ -118,23 +116,12 @@ readonly class UserRegisterProcessor implements ProcessorInterface
         $this->entityManager->beginTransaction();
 
         try {
-            // Créer l'utilisateur
+            // Créer l'utilisateur (non vérifié : isEmailVerified = false par défaut)
             $user = $this->createUser($data);
 
-            // Générer et envoyer OTP
-            $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-            $expiresAt = (new DateTime())->modify('+10 minutes');
-            $user->setPhoneOtp($otp);
-            $user->setPhoneOtpExpiresAt($expiresAt);
-            $this->entityManager->persist($user);
-
-            // Envoyer OTP par email
-            $this->emailService->sendOtpEmail($user, $otp);
-
-            // Envoyer OTP par SMS si téléphone disponible
-            if ($user->getPhone()) {
-                $this->smsService->sendOtpSms($user, $otp);
-            }
+            // Générer et envoyer l'OTP par email (source unique : OtpManager).
+            // L'utilisateur devra le saisir pour obtenir un token (voir VerifyOtpProcessor).
+            $this->otpManager->generateAndSendOtp($user);
 
             // Inscription simple (pas de paiement)
             if ($data->level || $data->participationType) {
@@ -144,12 +131,7 @@ readonly class UserRegisterProcessor implements ProcessorInterface
             // Commit la transaction
             $this->entityManager->commit();
 
-            // Générer le JWT token et le stocker dans l'utilisateur pour la sérialisation
-            $token = $this->jwtManager->create($user);
-
-            // Ajouter le token à l'utilisateur pour la réponse
-            $user->setJwtToken($token);
-
+            // Pas de JWT à l'inscription : le token n'est délivré qu'après vérification OTP.
             return $user;
 
         } catch (\Exception $e) {

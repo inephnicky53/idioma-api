@@ -7,6 +7,7 @@ use ApiPlatform\State\ProcessorInterface;
 use App\Dto\SendOtpDto;
 use App\Manager\OtpManager;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 readonly class SendOtpProcessor implements ProcessorInterface
 {
@@ -32,6 +33,7 @@ readonly class SendOtpProcessor implements ProcessorInterface
 
         $this->otpManager->sendPhoneOtp($data->identifier);
 
-        return ['message' => 'OTP envoyé avec succès'];
+        // Réponse JSON directe (évite qu'API Platform traite le tableau comme une collection)
+        return new JsonResponse(['message' => 'OTP envoyé avec succès']);
     }
 }
