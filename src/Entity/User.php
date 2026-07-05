@@ -126,13 +126,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:read', 'subscription:read', 'payment:read'])]
+    #[Groups(['user:read', 'subscription:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255, unique: true)]
     #[Assert\NotBlank(message: 'Email cannot be empty')]
     #[Assert\Email(message: 'The email "{{ value }}" is not valid')]
-    #[Groups(['user:read', 'user:write', 'subscription:read', 'payment:read'])]
+    #[Groups(['user:read', 'user:write', 'subscription:read'])]
     private ?string $email = null;
 
     #[ORM\Column(type: 'json')]

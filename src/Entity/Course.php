@@ -37,12 +37,12 @@ class Course implements PayableInterface, UploadedFileAwareInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['course:read', 'payment:read', 'course_purchase:read'])]
+    #[Groups(['course:read', 'course_purchase:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Le titre est requis')]
-    #[Groups(['course:read', 'payment:read', 'course_purchase:read'])]
+    #[Groups(['course:read', 'course_purchase:read'])]
     private ?string $title = null;
 
     #[ORM\Column(length: 255, nullable: true)]

@@ -155,16 +155,19 @@ class PaymentCrudController extends AbstractCrudController
         $fieldsIndex = [
             AssociationField::new('user')->setLabel('Utilisateur'),
             TextField::new('purchaseTypeLabel', 'Type')
-                ->formatValue(fn ($value, Payment $entity) => $this->renderPurchaseTypeBadge($entity)),
+                ->formatValue(fn ($value, Payment $entity) => $this->renderPurchaseTypeBadge($entity))
+                ->renderAsHtml(),
             TextField::new('product', 'Produit'),
             NumberField::new('amount')->setLabel('Montant')
                 ->formatValue(fn ($value, Payment $entity) =>
                     number_format((float)$value, 0, ',', ' ') . ' ' . $entity->getCurrency()?->value
                 ),
             TextField::new('statusLabel', 'Statut')
-                ->formatValue(fn ($value, Payment $entity) => $this->renderStatusBadge($entity)),
+                ->formatValue(fn ($value, Payment $entity) => $this->renderStatusBadge($entity))
+                ->renderAsHtml(),
             TextField::new('paymentMethodLabel', 'Méthode')
-                ->formatValue(fn ($value, Payment $entity) => $this->renderPaymentMethodBadge($entity)),
+                ->formatValue(fn ($value, Payment $entity) => $this->renderPaymentMethodBadge($entity))
+                ->renderAsHtml(),
             DateTimeField::new('createdAt')->setLabel('Date')->setFormat('dd/MM/yy HH:mm'),
         ];
 
@@ -175,11 +178,13 @@ class PaymentCrudController extends AbstractCrudController
             NumberField::new('id')->setLabel('ID Paiement')->setNumDecimals(0),
             AssociationField::new('user')->setLabel('Utilisateur'),
             TextField::new('purchaseTypeLabel', 'Type d\'achat')
-                ->formatValue(fn ($value, Payment $entity) => $this->renderPurchaseTypeBadge($entity, true)),
+                ->formatValue(fn ($value, Payment $entity) => $this->renderPurchaseTypeBadge($entity, true))
+                ->renderAsHtml(),
             AssociationField::new('subscriptionPlan')->setLabel('Plan d\'abonnement'),
             AssociationField::new('course')->setLabel('Cours'),
             TextField::new('statusLabel', 'Statut')
-                ->formatValue(fn ($value, Payment $entity) => $this->renderStatusBadge($entity, true)),
+                ->formatValue(fn ($value, Payment $entity) => $this->renderStatusBadge($entity, true))
+                ->renderAsHtml(),
 
             // Section: Montant
             FormField::addPanel('Montant')->setIcon('fa fa-money-bill'),
@@ -196,7 +201,8 @@ class PaymentCrudController extends AbstractCrudController
             // Section: Méthode de paiement
             FormField::addPanel('Méthode de paiement')->setIcon('fa fa-credit-card'),
             TextField::new('paymentMethodLabel', 'Méthode')
-                ->formatValue(fn ($value, Payment $entity) => $this->renderPaymentMethodBadge($entity, true)),
+                ->formatValue(fn ($value, Payment $entity) => $this->renderPaymentMethodBadge($entity, true))
+                ->renderAsHtml(),
             TextField::new('phone')->setLabel('Téléphone'),
             TextField::new('reference')->setLabel('Référence'),
 
@@ -208,9 +214,11 @@ class PaymentCrudController extends AbstractCrudController
             DateTimeField::new('paidAt')->setLabel('Payé le'),
             DateTimeField::new('responsedAt')->setLabel('Réponse callback'),
             TextareaField::new('notes')->setLabel('Notes / Réponse FlexPay'),
-            TextareaField::new('data')->setLabel('Données brutes FlexPay (JSON)')
+            TextField::new('dataFormatted')->setLabel('Données brutes FlexPay (JSON)')
                 ->setHelp('Données brutes de la réponse FlexPay (callback et vérification)')
-                ->formatValue(fn ($value, Payment $entity) => $value ? json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : ''),
+                ->onlyOnDetail()
+                ->formatValue(fn ($value) => $value ? '<pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; max-width: 100%;">' . htmlspecialchars($value) . '</pre>' : '')
+                ->renderAsHtml(),
 
             // Section: Métadonnées
             FormField::addPanel('Métadonnées')->setIcon('fa fa-clock'),

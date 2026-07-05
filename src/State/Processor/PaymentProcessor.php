@@ -4,14 +4,11 @@ namespace App\State\Processor;
 
 use App\Dto\CreatePaymentDto;
 use App\Entity\Payment;
-use App\Entity\User;
 use App\Exception\PaymentException;
 use App\Service\Payment\PaymentManager;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use InvalidArgumentException;
-use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 readonly class PaymentProcessor implements ProcessorInterface
 {

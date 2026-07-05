@@ -2,15 +2,14 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use App\Contract\PayableInterface;
-use App\State\Processor\ValidatePaymentProcessor;
-use App\State\Processor\CheckTransactionProcessor;
 use App\Dto\CreatePaymentDto;
 use App\Enum\Currency;
 use App\Enum\PaymentMethod;
@@ -18,7 +17,9 @@ use App\Enum\PaymentProvider;
 use App\Enum\PaymentStatus;
 use App\Enum\PurchaseType;
 use App\Repository\PaymentRepository;
+use App\State\Processor\CheckTransactionProcessor;
 use App\State\Processor\PaymentProcessor;
+use App\State\Processor\ValidatePaymentProcessor;
 use App\State\Provider\PendingCoursePaymentProvider;
 use DateTime;
 use DateTimeImmutable;
@@ -90,7 +91,6 @@ class Payment
     // User est défini automatiquement par le PaymentProcessor via le JWT
     #[ORM\ManyToOne(inversedBy: 'payments')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['payment:read'])]
     private ?User $user = null;
     #[ORM\Column(length: 20, enumType: PurchaseType::class)]
     #[Groups(['payment:read'])]
@@ -98,12 +98,12 @@ class Payment
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: true)]
-    #[Groups(['payment:read', 'payment:write'])]
+    #[Groups(['payment:write'])]
     private ?SubscriptionPlan $subscriptionPlan = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: true)]
-    #[Groups(['payment:read', 'payment:write'])]
+    #[Groups(['payment:write'])]
     private ?Course $course = null;
 
     // Amount est calculé automatiquement par le PaymentProcessor depuis le plan
@@ -124,23 +124,19 @@ class Payment
     private ?PaymentMethod $paymentMethod = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    #[Groups(['payment:read'])]
     private ?DateTimeInterface $paidAt = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['payment:read', 'payment:write'])]
+    #[Groups(['payment:write'])]
     private ?string $notes = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    #[Groups(['payment:read'])]
     private ?DateTimeInterface $createdAt;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    #[Groups(['payment:read'])]
     private ?DateTimeInterface $updatedAt = null;
 
     #[ORM\Column]
-    #[Groups(['payment:read'])]
     private bool $isSmsSend = false;
 
     #[ORM\Column(nullable: true)]
@@ -158,11 +154,10 @@ class Payment
     private ?string $providerReference;
 
     #[ORM\Column(length: 20, nullable: true, enumType: PaymentProvider::class)]
-    #[Groups(['payment:read'])]
     private ?PaymentProvider $provider = PaymentProvider::FLEXPAY;
 
     #[ORM\Column(type: Types::JSON, nullable: true)]
-    #[Groups(['payment:read'])]
+    #[ApiProperty(readable: false)]
     private ?array $data = null;
 
     public function __construct()
@@ -230,6 +225,7 @@ class Payment
     /**
      * Retourne l'objet Payable (plan ou cours)
      */
+    #[ApiProperty(readable: false)]
     public function getPayable(): ?PayableInterface
     {
         if ($this->purchaseType === PurchaseType::COURSE && $this->course) {
@@ -261,10 +257,18 @@ class Payment
     /**
      * Retourne le nom du produit acheté (plan ou cours)
      */
-    #[Groups(['payment:read'])]
     public function getProduct(): ?string
     {
         return $this->getPayable()?->getLabel();
+    }
+
+    /**
+     * Retourne l'URL de paiement pour les cartes bancaires
+     */
+    #[Groups(['payment:read'])]
+    public function getPaymentUrl(): ?string
+    {
+        return $this->data['paymentUrl'] ?? null;
     }
 
     public function getAmount(): ?string
@@ -292,7 +296,6 @@ class Payment
     /**
      * Retourne les informations complètes du statut pour l'API
      */
-    #[Groups(['payment:read'])]
     public function getStatusInfo(): array
     {
         return $this->status?->toArray() ?? [];
@@ -461,6 +464,14 @@ class Payment
     {
         $this->data = $data;
         return $this;
+    }
+
+    /**
+     * Retourne les données JSON formatées pour l'admin
+     */
+    public function getDataFormatted(): string
+    {
+        return $this->data ? json_encode($this->data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) : '';
     }
 }
 

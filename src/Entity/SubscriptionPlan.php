@@ -42,12 +42,12 @@ class SubscriptionPlan implements PayableInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['subscriptionplan:read', 'subscription:read', 'payment:read'])]
+    #[Groups(['subscriptionplan:read', 'subscription:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Name cannot be empty')]
-    #[Groups(['subscriptionplan:read', 'subscriptionplan:write', 'subscription:read', 'payment:read'])]
+    #[Groups(['subscriptionplan:read', 'subscriptionplan:write', 'subscription:read'])]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -57,11 +57,11 @@ class SubscriptionPlan implements PayableInterface
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     #[Assert\NotBlank(message: 'Price cannot be empty')]
     #[Assert\Positive(message: 'Price must be positive')]
-    #[Groups(['subscriptionplan:read', 'subscriptionplan:write', 'subscription:read', 'payment:read'])]
+    #[Groups(['subscriptionplan:read', 'subscriptionplan:write', 'subscription:read'])]
     private ?string $price = null;
 
     #[ORM\Column(length: 3, enumType: Currency::class)]
-    #[Groups(['subscriptionplan:read', 'subscriptionplan:write', 'subscription:read', 'payment:read'])]
+    #[Groups(['subscriptionplan:read', 'subscriptionplan:write', 'subscription:read'])]
     private Currency $currency = Currency::USD;
 
     #[ORM\Column]
@@ -76,7 +76,7 @@ class SubscriptionPlan implements PayableInterface
         choices: ['club', 'formation', 'both'],
         message: 'Type must be one of: club, formation, both'
     )]
-    #[Groups(['subscriptionplan:read', 'subscriptionplan:write', 'subscription:read', 'payment:read'])]
+    #[Groups(['subscriptionplan:read', 'subscriptionplan:write', 'subscription:read'])]
     private ?string $type = null;
 
     #[ORM\Column]
