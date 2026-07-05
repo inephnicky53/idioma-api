@@ -38,8 +38,15 @@ class VimeoService implements VideoStorageInterface
 
     public function generateVideoJwt(string $videoUri): string
     {
-        // Extract video ID from URI
-        $videoId = preg_replace('#^/videos/(\d+).*$#', '$1', $videoUri);
+        // Extract video ID from URI or URL
+        $videoId = null;
+        if (preg_match('#(?:/videos/|vimeo\.com/)(\d+)#', $videoUri, $matches)) {
+            $videoId = $matches[1];
+        }
+        
+        if (!$videoId) {
+            $videoId = $videoUri;
+        }
         
         $payload = [
             'iss' => $this->clientId,
