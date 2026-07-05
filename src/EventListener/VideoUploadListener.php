@@ -4,6 +4,7 @@ namespace App\EventListener;
 
 use App\Contract\VideoStorageInterface;
 use App\Entity\CourseVideo;
+use App\Service\VideoStorageFactory;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Vich\UploaderBundle\Event\Event;
@@ -11,7 +12,7 @@ use Vich\UploaderBundle\Event\Event;
 class VideoUploadListener
 {
     public function __construct(
-        private readonly VideoStorageInterface $videoStorage,
+        private readonly VideoStorageFactory $videoStorageFactory,
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger
     ) {}
@@ -47,9 +48,14 @@ class VideoUploadListener
             return;
         }
 
+        // Get provider from entity or use default
+        $videoProvider = $object->getVideoProvider() ?? ($_ENV['VIDEO_PROVIDER'] ?? 'cloudinary');
+        $this->logger->info('VideoUploadListener: Using provider: ' . $videoProvider);
+
         // Upload vers le fournisseur configuré
         $this->logger->info('VideoUploadListener: Starting upload to configured storage...');
-        $result = $this->videoStorage->uploadVideo($path, [
+        $storage = $this->videoStorageFactory->getStorageForProvider($videoProvider);
+        $result = $storage->uploadVideo($path, [
             'title' => $object->getTitle(),
             'description' => $object->getDescription(),
         ]);
@@ -58,7 +64,6 @@ class VideoUploadListener
             $this->logger->info('VideoUploadListener: Upload successful!');
             
             // Update the entity based on provider
-            $videoProvider = $_ENV['VIDEO_PROVIDER'] ?? 'cloudinary';
             if ($videoProvider === 'vimeo') {
                 $object->setVimeoUri($result['url']);
             } else {

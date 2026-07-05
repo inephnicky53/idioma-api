@@ -13,13 +13,28 @@ class VideoStorageFactory implements VideoStorageInterface
     ) {
     }
 
-    private function getStorage(): VideoStorageInterface
+    public function getCloudinaryService(): CloudinaryService
     {
-        return match ($this->videoProvider) {
+        return $this->cloudinaryService;
+    }
+
+    public function getVimeoService(): VimeoService
+    {
+        return $this->vimeoService;
+    }
+
+    public function getStorageForProvider(string $provider): VideoStorageInterface
+    {
+        return match ($provider) {
             'vimeo' => $this->vimeoService,
             'cloudinary' => $this->cloudinaryService,
             default => $this->cloudinaryService,
         };
+    }
+
+    private function getStorage(): VideoStorageInterface
+    {
+        return $this->getStorageForProvider($this->videoProvider);
     }
 
     public function uploadVideo(mixed $file, array $options = []): ?array

@@ -12,6 +12,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Filters;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
@@ -50,13 +51,9 @@ class CourseVideoCrudController extends AbstractCrudController
 
     public function configureAssets(Assets $assets): Assets
     {
-        $assets = $assets;
-        if ($this->parameterBag->get('video_provider') === 'cloudinary') {
-            $assets->addJsFile('https://upload-widget.cloudinary.com/global/all.js');
-            $assets->addJsFile('js/admin/cloudinary-upload.js');
-        } else if ($this->parameterBag->get('video_provider') === 'vimeo') {
-            $assets->addJsFile('js/admin/vimeo-upload.js');
-        }
+        $assets->addJsFile('https://upload-widget.cloudinary.com/global/all.js');
+        $assets->addJsFile('js/admin/cloudinary-upload.js');
+        $assets->addJsFile('js/admin/vimeo-upload.js');
         return $assets;
     }
 
@@ -76,8 +73,6 @@ class CourseVideoCrudController extends AbstractCrudController
 
     public function configureFields(string $pageName): iterable
     {
-        $videoProvider = $this->parameterBag->get('video_provider');
-
         // === INDEX ===
         if ($pageName === Crud::PAGE_INDEX) {
             yield AssociationField::new('course', 'Cours');
@@ -152,61 +147,61 @@ class CourseVideoCrudController extends AbstractCrudController
             ->setHelp('Description optionnelle de la vidéo')
             ->hideOnIndex();
 
-        if ($videoProvider === 'cloudinary') {
-            yield TextField::new('cloudinaryUrl', 'URL de la vidéo (Cloudinary)')
-                ->setHelp('L\'URL sera remplie automatiquement après l\'upload ou vous pouvez la coller ici.')
-                ->setFormTypeOptions([
-                    'attr' => ['class' => 'cloudinary-url-field']
-                ]);
-        }
+        yield ChoiceField::new('videoProvider', 'Fournisseur de vidéo')
+            ->setChoices([
+                'Cloudinary' => 'cloudinary',
+                'Vimeo' => 'vimeo',
+            ])
+            ->setRequired(true)
+            ->setHelp('Choisissez où héberger la vidéo');
 
-        if ($videoProvider === 'vimeo') {
-            yield TextField::new('vimeoUri', 'URI de la vidéo (Vimeo)')
-                ->setHelp('URI ou URL de la vidéo Vimeo (ex: /videos/123456789 ou https://vimeo.com/123456789)')
-                ->setFormTypeOptions([
-                    'attr' => ['class' => 'vimeo-uri-field']
-                ]);
-        }
+        yield TextField::new('cloudinaryUrl', 'URL de la vidéo (Cloudinary)')
+            ->setHelp('L\'URL sera remplie automatiquement après l\'upload ou vous pouvez la coller ici.')
+            ->setFormTypeOptions([
+                'attr' => ['class' => 'cloudinary-url-field']
+            ]);
 
-        if ($videoProvider === 'cloudinary') {
-            yield FormField::addPanel('Uploader vers Cloudinary')
-                ->setIcon('fas fa-cloud-upload-alt')
-                ->onlyOnForms()
-                ->setHelp('
-                    <div class="cloudinary-upload-container">
-                        <button type="button" id="cloudinary-upload-widget" class="btn btn-primary btn-lg">
-                            <i class="fas fa-cloud-upload-alt"></i> Sélectionner une vidéo (Cloudinary)
-                        </button>
-                        <div id="upload-progress-container" style="display:none; margin-top: 15px;">
-                            <div class="progress" style="height: 20px;">
-                                <div id="upload-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
-                            </div>
-                            <small id="upload-status-text" class="text-muted d-block mt-2">Préparation de l\'envoi...</small>
+        yield TextField::new('vimeoUri', 'URI de la vidéo (Vimeo)')
+            ->setHelp('URI ou URL de la vidéo Vimeo (ex: /videos/123456789 ou https://vimeo.com/123456789)')
+            ->setFormTypeOptions([
+                'attr' => ['class' => 'vimeo-uri-field']
+            ]);
+
+        yield FormField::addPanel('Uploader vers Cloudinary')
+            ->setIcon('fas fa-cloud-upload-alt')
+            ->onlyOnForms()
+            ->setHelp('
+                <div class="cloudinary-upload-container">
+                    <button type="button" id="cloudinary-upload-widget" class="btn btn-primary btn-lg">
+                        <i class="fas fa-cloud-upload-alt"></i> Sélectionner une vidéo (Cloudinary)
+                    </button>
+                    <div id="upload-progress-container" style="display:none; margin-top: 15px;">
+                        <div class="progress" style="height: 20px;">
+                            <div id="upload-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
                         </div>
+                        <small id="upload-status-text" class="text-muted d-block mt-2">Préparation de l\'envoi...</small>
                     </div>
-                ');
-        }
+                </div>
+            ');
 
-        if ($videoProvider === 'vimeo') {
-            yield FormField::addPanel('Uploader vers Vimeo')
-                ->setIcon('fab fa-vimeo')
-                ->onlyOnForms()
-                ->setHelp('
-                    <div class="vimeo-upload-container" style="padding: 15px; background-color: #f0f4f7; border-radius: 8px;">
-                        <input type="file" id="vimeo-file-input" accept="video/*" style="display: none;">
-                        <button type="button" id="vimeo-upload-button" class="btn btn-primary btn-lg">
-                            <i class="fas fa-upload"></i> Sélectionner une vidéo (Vimeo)
-                        </button>
-                        <div id="vimeo-upload-progress-container" style="display:none; margin-top: 15px;">
-                            <div class="progress" style="height: 20px;">
-                                <div id="vimeo-upload-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
-                            </div>
-                            <small id="vimeo-upload-status-text" class="text-muted d-block mt-2">Préparation de l\'envoi...</small>
+        yield FormField::addPanel('Uploader vers Vimeo')
+            ->setIcon('fab fa-vimeo')
+            ->onlyOnForms()
+            ->setHelp('
+                <div class="vimeo-upload-container" style="padding: 15px; background-color: #f0f4f7; border-radius: 8px;">
+                    <input type="file" id="vimeo-file-input" accept="video/*" style="display: none;">
+                    <button type="button" id="vimeo-upload-button" class="btn btn-primary btn-lg">
+                        <i class="fas fa-upload"></i> Sélectionner une vidéo (Vimeo)
+                    </button>
+                    <div id="vimeo-upload-progress-container" style="display:none; margin-top: 15px;">
+                        <div class="progress" style="height: 20px;">
+                            <div id="vimeo-upload-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
                         </div>
-                        <p class="text-muted mt-3"><small>Ou uploader directement sur <a href="https://vimeo.com/upload" target="_blank">vimeo.com/upload</a> et coller l\'URL/URI ci-dessus.</small></p>
+                        <small id="vimeo-upload-status-text" class="text-muted d-block mt-2">Préparation de l\'envoi...</small>
                     </div>
-                ');
-        }
+                    <p class="text-muted mt-3"><small>Ou uploader directement sur <a href="https://vimeo.com/upload" target="_blank">vimeo.com/upload</a> et coller l\'URL/URI ci-dessus.</small></p>
+                </div>
+            ');
 
         yield IntegerField::new('duration', 'Durée (secondes)')
             ->setHelp('Durée de la vidéo en secondes (ex: 300 pour 5 minutes)');

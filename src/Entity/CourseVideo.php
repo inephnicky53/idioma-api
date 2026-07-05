@@ -81,6 +81,10 @@ class CourseVideo implements UploadedFileAwareInterface
     #[Groups(['course_video:read', 'course:read'])]
     private ?string $vimeoUri = null;
 
+    #[ORM\Column(length: 50, nullable: true)]
+    #[Groups(['course_video:read', 'course:read'])]
+    private ?string $videoProvider = null;
+
     #[ORM\Column(nullable: true)]
     #[Groups(['course_video:read', 'course:read'])]
     private ?int $duration = null;
@@ -228,6 +232,17 @@ class CourseVideo implements UploadedFileAwareInterface
     public function setVimeoUri(?string $vimeoUri): static
     {
         $this->vimeoUri = $vimeoUri;
+        return $this;
+    }
+
+    public function getVideoProvider(): ?string
+    {
+        return $this->videoProvider;
+    }
+
+    public function setVideoProvider(?string $videoProvider): static
+    {
+        $this->videoProvider = $videoProvider;
         return $this;
     }
 
