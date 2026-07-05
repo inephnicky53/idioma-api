@@ -103,7 +103,7 @@ class Payment
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: true)]
-    #[Groups(['payment:write'])]
+    #[Groups(['payment:read', 'payment:write'])]
     private ?Course $course = null;
 
     // Amount est calculé automatiquement par le PaymentProcessor depuis le plan

@@ -37,38 +37,38 @@ class Course implements PayableInterface, UploadedFileAwareInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['course:read', 'course_purchase:read'])]
+    #[Groups(['course:read', 'course_purchase:read', 'payment:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Le titre est requis')]
-    #[Groups(['course:read', 'course_purchase:read'])]
+    #[Groups(['course:read', 'course_purchase:read', 'payment:read'])]
     private ?string $title = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['course:read', 'course_purchase:read'])]
+    #[Groups(['course:read', 'course_purchase:read', 'payment:read'])]
     private ?string $titleEn = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['course:read', 'course_purchase:read'])]
+    #[Groups(['course:read', 'course_purchase:read', 'payment:read'])]
     private ?string $description = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['course:read', 'course_purchase:read'])]
+    #[Groups(['course:read', 'course_purchase:read', 'payment:read'])]
     private ?string $descriptionEn = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
     #[Assert\NotBlank(message: 'Le prix est requis')]
     #[Assert\Positive(message: 'Le prix doit être positif')]
-    #[Groups(['course:read'])]
+    #[Groups(['course:read', 'payment:read'])]
     private ?string $price = null;
 
     #[ORM\Column(length: 3, enumType: Currency::class)]
-    #[Groups(['course:read'])]
+    #[Groups(['course:read', 'payment:read'])]
     private Currency $currency = Currency::USD;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['course:read', 'course_purchase:read'])]
+    #[Groups(['course:read', 'course_purchase:read', 'payment:read'])]
     private ?string $thumbnail = null;
 
     #[ORM\Column(length: 255, nullable: true)]
