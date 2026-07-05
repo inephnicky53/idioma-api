@@ -296,6 +296,7 @@ class Payment
     /**
      * Retourne les informations complètes du statut pour l'API
      */
+    #[Groups(['payment:read'])]
     public function getStatusInfo(): array
     {
         return $this->status?->toArray() ?? [];
