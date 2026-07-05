@@ -5,6 +5,7 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use App\Controller\Api\GetVimeoJwtAction;
 use App\Controller\Api\VideoStreamAction;
 use App\Model\UploadedFileAwareInterface;
 use App\Repository\CourseVideoRepository;
@@ -32,6 +33,15 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
             read: false,
             serialize: false,
             name: 'stream'
+        ),
+        new Get(
+            uriTemplate: '/course_videos/{id}/vimeo-jwt',
+            controller: GetVimeoJwtAction::class,
+            description: 'Récupère un JWT Vimeo pour accéder à une vidéo privée',
+            security: "is_granted('ROLE_USER')",
+            read: false,
+            serialize: false,
+            name: 'vimeo-jwt'
         ),
     ],
     normalizationContext: ['groups' => ['course_video:read']],

@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Contract\VideoStorageInterface;
+use Firebase\JWT\JWT;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Vimeo\Vimeo;
@@ -33,6 +34,25 @@ class VimeoService implements VideoStorageInterface
             $this->logger->error('Failed to initialize Vimeo: ' . $e->getMessage(), ['exception' => $e]);
             throw new \RuntimeException('Failed to initialize Vimeo: ' . $e->getMessage(), 0, $e);
         }
+    }
+
+    public function generateVideoJwt(string $videoUri): string
+    {
+        // Extract video ID from URI
+        $videoId = preg_replace('#^/videos/(\d+).*$#', '$1', $videoUri);
+        
+        $payload = [
+            'iss' => $this->clientId,
+            'exp' => time() + 3600, // 1 hour expiration
+            'aud' => 'vimeo',
+            'sub' => $videoId,
+        ];
+
+        $jwt = JWT::encode($payload, $this->clientSecret, 'HS256');
+        
+        $this->logger->info('Generated Vimeo JWT for video', ['videoUri' => $videoUri, 'videoId' => $videoId]);
+        
+        return $jwt;
     }
 
     /**
