@@ -38,9 +38,12 @@ class VimeoService implements VideoStorageInterface
 
     public function generateVideoJwt(string $videoUri): string
     {
+        // Strip query parameters from URI/URL first
+        $cleanedUri = explode('?', $videoUri)[0];
+        
         // Extract video ID from URI or URL
         $videoId = null;
-        if (preg_match('#(?:/videos/|vimeo\.com/)(\d+)#', $videoUri, $matches)) {
+        if (preg_match('#(?:/videos/|vimeo\.com/)(\d+)#', $cleanedUri, $matches)) {
             $videoId = $matches[1];
         }
         
@@ -57,7 +60,7 @@ class VimeoService implements VideoStorageInterface
 
         $jwt = JWT::encode($payload, $this->clientSecret, 'HS256');
         
-        $this->logger->info('Generated Vimeo JWT for video', ['videoUri' => $videoUri, 'videoId' => $videoId]);
+        $this->logger->info('Generated Vimeo JWT for video', ['videoUri' => $videoUri, 'cleanedUri' => $cleanedUri, 'videoId' => $videoId]);
         
         return $jwt;
     }
