@@ -128,7 +128,7 @@ class PaymentCrudController extends AbstractCrudController
             ->setCssClass('btn btn-info')
             ->displayIf(fn (Payment $payment) =>
                 $payment->getStatus() === PaymentStatus::WAIT &&
-                in_array($payment->getPaymentMethod(), [PaymentMethod::MOBILE, PaymentMethod::BANK])
+                in_array($payment->getPaymentMethod(), [PaymentMethod::MOBILE, PaymentMethod::CARD])
             );
 
         // Action pour vérifier toutes les transactions en attente
