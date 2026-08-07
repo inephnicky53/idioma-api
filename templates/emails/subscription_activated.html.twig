@@ -1,0 +1,40 @@
+{% extends 'emails/base.html.twig' %}
+
+{# Twig n'a pas d'opérateur null-safe : les accès sont gardés explicitement. #}
+{% set plan = subscription.plan %}
+{% set planName = plan ? plan.name : 'Idioma' %}
+{% set sessionsLimit = plan ? plan.sessionsLimit : null %}
+{% set startDate = subscription.startDate ? subscription.startDate|date('d/m/Y') : '-' %}
+{% set endDate = subscription.endDate ? subscription.endDate|date('d/m/Y') : '-' %}
+
+{% block content %}
+<mj-section>
+  <mj-column>
+    <mj-text font-size="20px" font-weight="bold">
+      {{ renewed ? 'Abonnement prolongé' : 'Abonnement activé' }}
+    </mj-text>
+    <mj-text>
+      Bonjour {{ user.firstName }}, votre abonnement {{ renewed ? 'a bien été prolongé' : 'est désormais actif' }}.
+      Voici le récapitulatif :
+    </mj-text>
+    <mj-divider border-color="#e5e7eb"></mj-divider>
+    <mj-text>
+      <strong>Formule :</strong> {{ planName }}
+    </mj-text>
+    <mj-text>
+      <strong>Début :</strong> {{ startDate }}
+    </mj-text>
+    <mj-text>
+      <strong>Valable jusqu'au :</strong> {{ endDate }}
+    </mj-text>
+    {% if sessionsLimit %}
+    <mj-text>
+      <strong>Sessions incluses :</strong> {{ sessionsLimit }}
+    </mj-text>
+    {% endif %}
+    <mj-button background-color="#3b82f6" href="{{ frontendUrl }}/dashboard">
+      Voir mon abonnement
+    </mj-button>
+  </mj-column>
+</mj-section>
+{% endblock %}

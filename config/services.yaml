@@ -14,6 +14,19 @@ parameters:
     video_provider: '%env(VIDEO_PROVIDER)%'
     app_email_no_reply: '%env(APP_EMAIL_NO_REPLY)%'
     frontend_url: '%env(FRONTEND_URL)%'
+    # WhatsApp Cloud API (Meta). Sans jeton ni identifiant de numéro, les envois
+    # sont simplement tracés dans les logs : le reste de l'application continue.
+    whatsapp_access_token: '%env(WHATSAPP_ACCESS_TOKEN)%'
+    whatsapp_phone_number_id: '%env(WHATSAPP_PHONE_NUMBER_ID)%'
+    whatsapp_api_version: '%env(WHATSAPP_API_VERSION)%'
+    whatsapp_language: '%env(WHATSAPP_LANGUAGE)%'
+    # Doivent correspondre exactement aux templates approuvés dans le
+    # WhatsApp Business Manager.
+    whatsapp_template_otp: '%env(WHATSAPP_TEMPLATE_OTP)%'
+    whatsapp_template_welcome: '%env(WHATSAPP_TEMPLATE_WELCOME)%'
+    whatsapp_template_subscription: '%env(WHATSAPP_TEMPLATE_SUBSCRIPTION)%'
+    whatsapp_template_course_purchase: '%env(WHATSAPP_TEMPLATE_COURSE_PURCHASE)%'
+    whatsapp_otp_has_copy_button: '%env(bool:WHATSAPP_OTP_HAS_COPY_BUTTON)%'
 
 services:
     # default configuration for services in *this* file
@@ -81,6 +94,26 @@ services:
 
     App\Contract\VideoStorageInterface:
         alias: App\Service\VideoStorageFactory
+
+    App\Service\WhatsApp\CloudApiWhatsAppSender:
+        arguments:
+            $accessToken: '%whatsapp_access_token%'
+            $phoneNumberId: '%whatsapp_phone_number_id%'
+            $apiVersion: '%whatsapp_api_version%'
+            $defaultLanguage: '%whatsapp_language%'
+
+    # Point de bascule si l'on change de fournisseur WhatsApp (Twilio, BSP…) :
+    # seule cette ligne est à modifier.
+    App\Contract\WhatsAppSenderInterface:
+        alias: App\Service\WhatsApp\CloudApiWhatsAppSender
+
+    App\Service\WhatsAppService:
+        arguments:
+            $otpTemplate: '%whatsapp_template_otp%'
+            $welcomeTemplate: '%whatsapp_template_welcome%'
+            $subscriptionTemplate: '%whatsapp_template_subscription%'
+            $coursePurchaseTemplate: '%whatsapp_template_course_purchase%'
+            $otpTemplateHasCopyButton: '%whatsapp_otp_has_copy_button%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

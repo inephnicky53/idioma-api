@@ -1,0 +1,36 @@
+{% extends 'emails/base.html.twig' %}
+
+{# Twig n'a pas d'opérateur null-safe : les accès sont gardés explicitement. #}
+{% set courseTitle = course ? course.title : 'Votre cours' %}
+{% set videoCount = course ? course.videoCount : 0 %}
+{% set courseUrl = course ? frontendUrl ~ '/courses/' ~ course.id : frontendUrl ~ '/courses' %}
+{% set purchasedAt = purchase.purchasedAt ? purchase.purchasedAt|date('d/m/Y H:i') : 'now'|date('d/m/Y H:i') %}
+
+{% block content %}
+<mj-section>
+  <mj-column>
+    <mj-text font-size="20px" font-weight="bold">
+      Votre cours est débloqué
+    </mj-text>
+    <mj-text>
+      Merci {{ user.firstName }} ! Votre achat est confirmé, vous avez maintenant accès à
+      l'intégralité du cours.
+    </mj-text>
+    <mj-divider border-color="#e5e7eb"></mj-divider>
+    <mj-text>
+      <strong>Cours :</strong> {{ courseTitle }}
+    </mj-text>
+    {% if videoCount %}
+    <mj-text>
+      <strong>Vidéos :</strong> {{ videoCount }}
+    </mj-text>
+    {% endif %}
+    <mj-text>
+      <strong>Acheté le :</strong> {{ purchasedAt }}
+    </mj-text>
+    <mj-button background-color="#3b82f6" href="{{ courseUrl }}">
+      Commencer le cours
+    </mj-button>
+  </mj-column>
+</mj-section>
+{% endblock %}

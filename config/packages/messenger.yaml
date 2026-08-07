@@ -20,6 +20,11 @@ framework:
         routing:
             # Envoi de l'email de reçu en arrière-plan
             'App\Message\SendPaymentReceiptMessage': async
+            # Notifications client (email + WhatsApp). L'OTP, lui, reste synchrone :
+            # un code de vérification différé par une file n'aurait pas de sens.
+            'App\Message\SendWelcomeNotificationMessage': async
+            'App\Message\SendSubscriptionNotificationMessage': async
+            'App\Message\SendCoursePurchaseNotificationMessage': async
 
 when@test:
     framework:

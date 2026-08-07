@@ -1,0 +1,22 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block content %}
+<mj-section>
+  <mj-column>
+    <mj-text font-size="20px" font-weight="bold">
+      Bienvenue {{ user.firstName }} !
+    </mj-text>
+    <mj-text>
+      Votre compte {{ appName }} est vérifié et prêt à l'emploi. Vous pouvez dès maintenant
+      vous connecter, découvrir nos cours et rejoindre les sessions du club.
+    </mj-text>
+    <mj-divider border-color="#e5e7eb"></mj-divider>
+    <mj-button background-color="#3b82f6" href="{{ frontendUrl }}/login">
+      Accéder à mon espace
+    </mj-button>
+    <mj-text font-size="12px" color="#6b7280">
+      Une question ? Répondez simplement à cet email, notre équipe vous accompagne.
+    </mj-text>
+  </mj-column>
+</mj-section>
+{% endblock %}

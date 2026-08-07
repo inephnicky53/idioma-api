@@ -3,25 +3,30 @@
 namespace App\Manager;
 
 use App\Entity\User;
+use App\Message\SendWelcomeNotificationMessage;
 use App\Repository\UserRepository;
 use App\Service\EmailService;
+use App\Service\WhatsAppService;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 class OtpManager
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
         private UserRepository $userRepository,
-        // L'OTP est envoyé par email tant que l'API SMS n'est pas branchée.
-        // TODO: réintroduire l'envoi SMS (SmsService) une fois l'API configurée.
-        private EmailService $emailService
+        private EmailService $emailService,
+        private WhatsAppService $whatsAppService,
+        private MessageBusInterface $messageBus,
+        private LoggerInterface $logger,
     ) {
     }
 
     /**
-     * Finds a user by identifier (email or phone) and (re)sends an OTP by email.
+     * Finds a user by identifier (email or phone) and (re)sends an OTP.
      */
     public function sendPhoneOtp(string $identifier): void
     {
@@ -39,8 +44,12 @@ class OtpManager
     }
 
     /**
-     * Generates a 4-digit OTP for a user, stores it (10 min validity) and sends it by email.
+     * Generates a 4-digit OTP for a user, stores it (10 min validity) and delivers it.
      * Single source of truth for OTP delivery (registration + resend).
+     *
+     * WhatsApp est le canal privilégié ; l'email reste le filet de sécurité, sans
+     * quoi un numéro invalide ou une indisponibilité de Meta bloquerait l'inscription.
+     * L'envoi est synchrone : un OTP différé par une file d'attente n'a pas de sens.
      */
     public function generateAndSendOtp(User $user): void
     {
@@ -52,7 +61,12 @@ class OtpManager
         $this->entityManager->persist($user);
         $this->entityManager->flush();
 
-        $this->emailService->sendOtpEmail($user, $otp);
+        $sentViaWhatsApp = $this->whatsAppService->sendOtp($user, $otp);
+
+        if (!$sentViaWhatsApp) {
+            $this->logger->info('OTP : repli sur l\'email', ['userId' => $user->getId()]);
+            $this->emailService->sendOtpEmail($user, $otp);
+        }
     }
 
     /**
@@ -81,8 +95,12 @@ class OtpManager
             throw new BadRequestHttpException('Code OTP expiré');
         }
 
-        // Mark as verified and clear OTP. L'OTP étant délivré par email, on valide
-        // aussi l'email : c'est ce flag qui ouvre le login (UserChecker).
+        // Une re-vérification (renvoi de code, second appareil) ne doit pas
+        // resouhaiter la bienvenue : on retient l'état d'avant.
+        $isFirstVerification = !$user->isPhoneVerified();
+
+        // Mark as verified and clear OTP. On valide aussi l'email : c'est ce flag
+        // qui ouvre le login (UserChecker).
         $user->setIsPhoneVerified(true);
         $user->setIsEmailVerified(true);
         $user->setPhoneOtp(null);
@@ -90,6 +108,14 @@ class OtpManager
 
         $this->entityManager->persist($user);
         $this->entityManager->flush();
+
+        // Le compte est désormais utilisable : on souhaite la bienvenue en
+        // arrière-plan pour ne pas retarder la réponse (émission du JWT).
+        if ($isFirstVerification) {
+            $this->messageBus->dispatch(new SendWelcomeNotificationMessage(
+                userId: $user->getId(),
+            ));
+        }
 
         return $user;
     }

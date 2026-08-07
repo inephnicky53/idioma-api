@@ -1,5 +1,12 @@
 {% extends 'emails/base.html.twig' %}
 
+{# Twig n'a pas d'opérateur null-safe : les accès sont gardés explicitement. #}
+{% set plan = payment.subscriptionPlan %}
+{% set course = payment.course %}
+{% set productName = plan ? plan.name : (course ? course.title : 'Achat') %}
+{% set paidAt = payment.paidAt ? payment.paidAt|date('d/m/Y H:i') : 'now'|date('d/m/Y H:i') %}
+{% set currency = payment.currency ? payment.currency.value : 'USD' %}
+
 {% block content %}
 <mj-section>
   <mj-column>
@@ -11,16 +18,16 @@
     </mj-text>
     <mj-divider border-color="#e5e7eb"></mj-divider>
     <mj-text>
-      <strong>Produit/Service:</strong> {{ payment.subscriptionPlan?.name ?: payment.course?.title ?: 'Achat' }}
+      <strong>Produit/Service:</strong> {{ productName }}
     </mj-text>
     <mj-text>
       <strong>Référence:</strong> {{ payment.reference }}
     </mj-text>
     <mj-text>
-      <strong>Date:</strong> {{ payment.paidAt?.format('d/m/Y H:i') ?: 'now'|date('d/m/Y H:i') }}
+      <strong>Date:</strong> {{ paidAt }}
     </mj-text>
     <mj-text font-size="20px" color="#3b82f6">
-      <strong>Montant:</strong> {{ payment.amount }} {{ payment.currency?.value ?: 'USD' }}
+      <strong>Montant:</strong> {{ payment.amount }} {{ currency }}
     </mj-text>
   </mj-column>
 </mj-section>

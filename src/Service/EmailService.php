@@ -2,8 +2,10 @@
 
 namespace App\Service;
 
+use App\Entity\CoursePurchase;
 use App\Entity\News;
 use App\Entity\Payment;
+use App\Entity\Subscription;
 use App\Entity\User;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
@@ -114,6 +116,74 @@ class EmailService
                 'payment' => $payment,
                 'user' => $user,
                 'appName' => $this->appName,
+            ]));
+
+        $this->mailer->send($email);
+    }
+
+    /**
+     * Send welcome email once the account has been verified (OTP validated)
+     */
+    public function sendAccountActivatedEmail(User $user): void
+    {
+        $email = (new Email())
+            ->from($this->appEmailNoReply)
+            ->to($user->getEmail())
+            ->subject('Bienvenue chez ' . $this->appName . ' !')
+            ->html($this->twig->render('emails/welcome.html.twig', [
+                'user' => $user,
+                'appName' => $this->appName,
+                'frontendUrl' => $this->frontendUrl,
+            ]));
+
+        $this->mailer->send($email);
+    }
+
+    /**
+     * Send subscription activation (or renewal) confirmation
+     */
+    public function sendSubscriptionActivatedEmail(Subscription $subscription, bool $renewed = false): void
+    {
+        $user = $subscription->getUser();
+        if (!$user) {
+            return;
+        }
+
+        $email = (new Email())
+            ->from($this->appEmailNoReply)
+            ->to($user->getEmail())
+            ->subject(($renewed ? 'Votre abonnement est prolongé - ' : 'Votre abonnement est actif - ') . $this->appName)
+            ->html($this->twig->render('emails/subscription_activated.html.twig', [
+                'subscription' => $subscription,
+                'user' => $user,
+                'renewed' => $renewed,
+                'appName' => $this->appName,
+                'frontendUrl' => $this->frontendUrl,
+            ]));
+
+        $this->mailer->send($email);
+    }
+
+    /**
+     * Send course purchase confirmation
+     */
+    public function sendCoursePurchasedEmail(CoursePurchase $purchase): void
+    {
+        $user = $purchase->getUser();
+        if (!$user) {
+            return;
+        }
+
+        $email = (new Email())
+            ->from($this->appEmailNoReply)
+            ->to($user->getEmail())
+            ->subject('Votre cours est disponible - ' . $this->appName)
+            ->html($this->twig->render('emails/course_purchased.html.twig', [
+                'purchase' => $purchase,
+                'course' => $purchase->getCourse(),
+                'user' => $user,
+                'appName' => $this->appName,
+                'frontendUrl' => $this->frontendUrl,
             ]));
 
         $this->mailer->send($email);

@@ -16,7 +16,9 @@ use App\Enum\PaymentProvider;
 use App\Enum\PaymentStatus;
 use App\Enum\PurchaseType;
 use App\Exception\PaymentException;
+use App\Message\SendCoursePurchaseNotificationMessage;
 use App\Message\SendPaymentReceiptMessage;
+use App\Message\SendSubscriptionNotificationMessage;
 use App\Service\RateService;
 use App\Service\SmsService;
 use DateTime;
@@ -251,21 +253,45 @@ readonly class PaymentManager
 
     /**
      * Activer l'achat après paiement réussi (abonnement ou cours)
+     *
+     * Le flush est fait ici : les entités créées doivent porter un identifiant
+     * avant d'être référencées par les messages de notification.
      */
     public function activatePurchase(Payment $payment): void
     {
         $purchaseType = $payment->getPurchaseType();
 
-        match ($purchaseType) {
+        $activated = match ($purchaseType) {
             PurchaseType::SUBSCRIPTION_CLUB => $this->activateSubscription($payment),
             PurchaseType::COURSE => $this->activateCoursePurchase($payment),
         };
+
+        if ($activated === null) {
+            return;
+        }
+
+        $this->entityManager->flush();
+
+        // Notification en arrière-plan : ni le callback du prestataire ni la
+        // requête HTTP courante ne doivent attendre l'envoi.
+        $message = $activated instanceof SubscriptionActivation
+            ? new SendSubscriptionNotificationMessage(
+                subscriptionId: $activated->subscription->getId(),
+                renewed: $activated->renewed,
+            )
+            : new SendCoursePurchaseNotificationMessage(
+                coursePurchaseId: $activated->getId(),
+            );
+
+        $this->messageBus->dispatch($message);
     }
 
     /**
      * Activer l'abonnement après paiement réussi
+     *
+     * @return SubscriptionActivation|null null si l'activation est impossible
      */
-    public function activateSubscription(Payment $payment): void
+    public function activateSubscription(Payment $payment): ?SubscriptionActivation
     {
         $user = $payment->getUser();
         $plan = $payment->getSubscriptionPlan();
@@ -274,7 +300,7 @@ readonly class PaymentManager
             $this->logger->error('Cannot activate subscription: missing user or plan', [
                 'paymentId' => $payment->getId()
             ]);
-            return;
+            return null;
         }
 
         // Vérifier si l'utilisateur a déjà un abonnement actif pour ce plan
@@ -292,6 +318,8 @@ readonly class PaymentManager
                 'subscriptionId' => $existingSubscription->getId(),
                 'newEndDate' => $newEndDate->format('Y-m-d')
             ]);
+
+            return new SubscriptionActivation($existingSubscription, renewed: true);
         } else {
             // Créer un nouvel abonnement
             $subscription = new Subscription();
@@ -319,13 +347,17 @@ readonly class PaymentManager
                 'planId' => $plan->getId(),
                 'endDate' => $endDate->format('Y-m-d')
             ]);
+
+            return new SubscriptionActivation($subscription, renewed: false);
         }
     }
 
     /**
      * Activer l'achat de cours après paiement réussi
+     *
+     * @return CoursePurchase|null null si l'activation est impossible
      */
-    public function activateCoursePurchase(Payment $payment): void
+    public function activateCoursePurchase(Payment $payment): ?CoursePurchase
     {
         $user = $payment->getUser();
         $course = $payment->getCourse();
@@ -334,7 +366,7 @@ readonly class PaymentManager
             $this->logger->error('Cannot activate course purchase: missing user or course', [
                 'paymentId' => $payment->getId()
             ]);
-            return;
+            return null;
         }
 
         // Vérifier si l'achat existe déjà
@@ -347,6 +379,8 @@ readonly class PaymentManager
             $this->logger->info('Course purchase reactivated', [
                 'purchaseId' => $existingPurchase->getId()
             ]);
+
+            return $existingPurchase;
         } else {
             // Créer un nouvel achat
             $purchase = new CoursePurchase();
@@ -359,6 +393,8 @@ readonly class PaymentManager
                 'userId' => $user->getId(),
                 'courseId' => $course->getId()
             ]);
+
+            return $purchase;
         }
     }
 
