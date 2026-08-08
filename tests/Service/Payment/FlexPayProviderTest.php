@@ -101,7 +101,8 @@ class FlexPayProviderTest extends TestCase
         self::assertSame('Bearer TEST_TOKEN', $fields['authorization']);
         self::assertSame('IDIOMA', $fields['merchant']);
         self::assertSame('PAY_TEST001', $fields['reference']);
-        self::assertSame('10.00', $fields['amount']);
+        // Format documenté : unité principale sans décimale décorative.
+        self::assertSame('10', $fields['amount']);
         self::assertSame('USD', $fields['currency']);
         self::assertArrayHasKey('callback_url', $fields);
         self::assertStringContainsString('status=approved', $fields['approve_url']);
@@ -164,6 +165,140 @@ class FlexPayProviderTest extends TestCase
 
         // On ne doit surtout pas accorder l'accès : statut inchangé
         self::assertSame(PaymentStatus::WAIT, $payment->getStatus());
+    }
+
+    public function testCheckTransactionPendingKeepsPaymentWaiting(): void
+    {
+        // transaction.status "2" = en attente : le client n'a pas encore validé
+        // le push USSD. Le paiement doit rester en attente, pas basculer en échec.
+        $http = new MockHttpClient(fn () => new MockResponse(json_encode([
+            'code' => '0',
+            'message' => 'Une transaction trouvée',
+            'transaction' => ['orderNumber' => 'ORDER123', 'status' => '2'],
+        ]), ['http_code' => 200]));
+
+        $payment = $this->makeCardPayment();
+        $payment->setProviderReference('ORDER123');
+        $payment->setStatus(PaymentStatus::WAIT);
+
+        $this->makeProvider($http)->checkTransaction($payment);
+
+        self::assertSame(PaymentStatus::WAIT, $payment->getStatus());
+        self::assertFalse($payment->getStatus()->isFinal());
+    }
+
+    public function testCheckTransactionHttpErrorLeavesPaymentWaiting(): void
+    {
+        // Juste après l'initiation, FlexPay peut répondre en erreur HTTP tant que
+        // la transaction n'est pas visible. Ne rien conclure : ni exception qui
+        // remonte, ni statut final.
+        $http = new MockHttpClient(fn () => new MockResponse('<html>error</html>', ['http_code' => 500]));
+
+        $payment = $this->makeCardPayment();
+        $payment->setProviderReference('ORDER123');
+        $payment->setStatus(PaymentStatus::WAIT);
+
+        $result = $this->makeProvider($http)->checkTransaction($payment);
+
+        self::assertFalse($result);
+        self::assertSame(PaymentStatus::WAIT, $payment->getStatus());
+    }
+
+    public function testCheckTransactionUnknownStatusIsNotAFailure(): void
+    {
+        // Statut non documenté : état indéterminé, surtout pas un échec définitif.
+        $http = new MockHttpClient(fn () => new MockResponse(json_encode([
+            'code' => '0',
+            'message' => 'Une transaction trouvée',
+            'transaction' => ['orderNumber' => 'ORDER123', 'status' => '9'],
+        ]), ['http_code' => 200]));
+
+        $payment = $this->makeCardPayment();
+        $payment->setProviderReference('ORDER123');
+        $payment->setStatus(PaymentStatus::WAIT);
+
+        $this->makeProvider($http)->checkTransaction($payment);
+
+        self::assertFalse($payment->getStatus()->isFinal());
+    }
+
+    public function testCheckTransactionNeverOverwritesAFinalStatus(): void
+    {
+        // Le callback a déjà tranché : une vérification tardive ne doit pas
+        // rouvrir ni réécrire l'état acquis.
+        $http = new MockHttpClient(fn () => new MockResponse(json_encode([
+            'code' => '0',
+            'transaction' => ['orderNumber' => 'ORDER123', 'status' => '1'],
+        ]), ['http_code' => 200]));
+
+        $payment = $this->makeCardPayment();
+        $payment->setProviderReference('ORDER123');
+        $payment->setStatus(PaymentStatus::COMPLETED);
+
+        $this->makeProvider($http)->checkTransaction($payment);
+
+        self::assertSame(PaymentStatus::COMPLETED, $payment->getStatus());
+    }
+
+    public function testMobileTransactionPayloadMatchesFlexPayDocumentation(): void
+    {
+        // Doc rev 1.5 : tous les champs sont des chaînes, `type` compris, et le
+        // montant est en unité principale sans décimale décorative ("575", pas
+        // "575.00"). Le numéro part sans « + ».
+        $sent = null;
+        $http = new MockHttpClient(function (string $method, string $url, array $options) use (&$sent) {
+            self::assertSame('POST', $method);
+            self::assertSame('https://backend.flexpay.cd/api/rest/v1/paymentService', $url);
+            $sent = json_decode($options['body'], true);
+
+            return new MockResponse(json_encode([
+                'code' => '0',
+                'message' => 'Transaction envoyée',
+                'orderNumber' => 'ORDER999',
+            ]), ['http_code' => 200]);
+        });
+
+        $payment = new Payment();
+        $payment->setPaymentMethod(PaymentMethod::MOBILE);
+        $payment->setReference('PAY_TEST_MM');
+        $payment->setAmount('575.00');
+        $payment->setCurrency(Currency::CDF);
+        $payment->setPhone('243810000000');
+
+        $this->makeProvider($http)->createTransaction($payment, 1, ['phone' => '243810000000']);
+
+        self::assertSame('1', $sent['type']);
+        self::assertSame('575', $sent['amount']);
+        self::assertSame('CDF', $sent['currency']);
+        self::assertSame('IDIOMA', $sent['merchant']);
+        self::assertSame('243810000000', $sent['phone']);
+        self::assertSame('https://api.idioma.test/callback/flexpay', $sent['callbackUrl']);
+
+        // Après une initiation acceptée, le paiement passe en attente.
+        self::assertSame(PaymentStatus::WAIT, $payment->getStatus());
+        self::assertSame('ORDER999', $payment->getProviderReference());
+    }
+
+    public function testMobileTransactionKeepsRealDecimals(): void
+    {
+        // 0.5 USD reste "0.5" : seul le zéro décoratif disparaît.
+        $sent = null;
+        $http = new MockHttpClient(function (string $method, string $url, array $options) use (&$sent) {
+            $sent = json_decode($options['body'], true);
+
+            return new MockResponse(json_encode(['code' => '0', 'orderNumber' => 'ORDER998']), ['http_code' => 200]);
+        });
+
+        $payment = new Payment();
+        $payment->setPaymentMethod(PaymentMethod::MOBILE);
+        $payment->setReference('PAY_TEST_MM2');
+        $payment->setAmount('0.50');
+        $payment->setCurrency(Currency::USD);
+        $payment->setPhone('243810000000');
+
+        $this->makeProvider($http)->createTransaction($payment, 1, ['phone' => '243810000000']);
+
+        self::assertSame('0.5', $sent['amount']);
     }
 
     public function testMobileTransactionWithHtmlErrorPageFailsCleanly(): void

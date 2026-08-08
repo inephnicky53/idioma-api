@@ -137,13 +137,33 @@ readonly class PaymentManager
     }
 
     /**
-     * Attend que le paiement atteigne un état final (succès / échec) puis rend
-     * la main, de sorte que la requête POST /payments réponde directement avec
-     * le résultat. Combine deux mécanismes :
+     * Cadence des vérifications, en secondes avant la n-ième check (calquée sur
+     * PaymentStatusPoller de Connect-In). Le premier délai est volontairement
+     * long : le client vient à peine de recevoir le push USSD, il n'a pas encore
+     * saisi son PIN. Interroger FlexPay à la seconde qui suit l'initiation ne
+     * renvoie qu'un état non consolidé et fait marteler l'API pour rien.
+     * Au-delà du dernier palier, la dernière valeur est reconduite.
+     */
+    private const CHECK_BACKOFF = [5, 3, 3, 5, 5, 10, 10, 15, 20, 30];
+
+    /**
+     * Attend la résolution du paiement puis rend la main, de sorte que la requête
+     * POST /payments réponde directement avec le résultat. Combine deux mécanismes :
      *  - la relecture en base, alimentée par le callback FlexPay qui s'exécute
      *    dans une autre requête HTTP ;
      *  - une vérification active auprès de FlexPay (filet de sécurité si le
      *    callback tarde ou n'arrive jamais, par ex. en local).
+     *
+     * Deux règles héritées de Connect-In, essentielles à la justesse du verdict :
+     *
+     *  1. Seul FlexPay déclare un échec. Une réponse indéterminée (transaction
+     *     pas encore visible, réseau en vrac, statut non documenté) ne conclut
+     *     jamais — cf. FlexPayProvider::checkTransaction().
+     *  2. L'expiration de CETTE attente n'est pas un échec. Le paiement reste en
+     *     attente : le client peut encore valider son push USSD, et le callback
+     *     ou une vérification ultérieure (PATCH /payments/{id}/check-transaction,
+     *     cron) tranchera. Couper au bout de PAYMENT_WAIT_TIMEOUT en marquant
+     *     « Echec » condamnerait des paiements réellement encaissés.
      *
      * NB: PAYMENT_WAIT_TIMEOUT doit rester inférieur au timeout du reverse
      * proxy / serveur web pour éviter une coupure prématurée de la requête.
@@ -160,9 +180,18 @@ readonly class PaymentManager
         @set_time_limit($this->paymentWaitTimeout + 15);
 
         $deadline = time() + $this->paymentWaitTimeout;
+        $attempt = 0;
 
-        while (time() < $deadline) {
-            sleep($this->paymentPollInterval);
+        while (true) {
+            $delay = self::CHECK_BACKOFF[min($attempt, count(self::CHECK_BACKOFF) - 1)]
+                ?: $this->paymentPollInterval;
+
+            if (time() + $delay > $deadline) {
+                break;
+            }
+
+            sleep($delay);
+            $attempt++;
 
             // 1) Relecture en base : capte la mise à jour faite par le callback.
             try {
@@ -191,6 +220,13 @@ readonly class PaymentManager
             if ($payment->getStatus()->isFinal()) {
                 break;
             }
+        }
+
+        if (!$payment->getStatus()->isFinal()) {
+            $this->logger->info('Payment still pending when wait window elapsed', [
+                'paymentId' => $payment->getId(),
+                'attempts' => $attempt,
+            ]);
         }
 
         $this->finalizeIfSuccessful($payment);

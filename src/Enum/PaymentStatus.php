@@ -164,7 +164,16 @@ enum PaymentStatus: string
     }
 
     /**
-     * Conversion depuis code FlexPay
+     * Conversion depuis le code de statut d'une TRANSACTION FlexPay
+     * (champ `transaction.status` de GET /check/{orderNumber}).
+     *
+     * ⚠ Ne jamais appeler avec le champ `code` de la réponse : celui-ci décrit
+     * l'issue de la REQUÊTE ("0" = requête traitée), pas celle du paiement.
+     * Les confondre marque des paiements en attente comme complétés ou échoués.
+     *
+     * Un statut inconnu (champ absent, valeur non documentée) N'EST PAS un
+     * échec : c'est un état indéterminé. On reste en attente, le prochain
+     * callback ou la prochaine vérification tranchera.
      */
     public static function fromFlexPayCode(string $code): self
     {
@@ -175,7 +184,7 @@ enum PaymentStatus: string
             '3' => self::PROCESS,    // Remboursement en cours
             '4' => self::REFUNDED,   // Remboursé
             '5' => self::CANCELLED,  // Annulé par marchand
-            default => self::ERROR,
+            default => self::WAIT,   // Indéterminé : surtout pas un état final
         };
     }
 

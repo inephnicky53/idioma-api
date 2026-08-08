@@ -100,15 +100,22 @@ class CallbackController extends AbstractController
         // On vérifie le statut réel directement auprès de FlexPay via son API /check,
         // authentifiée par notre token. C'est cette vérification qui fait autorité.
         try {
-            $this->paymentManager->check($payment);
+            $verification = $this->paymentManager->check($payment);
         } catch (\Throwable $e) {
             $this->logger->error('FlexPay callback: verification failed', [
                 'paymentId' => $payment->getId(),
                 'reference' => $data['reference'],
                 'error' => $e->getMessage(),
             ]);
-            // Vérification impossible : on ne débloque rien. Le statut reste non final
+            $verification = false;
+        }
+
+        if ($verification === false) {
+            // Vérification impossible (réseau, réponse illisible) : on ne débloque
+            // rien et on ne conclut PAS à un échec. Le paiement reste en attente
             // et sera résolu par le polling frontend, un prochain callback ou un admin.
+            $this->entityManager->flush();
+
             return new JsonResponse([
                 'success' => false,
                 'message' => 'Verification pending',

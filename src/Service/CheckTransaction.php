@@ -33,18 +33,25 @@ class CheckTransaction
      */
     private function processPaymentResult(Payment $payment, array $body): void
     {
-        // Vérifier que le paiement n'est pas déjà dans un état final
-        if ($payment->getStatus()->isFinal()) {
-            $this->logger->info('Payment already in final state', [
+        // NB : on ne sort pas ici sur un statut déjà final. FlexPayProvider::checkTransaction()
+        // vient précisément d'écrire ce statut à partir de la réponse ; c'est donc
+        // le cas nominal du succès. L'idempotence est portée par `paidAt` plus bas.
+
+        // Seul `transaction.status` porte l'issue du paiement. Le champ `code`
+        // de premier niveau décrit la requête ("0" = requête traitée) : l'utiliser
+        // comme statut marquait les paiements en attente COMPLETED (code "0") ou
+        // FAILED (code "1", « aucune transaction trouvée ») à tort.
+        $statusCode = $body['transaction']['status'] ?? null;
+
+        if (((string) ($body['code'] ?? '')) !== "0" || $statusCode === null) {
+            $this->logger->info('Payment check inconclusive, still pending', [
                 'paymentId' => $payment->getId(),
-                'status' => $payment->getStatus()->value
+                'code' => $body['code'] ?? null,
             ]);
             return;
         }
 
-        // Convertir le code FlexPay en statut
-        $code = $body['payment']['status'] ?? $body['code'] ?? null;
-        $newStatus = PaymentStatus::fromFlexPayCode((string) $code);
+        $newStatus = PaymentStatus::fromFlexPayCode((string) $statusCode);
         $payment->setStatus($newStatus);
         $payment->setResponsedAt(new DateTimeImmutable());
 
@@ -54,8 +61,11 @@ class CheckTransaction
             $payment->setNotes(trim($existingNotes . "\nVérification: " . $body['message']));
         }
 
-        // Si paiement réussi, activer l'achat (abonnement ou cours) et définir paidAt
-        if ($newStatus->isSuccess()) {
+        // Si paiement réussi, activer l'achat (abonnement ou cours) et définir paidAt.
+        // `paidAt` rend l'opération idempotente : si le callback FlexPay est déjà
+        // passé par là, on ne réactive pas l'achat une seconde fois.
+        $activated = $newStatus->isSuccess() && $payment->getPaidAt() === null;
+        if ($activated) {
             $payment->setPaidAt(new DateTimeImmutable());
             $this->paymentManager->activatePurchase($payment);
         }
@@ -66,7 +76,7 @@ class CheckTransaction
         $this->logger->info('Payment processed', [
             'paymentId' => $payment->getId(),
             'status' => $payment->getStatus()->value,
-            'purchaseActivated' => $newStatus->isSuccess()
+            'purchaseActivated' => $activated
         ]);
     }
 

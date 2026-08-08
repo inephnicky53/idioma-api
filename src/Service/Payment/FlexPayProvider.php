@@ -65,12 +65,14 @@ readonly class FlexPayProvider implements PaymentProviderInterface
                 return $payment;
             }
 
+            // Payload conforme à la doc FlexPay (rev 1.5) : tous les champs sont
+            // des CHAÎNES, y compris `type`. L'ordre reprend celui de la doc.
             $request = [
                 "merchant" => $this->merchantName,
-                "type" => $type,
-                "phone" => $options['phone'] ?? $payment->getPhone(),
+                "type" => (string) $type,
                 "reference" => $payment->getReference(),
-                "amount" => $payment->getAmount(),
+                "phone" => $options['phone'] ?? $payment->getPhone(),
+                "amount" => self::flexpayAmount($payment->getAmount()),
                 "currency" => $payment->getCurrency()?->value ?? 'USD',
                 "callbackUrl" => $this->router->generate(
                     'callback_flexpay', [],
@@ -84,7 +86,8 @@ readonly class FlexPayProvider implements PaymentProviderInterface
                     'Authorization' => 'Bearer ' . $this->flexpayToken
                 ],
                 'json' => $request,
-                'timeout' => 30
+                'timeout' => 30,
+                'max_duration' => 30,
             ]);
 
             [$data, $rawBody] = $this->decodeFlexPayResponse($response);
@@ -117,6 +120,22 @@ readonly class FlexPayProvider implements PaymentProviderInterface
 
         $this->manager->flush();
         return $payment;
+    }
+
+    /**
+     * Montant tel que l'attend FlexPay : une chaîne en unité principale, sans
+     * décimales superflues (« 575 », pas « 575.00 » — cf. doc rev 1.5, exemples
+     * « 100 » / « 0.5 »). Un montant CDF envoyé avec « .00 » n'est pas le format
+     * documenté et rien ne garantit son interprétation côté opérateur.
+     *
+     * Les décimales réelles sont conservées (0.5 USD reste « 0.5 ») : seul le
+     * zéro décoratif disparaît.
+     */
+    private static function flexpayAmount(string|float|int|null $amount): string
+    {
+        $value = (float) $amount;
+
+        return rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.') ?: '0';
     }
 
     /**
@@ -185,7 +204,7 @@ readonly class FlexPayProvider implements PaymentProviderInterface
                 'authorization' => 'Bearer ' . $this->flexpayToken,
                 'merchant' => (string) $this->merchantName,
                 'reference' => $reference,
-                'amount' => (string) $payment->getAmount(),
+                'amount' => self::flexpayAmount($payment->getAmount()),
                 'currency' => $payment->getCurrency()?->value ?? 'USD',
                 'description' => (string) $description,
                 'callback_url' => $this->router->generate(
@@ -200,11 +219,22 @@ readonly class FlexPayProvider implements PaymentProviderInterface
     }
 
     /**
-     * @throws TransportExceptionInterface
-     * @throws ServerExceptionInterface
-     * @throws RedirectionExceptionInterface
-     * @throws DecodingExceptionInterface
-     * @throws ClientExceptionInterface
+     * Interroge GET /check/{orderNumber} et n'écrit un nouveau statut QUE si
+     * FlexPay a réellement tranché.
+     *
+     * Règles tirées de la doc (« API de Paiement » rev 1.5) et respectées ici :
+     *  - `code` décrit la REQUÊTE, pas le paiement. Seul `transaction.status`
+     *    fait foi.
+     *  - Juste après l'initiation, la transaction n'est pas encore visible :
+     *    FlexPay répond `code != "0"` / « Aucune transaction trouvée », souvent
+     *    avec un statut HTTP d'erreur. Ce n'est pas un échec de paiement, c'est
+     *    un état indéterminé — on laisse le paiement en attente.
+     *  - Un état final déjà acquis (callback arrivé entre-temps) n'est jamais
+     *    réécrit.
+     *
+     * @return array<string,mixed>|false false si la vérification n'a pas pu
+     *                                   aboutir (réseau, réponse non JSON) —
+     *                                   l'appelant ne doit alors rien conclure.
      */
     public function checkTransaction(Payment $payment): array|bool
     {
@@ -212,30 +242,51 @@ readonly class FlexPayProvider implements PaymentProviderInterface
             return false;
         }
 
-        $response = $this->httpClient->request('GET', $this->flexpayEndpoint . '/check/' . $payment->getProviderReference(), [
-            'headers' => [
-                'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . $this->flexpayToken
-            ],
-        ]);
+        try {
+            $response = $this->httpClient->request('GET', $this->flexpayEndpoint . '/check/' . rawurlencode($payment->getProviderReference()), [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Authorization' => 'Bearer ' . $this->flexpayToken
+                ],
+                'timeout' => 30,
+            ]);
 
-        $data = $response->toArray();
+            // `false` : on ne veut pas d'exception sur 4xx/5xx — FlexPay répond
+            // par exemple en erreur HTTP tant que la transaction n'existe pas.
+            [$data, $rawBody] = $this->decodeFlexPayResponse($response);
+        } catch (TransportExceptionInterface $e) {
+            // Panne réseau : ne rien conclure, le paiement peut très bien aboutir.
+            $this->recordRawError($payment, 'flexpay_check_error', 0, $e->getMessage());
+            $this->manager->flush();
+            return false;
+        }
 
-        // Store check transaction details in payment data
+        if ($data === null) {
+            $this->recordRawError($payment, 'flexpay_check_error', $response->getStatusCode(), $rawBody);
+            $this->manager->flush();
+            return false;
+        }
+
+        // Trace technique de la dernière vérification.
         $paymentData = $payment->getData() ?? [];
         $paymentData['flexpay_check'] = $data;
         $payment->setData($paymentData);
 
-        if (isset($data['code']) && $data['code'] === "0" && isset($data['transaction'])) {
-            $transaction = $data['transaction'];
-            $statusCode = $transaction['status'] ?? null;
-            if ($statusCode !== null) {
-                $newStatus = PaymentStatus::fromFlexPayCode((string) $statusCode);
-                $payment->setStatus($newStatus);
-                if (isset($data['message'])) {
-                    $existingNotes = $payment->getNotes() ?? '';
-                    $payment->setNotes(trim($existingNotes . "\nFlexPay Check: " . $data['message']));
-                }
+        $transaction = is_array($data['transaction'] ?? null) ? $data['transaction'] : null;
+        $statusCode = $transaction['status'] ?? null;
+
+        if (((string) ($data['code'] ?? '')) !== "0" || $statusCode === null) {
+            // Transaction pas (encore) trouvée côté FlexPay : on reste en attente.
+            $this->manager->flush();
+            return $data;
+        }
+
+        if (!$payment->getStatus()->isFinal()) {
+            $payment->setStatus(PaymentStatus::fromFlexPayCode((string) $statusCode));
+
+            if (isset($data['message'])) {
+                $existingNotes = $payment->getNotes() ?? '';
+                $payment->setNotes(trim($existingNotes . "\nFlexPay Check: " . $data['message']));
             }
         }
 
