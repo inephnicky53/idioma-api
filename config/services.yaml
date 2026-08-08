@@ -26,6 +26,7 @@ parameters:
     whatsapp_template_welcome: '%env(WHATSAPP_TEMPLATE_WELCOME)%'
     whatsapp_template_subscription: '%env(WHATSAPP_TEMPLATE_SUBSCRIPTION)%'
     whatsapp_template_course_purchase: '%env(WHATSAPP_TEMPLATE_COURSE_PURCHASE)%'
+    whatsapp_template_subscription_expired: '%env(WHATSAPP_TEMPLATE_SUBSCRIPTION_EXPIRED)%'
     whatsapp_otp_has_copy_button: '%env(bool:WHATSAPP_OTP_HAS_COPY_BUTTON)%'
 
 services:
@@ -113,6 +114,7 @@ services:
             $welcomeTemplate: '%whatsapp_template_welcome%'
             $subscriptionTemplate: '%whatsapp_template_subscription%'
             $coursePurchaseTemplate: '%whatsapp_template_course_purchase%'
+            $subscriptionExpiredTemplate: '%whatsapp_template_subscription_expired%'
             $otpTemplateHasCopyButton: '%whatsapp_otp_has_copy_button%'
 
     # add more service definitions when explicit configuration is needed

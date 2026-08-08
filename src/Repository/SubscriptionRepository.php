@@ -38,6 +38,37 @@ class SubscriptionRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * Abonnements encore marqués actifs alors que la date de fin est dépassée.
+     *
+     * @return Subscription[]
+     */
+    public function findActiveSubscriptionsPastEndDate(): array
+    {
+        return $this->createQueryBuilder('s')
+            ->where('s.status = :active')
+            ->andWhere('s.endDate < :now')
+            ->setParameter('active', 'active')
+            ->setParameter('now', new \DateTime())
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function countActiveClubSubscriptionsForUser(User $user): int
+    {
+        return (int) $this->createQueryBuilder('s')
+            ->select('COUNT(s.id)')
+            ->join('s.plan', 'p')
+            ->where('s.user = :user')
+            ->andWhere('s.status = :active')
+            ->andWhere('p.type = :club')
+            ->setParameter('user', $user)
+            ->setParameter('active', 'active')
+            ->setParameter('club', 'club')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     public function getActiveSubscriptionsCount(): int
     {
         return (int) $this->createQueryBuilder('s')

@@ -17,6 +17,7 @@ use App\Enum\PaymentProvider;
 use App\Enum\PaymentStatus;
 use App\Enum\PurchaseType;
 use App\Repository\PaymentRepository;
+use App\State\Processor\CancelPaymentProcessor;
 use App\State\Processor\CheckTransactionProcessor;
 use App\State\Processor\PaymentProcessor;
 use App\State\Processor\ValidatePaymentProcessor;
@@ -74,8 +75,10 @@ use Symfony\Component\Serializer\Annotation\Groups;
         new Delete(
             uriTemplate: '/payments/{id}/cancel',
             description: 'Annuler un paiement en attente (utilisateur ou admin)',
+            normalizationContext: ['groups' => ['payment:read']],
             security: "is_granted('ROLE_USER') and object.getUser() == user or is_granted('ROLE_ADMIN')",
-            name: 'cancel_payment'
+            name: 'cancel_payment',
+            processor: CancelPaymentProcessor::class,
         ),
     ],
     paginationEnabled: true

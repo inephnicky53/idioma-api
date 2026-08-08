@@ -285,13 +285,9 @@ class PaymentCrudController extends AbstractCrudController
             return $this->redirectToDetail($payment);
         }
 
-        // Mettre à jour le statut
-        $payment->setStatus(PaymentStatus::COMPLETED);
-        $payment->setPaidAt(new DateTime());
-        $payment->setResponsedAt(new DateTimeImmutable());
-        $payment->setNotes(($payment->getNotes() ?? '') . "\nValidé manuellement le " . date('d/m/Y H:i'));
-
-        // Activer l'achat via le PaymentManager (gère abonnement et cours)
+        // Compléter le paiement (reçu email) puis activer l'achat
+        $this->paymentManager->complete($payment);
+        $payment->setNotes(trim(($payment->getNotes() ?? '') . "\nValidé manuellement le " . date('d/m/Y H:i')));
         $this->paymentManager->activatePurchase($payment);
 
         $this->entityManager->flush();
@@ -353,41 +349,41 @@ class PaymentCrudController extends AbstractCrudController
         }
 
         try {
-            // Utiliser le service CheckTransaction pour vérifier la transaction
-            $body = $this->checkTransaction->checkSinglePayment($payment);
+            // Même logique que CallbackController / CheckTransactionProcessor :
+            // seul FlexPay /check fait foi (transaction.status), pas le corps du callback.
+            $verification = $this->paymentManager->check($payment);
 
-            if ($body !== false) {
-                if (isset($body['payment']) && $body['payment']['status'] === '0') {
-                    // Transaction réussie
-                    $payment->setStatus(PaymentStatus::COMPLETED);
-                    $payment->setResponsedAt(new DateTimeImmutable());
-
-                    // Activer l'achat via le PaymentManager
-                    $this->paymentManager->activatePurchase($payment);
-
-                    $this->entityManager->flush();
-
-                    $this->addFlash('success', sprintf(
-                        'Transaction #%d vérifiée avec succès. Statut: COMPLÉTÉE.',
-                        $payment->getId()
-                    ));
-                } else {
-                    // Transaction échouée
-                    $payment->setStatus(PaymentStatus::FAILED);
-                    //$payment->setMessage($body['message'] ?? 'Vérification échouée');
-                    $payment->setResponsedAt(new DateTimeImmutable());
-
-                    $this->entityManager->flush();
-
-                    $this->addFlash('danger', sprintf(
-                        'Transaction #%d vérifiée. Statut: ÉCHOUÉE. Message: %s',
-                        $payment->getId(),
-                        $body['message'] ?? 'Erreur inconnue'
-                    ));
-                }
-            } else {
+            if ($verification === false) {
                 $this->addFlash('warning', sprintf(
                     'Impossible de vérifier la transaction #%d. Veuillez réessayer plus tard.',
+                    $payment->getId()
+                ));
+
+                return $this->redirectToDetail($payment);
+            }
+
+            if ($payment->getStatus()->isSuccess() && $payment->getPaidAt() === null) {
+                $this->paymentManager->complete($payment);
+                $this->paymentManager->activatePurchase($payment);
+                $this->entityManager->flush();
+
+                $this->addFlash('success', sprintf(
+                    'Transaction #%d vérifiée avec succès. Statut: COMPLÉTÉE. Abonnement activé.',
+                    $payment->getId()
+                ));
+            } elseif ($payment->getStatus()->isFinal()) {
+                $this->entityManager->flush();
+
+                $this->addFlash('warning', sprintf(
+                    'Transaction #%d vérifiée. Statut final: %s.',
+                    $payment->getId(),
+                    $payment->getStatus()->getLabel()
+                ));
+            } else {
+                $this->entityManager->flush();
+
+                $this->addFlash('info', sprintf(
+                    'Transaction #%d toujours en attente côté FlexPay.',
                     $payment->getId()
                 ));
             }

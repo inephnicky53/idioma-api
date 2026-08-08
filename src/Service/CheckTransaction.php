@@ -61,12 +61,12 @@ class CheckTransaction
             $payment->setNotes(trim($existingNotes . "\nVérification: " . $body['message']));
         }
 
-        // Si paiement réussi, activer l'achat (abonnement ou cours) et définir paidAt.
+        // Si paiement réussi, compléter et activer l'achat (aligné sur CallbackController).
         // `paidAt` rend l'opération idempotente : si le callback FlexPay est déjà
         // passé par là, on ne réactive pas l'achat une seconde fois.
         $activated = $newStatus->isSuccess() && $payment->getPaidAt() === null;
         if ($activated) {
-            $payment->setPaidAt(new DateTimeImmutable());
+            $this->paymentManager->complete($payment);
             $this->paymentManager->activatePurchase($payment);
         }
 

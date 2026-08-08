@@ -25,6 +25,18 @@ framework:
             'App\Message\SendWelcomeNotificationMessage': async
             'App\Message\SendSubscriptionNotificationMessage': async
             'App\Message\SendCoursePurchaseNotificationMessage': async
+            'App\Message\SendSubscriptionExpiredMessage': async
+
+when@dev:
+    framework:
+        messenger:
+            routing:
+                # En local, envoi immédiat sans worker Messenger (Mailpit sur :1025).
+                'App\Message\SendPaymentReceiptMessage': sync
+                'App\Message\SendWelcomeNotificationMessage': sync
+                'App\Message\SendSubscriptionNotificationMessage': sync
+                'App\Message\SendCoursePurchaseNotificationMessage': sync
+                'App\Message\SendSubscriptionExpiredMessage': sync
 
 when@test:
     framework:

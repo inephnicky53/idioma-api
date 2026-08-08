@@ -86,6 +86,13 @@ class EmailServiceTest extends KernelTestCase
         $this->assertTrue(true);
     }
 
+    public function testSendSubscriptionExpiredEmail(): void
+    {
+        $this->emailService->sendSubscriptionExpiredEmail($this->makeSubscription());
+
+        $this->assertTrue(true);
+    }
+
     public function testSendCoursePurchasedEmail(): void
     {
         $course = new Course();

@@ -3,11 +3,13 @@
 namespace App\Manager;
 
 use App\Entity\User;
+use App\Message\SendWelcomeNotificationMessage;
 use App\Repository\UserRepository;
 use App\Service\EmailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 class EmailVerificationManager
 {
@@ -15,6 +17,7 @@ class EmailVerificationManager
         private EntityManagerInterface $entityManager,
         private UserRepository $userRepository,
         private EmailService $emailService,
+        private MessageBusInterface $messageBus,
     ) {
     }
 
@@ -56,12 +59,20 @@ class EmailVerificationManager
         }
 
         // Mark email as verified and clear token
+        $shouldSendWelcome = !$user->isPhoneVerified();
+
         $user->setIsEmailVerified(true);
         $user->setEmailVerificationToken(null);
         $user->setEmailVerificationTokenExpiresAt(null);
 
         $this->entityManager->persist($user);
         $this->entityManager->flush();
+
+        if ($shouldSendWelcome) {
+            $this->messageBus->dispatch(new SendWelcomeNotificationMessage(
+                userId: $user->getId(),
+            ));
+        }
 
         return $user;
     }

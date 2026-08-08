@@ -75,6 +75,7 @@ class OtpManagerTest extends KernelTestCase
             'idioma_welcome',
             'idioma_subscription_activated',
             'idioma_course_purchased',
+            'idioma_subscription_expired',
             otpTemplateHasCopyButton: true,
         );
 

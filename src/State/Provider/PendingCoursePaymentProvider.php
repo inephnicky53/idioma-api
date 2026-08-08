@@ -4,6 +4,7 @@ namespace App\State\Provider;
 
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
+use App\Entity\CoursePurchase;
 use App\Entity\Payment;
 use App\Enum\PaymentStatus;
 use App\Enum\PurchaseType;
@@ -11,11 +12,18 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 
 /**
- * Provider pour récupérer les paiements de cours en attente
- * Filtre les paiements avec les statuts INIT, WAIT, PROCESS
+ * Paiements de cours en attente : on ne retient un cours que si son
+ * paiement le plus récent (tous statuts confondus) est encore INIT/WAIT/PROCESS.
+ * Évite qu'un ancien paiement WAIT bloque le cours après annulation du dernier.
  */
 class PendingCoursePaymentProvider implements ProviderInterface
 {
+    private const PENDING_STATUSES = [
+        PaymentStatus::INIT,
+        PaymentStatus::WAIT,
+        PaymentStatus::PROCESS,
+    ];
+
     public function __construct(
         private EntityManagerInterface $entityManager,
         private Security $security
@@ -29,35 +37,49 @@ class PendingCoursePaymentProvider implements ProviderInterface
             return [];
         }
 
-        $payments = $this->entityManager->getRepository(Payment::class)
+        /** @var Payment[] $allCoursePayments */
+        $allCoursePayments = $this->entityManager->getRepository(Payment::class)
             ->createQueryBuilder('p')
             ->where('p.user = :user')
             ->andWhere('p.purchaseType = :type')
-            ->andWhere('p.status IN (:statuses)')
+            ->andWhere('p.course IS NOT NULL')
             ->setParameter('user', $user)
             ->setParameter('type', PurchaseType::COURSE)
-            ->setParameter('statuses', [
-                PaymentStatus::INIT,
-                PaymentStatus::WAIT,
-                PaymentStatus::PROCESS
-            ])
             ->orderBy('p.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
 
-        // Éviter les doublons : garder un seul paiement par cours (le plus récent)
-        $uniquePayments = [];
-        $courseIds = [];
+        $ownedCourseIds = array_map(
+            'intval',
+            $this->entityManager->getRepository(CoursePurchase::class)
+                ->createQueryBuilder('cp')
+                ->select('IDENTITY(cp.course)')
+                ->where('cp.user = :user')
+                ->andWhere('cp.isActive = true')
+                ->setParameter('user', $user)
+                ->getQuery()
+                ->getSingleColumnResult()
+        );
 
-        foreach ($payments as $payment) {
+        /** @var array<int, Payment> $latestByCourseId */
+        $latestByCourseId = [];
+        foreach ($allCoursePayments as $payment) {
             $courseId = $payment->getCourse()?->getId();
-            if ($courseId && !in_array($courseId, $courseIds)) {
-                $uniquePayments[] = $payment;
-                $courseIds[] = $courseId;
+            if ($courseId && !isset($latestByCourseId[$courseId])) {
+                $latestByCourseId[$courseId] = $payment;
             }
         }
 
-        return $uniquePayments;
+        $pending = [];
+        foreach ($latestByCourseId as $courseId => $payment) {
+            if (in_array($courseId, $ownedCourseIds, true)) {
+                continue;
+            }
+            if (in_array($payment->getStatus(), self::PENDING_STATUSES, true)) {
+                $pending[] = $payment;
+            }
+        }
+
+        return $pending;
     }
 }
-

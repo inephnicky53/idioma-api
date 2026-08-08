@@ -60,5 +60,14 @@ crons:
     clean-expired-sessions:
         spec: '17,47 * * * *'
         cmd: croncape php-session-clean
+    process-expired-subscriptions:
+        spec: '0 8 * * *'
+        cmd: croncape php bin/console app:subscriptions:process-expired
+    check-pending-payments:
+        # Filet de sécurité : résout les paiements mobile money dont l'attente
+        # synchrone (~45 s) a expiré côté requête HTTP et dont le callback
+        # FlexPay ne serait jamais arrivé (onglet fermé, panne réseau...).
+        spec: '*/5 * * * *'
+        cmd: croncape php bin/console app:payments:check-pending
 
 

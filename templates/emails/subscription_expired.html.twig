@@ -1,0 +1,30 @@
+{% extends 'emails/base.html.twig' %}
+
+{% set plan = subscription.plan %}
+{% set planName = plan ? plan.name : 'Idioma' %}
+{% set endDate = subscription.endDate ? subscription.endDate|date('d/m/Y') : '-' %}
+
+{% block content %}
+<mj-section>
+  <mj-column>
+    <mj-text font-size="20px" font-weight="bold">
+      Votre abonnement a expiré
+    </mj-text>
+    <mj-text>
+      Bonjour {{ user.firstName }}, votre abonnement <strong>{{ planName }}</strong>
+      n'a pas été renouvelé et a pris fin le {{ endDate }}.
+    </mj-text>
+    <mj-text>
+      Pour continuer à profiter de nos cours et sessions du club, renouvelez votre
+      abonnement depuis votre espace membre.
+    </mj-text>
+    <mj-divider border-color="#e5e7eb"></mj-divider>
+    <mj-button background-color="#3b82f6" href="{{ frontendUrl }}/dashboard">
+      Renouveler mon abonnement
+    </mj-button>
+    <mj-text font-size="12px" color="#6b7280">
+      Une question ? Répondez à cet email, notre équipe vous accompagne.
+    </mj-text>
+  </mj-column>
+</mj-section>
+{% endblock %}

@@ -27,6 +27,7 @@ readonly class WhatsAppService
         private string                  $welcomeTemplate,
         private string                  $subscriptionTemplate,
         private string                  $coursePurchaseTemplate,
+        private string                  $subscriptionExpiredTemplate,
         /**
          * Les templates Meta de catégorie AUTHENTICATION embarquent par défaut
          * un bouton « copier le code » qui exige de répéter l'OTP dans un
@@ -114,6 +115,24 @@ readonly class WhatsAppService
         return $this->sender->sendTemplate($phone, $this->coursePurchaseTemplate, [
             $this->firstNameOf($user),
             $purchase->getCourse()?->getTitle() ?? 'votre cours',
+        ]);
+    }
+
+    /**
+     * Rappel qu'un abonnement a expiré sans renouvellement.
+     */
+    public function sendSubscriptionExpired(Subscription $subscription): bool
+    {
+        $user = $subscription->getUser();
+        $phone = $user?->getPhone();
+        if (!$user || !$phone || $this->subscriptionExpiredTemplate === '') {
+            return false;
+        }
+
+        return $this->sender->sendTemplate($phone, $this->subscriptionExpiredTemplate, [
+            $this->firstNameOf($user),
+            $subscription->getPlan()?->getName() ?? 'Idioma',
+            $subscription->getEndDate()?->format('d/m/Y') ?? '-',
         ]);
     }
 

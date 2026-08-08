@@ -188,4 +188,28 @@ class EmailService
 
         $this->mailer->send($email);
     }
+
+    /**
+     * Notify member that their subscription has expired without renewal.
+     */
+    public function sendSubscriptionExpiredEmail(Subscription $subscription): void
+    {
+        $user = $subscription->getUser();
+        if (!$user) {
+            return;
+        }
+
+        $email = (new Email())
+            ->from($this->appEmailNoReply)
+            ->to($user->getEmail())
+            ->subject('Votre abonnement a expiré - ' . $this->appName)
+            ->html($this->twig->render('emails/subscription_expired.html.twig', [
+                'subscription' => $subscription,
+                'user' => $user,
+                'appName' => $this->appName,
+                'frontendUrl' => $this->frontendUrl,
+            ]));
+
+        $this->mailer->send($email);
+    }
 }

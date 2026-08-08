@@ -40,7 +40,8 @@ class PaymentStatusInfo
         public readonly string $descriptionEn,
         public readonly bool $isFinal,
         public readonly bool $isSuccess,
-    ) {}
+    ) {
+    }
 
     /**
      * Identifiant unique pour API Platform
@@ -50,4 +51,3 @@ class PaymentStatusInfo
         return $this->code;
     }
 }
-
