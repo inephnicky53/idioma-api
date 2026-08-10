@@ -28,9 +28,15 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
         protected readonly TeacherManager       $teacherManager,
         protected readonly TeacherRepository    $repository,
         protected readonly TeacherStatusService $statusService,
-        protected readonly LoggerInterface      $logger
+        protected readonly LoggerInterface      $logger,
+        protected readonly string               $teacherLabel = 'Idiomaster'
     )
     {
+    }
+
+    protected function teacherLabelLower(): string
+    {
+        return lcfirst($this->teacherLabel);
     }
 
     public static function getEntityFqcn(): string
@@ -41,7 +47,7 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
-            ->setEntityLabelInPlural('Idiomasters')
+            ->setEntityLabelInPlural("{$this->teacherLabel}s")
             ->setEntityLabelInSingular(function (?Teacher $teacher, ?string $pageName) {
                 return $teacher;
             })
@@ -54,7 +60,7 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
     {
         // Informations générales
         yield FormField::addTab('Informations générales')
-            ->setHelp("Les informations générales du idiomaster");
+            ->setHelp("Les informations générales du {$this->teacherLabelLower()}");
 
         yield IdField::new('id')->hideOnForm();
 
@@ -74,12 +80,12 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
         yield CollectionField::new('spokenLanguages', "Langues parlées")
             ->useEntryCrudForm(SpokenLanguageCrudController::class)
             ->setColumns(12)
-            ->setHelp('Langues que le idiomaster peut parler');
+            ->setHelp("Langues que le {$this->teacherLabelLower()} peut parler");
 
         yield CollectionField::new('teachingLanguages', "Langues enseignées")
             ->useEntryCrudForm(TeachingLanguageCrudController::class)
             ->setColumns(12)
-            ->setHelp('Langues que le idiomaster peut enseigner');
+            ->setHelp("Langues que le {$this->teacherLabelLower()} peut enseigner");
 
         // Statuts et dates
         yield BooleanField::new('isActive', "Actif")
@@ -106,7 +112,7 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
         // Média
         yield FormField::addTab("Média")
             ->onlyOnForms()
-            ->setHelp("Médias du idiomaster");
+            ->setHelp("Médias du {$this->teacherLabelLower()}");
 
         yield UrlField::new('link', "Lien de présentation")
             ->hideOnIndex()
@@ -121,11 +127,11 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
         yield UrlField::new('profile', "Photo de profil")
             ->hideOnIndex()
             ->setColumns(6)
-            ->setHelp('URL de la photo de profil du idiomaster');
+            ->setHelp("URL de la photo de profil du {$this->teacherLabelLower()}");
 
         // Description
         yield FormField::addTab('Présentation')
-            ->setHelp("Informations de présentation du idiomaster");
+            ->setHelp("Informations de présentation du {$this->teacherLabelLower()}");
 
         yield TextField::new('shortDescription', "Description courte")
             ->hideOnIndex()
@@ -150,22 +156,22 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
         // Certifications & Formations
         yield FormField::addTab("Certifications & Formations")
             ->onlyOnForms()
-            ->setHelp("Certifications et formations du idiomaster");
+            ->setHelp("Certifications et formations du {$this->teacherLabelLower()}");
 
         yield CollectionField::new('teacherCertifications', "Certifications")
             ->useEntryCrudForm(TeacherCertificationCrudController::class)
             ->hideOnIndex()
             ->setColumns(12)
-            ->setHelp('Certifications et diplômes du idiomaster');
+            ->setHelp("Certifications et diplômes du {$this->teacherLabelLower()}");
 
         yield CollectionField::new('teacherFormations', "Formations")
             ->useEntryCrudForm(TeacherFormationCrudController::class)
             ->hideOnIndex()
             ->setColumns(12)
-            ->setHelp('Formations académiques du idiomaster');
+            ->setHelp("Formations académiques du {$this->teacherLabelLower()}");
 
         // Affichages détaillés (lecture seule)
-        yield FormField::addPanel('Détails du Idiomaster')
+        yield FormField::addPanel("Détails du {$this->teacherLabel}")
             ->onlyOnDetail();
 
         // Médias (affichage)
@@ -218,7 +224,7 @@ abstract class AbstractTeacherCrudController extends AbstractCrudController
         // Statistiques (uniquement en détail)
         yield FormField::addTab('Statistiques')
             ->onlyOnDetail()
-            ->setHelp("Statistiques et avis du idiomaster");
+            ->setHelp("Statistiques et avis du {$this->teacherLabelLower()}");
 
         yield AssociationField::new('courses', "Cours donnés")
             ->onlyOnIndex();

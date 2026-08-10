@@ -18,6 +18,10 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 
 class InboxThreadCrudController extends AbstractCrudController
 {
+    public function __construct(private readonly string $teacherLabel = 'Idiomaster')
+    {
+    }
+
     public static function getEntityFqcn(): string
     {
         return InboxThread::class;
@@ -56,7 +60,7 @@ class InboxThreadCrudController extends AbstractCrudController
         yield IdField::new('id')
             ->hideOnForm();
 
-        yield AssociationField::new('teacher', "Idiomaster")
+        yield AssociationField::new('teacher', $this->teacherLabel)
             ->autocomplete()
             ->setColumns(6);
 

@@ -33,6 +33,7 @@ services:
       $apiUrl: '%app.api_url%'
       $appShortName: '%app.short_name%'
       $appName: '%app.name%'
+      $teacherLabel: '%app.teacher_label%'
 
   # makes classes in src/ available to be used as services
   # this creates a service per class whose id is the fully-qualified class name

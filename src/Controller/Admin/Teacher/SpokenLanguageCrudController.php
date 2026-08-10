@@ -12,6 +12,10 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\LocaleField;
 
 class SpokenLanguageCrudController extends AbstractCrudController
 {
+    public function __construct(private readonly string $teacherLabel = 'Idiomaster')
+    {
+    }
+
     public static function getEntityFqcn(): string
     {
         return SpokenLanguage::class;
@@ -22,7 +26,7 @@ class SpokenLanguageCrudController extends AbstractCrudController
         yield IdField::new('id')
             ->hideOnForm();
 
-        yield AssociationField::new('teacher', "Idiomaster")
+        yield AssociationField::new('teacher', $this->teacherLabel)
             ->autocomplete()
             ->setColumns(12);
 

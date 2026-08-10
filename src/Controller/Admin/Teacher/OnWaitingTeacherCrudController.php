@@ -29,17 +29,18 @@ class OnWaitingTeacherCrudController extends AbstractTeacherCrudController
         TeacherStatusService               $statusService,
         LoggerInterface                    $logger,
         private EventDispatcherInterface $dispatcher,
-        private readonly AdminUrlGenerator $adminUrlGenerator
+        private readonly AdminUrlGenerator $adminUrlGenerator,
+        string                              $teacherLabel = 'Idiomaster'
     )
     {
-        parent::__construct($teacherManager, $repository, $statusService, $logger);
+        parent::__construct($teacherManager, $repository, $statusService, $logger, $teacherLabel);
     }
 
     public function configureCrud(Crud $crud): Crud
     {
         return parent::configureCrud($crud)
-            ->setPageTitle(Crud::PAGE_INDEX, "Idiomasters en Attente")
-            ->setHelp(Crud::PAGE_INDEX, 'Idiomasters en attente de validation par l\'équipe');
+            ->setPageTitle(Crud::PAGE_INDEX, "{$this->teacherLabel}s en Attente")
+            ->setHelp(Crud::PAGE_INDEX, "{$this->teacherLabel}s en attente de validation par l'équipe");
     }
 
     public function configureActions(Actions $actions): Actions
@@ -75,11 +76,12 @@ class OnWaitingTeacherCrudController extends AbstractTeacherCrudController
 
         if ($this->statusService->activate($teacher) && $this->statusService->verify($teacher)) {
             $this->addFlash('success', sprintf(
-                'Le idiomaster "%s" a été validé et activé.',
+                'Le %s "%s" a été validé et activé.',
+                $this->teacherLabelLower(),
                 $teacher->getUser()->getFullName()
             ));
         } else {
-            $this->addFlash('error', 'Erreur lors de la validation du idiomaster.');
+            $this->addFlash('error', "Erreur lors de la validation du {$this->teacherLabelLower()}.");
         }
 
         $this->dispatcher->dispatch(
@@ -99,11 +101,12 @@ class OnWaitingTeacherCrudController extends AbstractTeacherCrudController
 
         if ($this->statusService->deactivate($teacher)) {
             $this->addFlash('warning', sprintf(
-                'Le idiomaster "%s" a été rejeté.',
+                'Le %s "%s" a été rejeté.',
+                $this->teacherLabelLower(),
                 $teacher->getUser()->getFullName()
             ));
         } else {
-            $this->addFlash('error', 'Erreur lors du rejet du idiomaster.');
+            $this->addFlash('error', "Erreur lors du rejet du {$this->teacherLabelLower()}.");
         }
 
         return $this->redirect($this->adminUrlGenerator

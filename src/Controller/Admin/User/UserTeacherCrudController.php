@@ -11,6 +11,10 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 
 class UserTeacherCrudController extends AbstractCrudController
 {
+    public function __construct(private readonly string $teacherLabel = 'Idiomaster')
+    {
+    }
+
     public static function getEntityFqcn(): string
     {
         return UserTeacher::class;
@@ -19,11 +23,16 @@ class UserTeacherCrudController extends AbstractCrudController
     public function configureCrud(Crud $crud): Crud
     {
         return $crud
-            ->setPageTitle(Crud::PAGE_INDEX, "Liste des idiomasters d'étudiants")
-            ->setEntityLabelInPlural("Idiomasters d'étudiants")
+            ->setPageTitle(Crud::PAGE_INDEX, "Liste des {$this->teacherLabelLower()}s d'étudiants")
+            ->setEntityLabelInPlural("{$this->teacherLabel}s d'étudiants")
             ->setEntityLabelInSingular(function (?UserTeacher $userTeacher, ?string $pageName) {
-                return 'edit' === $pageName ? $userTeacher : "Idiomaster d'étudiant";
+                return 'edit' === $pageName ? $userTeacher : "{$this->teacherLabel} d'étudiant";
             });
+    }
+
+    private function teacherLabelLower(): string
+    {
+        return lcfirst($this->teacherLabel);
     }
 
     public function configureFields(string $pageName): iterable
@@ -35,7 +44,7 @@ class UserTeacherCrudController extends AbstractCrudController
             ->autocomplete()
             ->setColumns(6);
 
-        yield AssociationField::new('teacher', "Idiomaster")
+        yield AssociationField::new('teacher', $this->teacherLabel)
             ->autocomplete()
             ->setColumns(6);
 

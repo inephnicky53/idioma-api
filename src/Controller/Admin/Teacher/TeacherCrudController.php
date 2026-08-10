@@ -26,17 +26,18 @@ class TeacherCrudController extends AbstractTeacherCrudController
         TeacherRepository                  $repository,
         TeacherStatusService               $statusService,
         LoggerInterface                    $logger,
-        private readonly AdminUrlGenerator $adminUrlGenerator
+        private readonly AdminUrlGenerator $adminUrlGenerator,
+        string                             $teacherLabel = 'Idiomaster'
     )
     {
-        parent::__construct($teacherManager, $repository, $statusService, $logger);
+        parent::__construct($teacherManager, $repository, $statusService, $logger, $teacherLabel);
     }
 
     public function configureCrud(Crud $crud): Crud
     {
         return parent::configureCrud($crud)
-            ->setPageTitle(Crud::PAGE_INDEX, 'Idiomasters Actifs')
-            ->setHelp(Crud::PAGE_INDEX, 'Liste des idiomasters actuellement actifs sur la plateforme');
+            ->setPageTitle(Crud::PAGE_INDEX, "{$this->teacherLabel}s Actifs")
+            ->setHelp(Crud::PAGE_INDEX, "Liste des {$this->teacherLabelLower()}s actuellement actifs sur la plateforme");
     }
 
     public function configureActions(Actions $actions): Actions
@@ -72,11 +73,12 @@ class TeacherCrudController extends AbstractTeacherCrudController
 
         if ($this->statusService->deactivate($teacher)) {
             $this->addFlash('success', sprintf(
-                'Le idiomaster "%s" a été désactivé avec succès.',
+                'Le %s "%s" a été désactivé avec succès.',
+                $this->teacherLabelLower(),
                 $teacher->getUser()->getFullName()
             ));
         } else {
-            $this->addFlash('error', 'Erreur lors de la désactivation du idiomaster.');
+            $this->addFlash('error', "Erreur lors de la désactivation du {$this->teacherLabelLower()}.");
         }
 
         return $this->redirect($this->adminUrlGenerator
@@ -98,8 +100,9 @@ class TeacherCrudController extends AbstractTeacherCrudController
         }
 
         $this->addFlash('success', sprintf(
-            '%d idiomaster(s) activé(s) avec succès.',
-            $activated
+            '%d %s(s) activé(s) avec succès.',
+            $activated,
+            $this->teacherLabelLower()
         ));
 
         return $this->redirect($this->adminUrlGenerator

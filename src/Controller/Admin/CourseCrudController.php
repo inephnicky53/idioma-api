@@ -24,6 +24,10 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
 class CourseCrudController extends AbstractCrudController
 {
+    public function __construct(private readonly string $teacherLabel = 'Idiomaster')
+    {
+    }
+
     public static function getEntityFqcn(): string
     {
         return Course::class;
@@ -71,7 +75,7 @@ class CourseCrudController extends AbstractCrudController
         yield AssociationField::new('language', "Langue")
             ->autocomplete()
             ->setColumns(6);
-        yield AssociationField::new('teacher', "Idiomaster")
+        yield AssociationField::new('teacher', $this->teacherLabel)
             ->autocomplete()
             ->setColumns(6);
         yield AssociationField::new('categories')

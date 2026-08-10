@@ -48,7 +48,8 @@ class UserCrudController extends AbstractCrudController
     public function __construct(
         private readonly EventDispatcherInterface $dispatcher,
         private readonly LoggerInterface          $logger,
-        private readonly Security                 $security
+        private readonly Security                 $security,
+        private readonly string                   $teacherLabel = 'Idiomaster'
     )
     {
     }
@@ -237,7 +238,7 @@ class UserCrudController extends AbstractCrudController
             ->setHelp('Nombre total d\'heures de cours suivies')
             ->setColumns(6);
 
-        yield AssociationField::new('teachers', 'Idiomasters suivis')
+        yield AssociationField::new('teachers', "{$this->teacherLabel}s suivis")
             ->onlyOnDetail()
             ->setTemplatePath('admin/field/teachers.html.twig')
             ->setColumns(6);

@@ -11,6 +11,10 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
 class PlanningCrudController extends AbstractCrudController
 {
+    public function __construct(private readonly string $teacherLabel = 'Idiomaster')
+    {
+    }
+
     public static function getEntityFqcn(): string
     {
         return Planning::class;
@@ -25,7 +29,7 @@ class PlanningCrudController extends AbstractCrudController
         yield AssociationField::new('course', "Cours")
             ->setColumns(6);
 
-        yield AssociationField::new('teacher', "Idiomaster")
+        yield AssociationField::new('teacher', $this->teacherLabel)
             ->setColumns(6);
 
         yield DateTimeField::new('start', "Début")
