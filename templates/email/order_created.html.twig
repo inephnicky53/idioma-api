@@ -12,7 +12,7 @@
                 Cher/Chère {{ data.order.user.fullname }},
             </mj-text>
             <mj-text color="#637381" font-size="16px">
-                Votre commande a été créée avec succès sur {{ idioma.name }}.
+                Votre commande a été créée avec succès sur {{ platform.name }}.
             </mj-text>
             
             <mj-divider border-color="#e5e7eb" border-width="1px" padding="20px 0"></mj-divider>
@@ -53,8 +53,8 @@
                 Nous traiterons votre commande dans les plus brefs délais. Vous recevrez une confirmation par email une fois le paiement validé.
             </mj-text>
             
-            <mj-button background-color="#3d165b" align="center" color="#ffffff" font-size="17px"
-                       font-weight="bold" href="{{ idioma.dashboard }}" width="300px">
+            <mj-button background-color="{{ platform.primary_color }}" align="center" color="#ffffff" font-size="17px"
+                       font-weight="bold" href="{{ platform.dashboard }}" width="300px">
                 Voir ma commande
             </mj-button>
             
@@ -62,7 +62,7 @@
                 Merci de votre confiance !
             </mj-text>
             <mj-text color="#637381" font-size="16px" padding-bottom="0">
-                L'équipe {{ idioma.name }}
+                L'équipe {{ platform.name }}
             </mj-text>
         </mj-column>
     </mj-section>

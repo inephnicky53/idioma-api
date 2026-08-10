@@ -6,13 +6,13 @@
     <mj-section background-color="#ffffff" padding-left="15px" padding-right="15px">
         <mj-column width="100%">
             <mj-text color="#212b35" font-weight="bold" font-size="20px">
-                Bienvenue sur {{ idioma.name }} !
+                Bienvenue sur {{ platform.name }} !
             </mj-text>
             <mj-text color="#637381" font-size="16px">
                 Cher/Chère {{ user }},
             </mj-text>
             <mj-text color="#637381" font-size="16px">
-                Nous sommes ravis de vous accueillir sur Idioma International, votre nouvelle plateforme
+                Nous sommes ravis de vous accueillir sur {{ platform.name }}, votre nouvelle plateforme
                 d'apprentissage des langues !
             </mj-text>
             <mj-text color="#637381" font-size="16px">
@@ -20,7 +20,7 @@
                 sommes là pour vous accompagner tout au long de ce passionnant voyage.
             </mj-text>
             <mj-text color="#637381" font-size="16px">
-                Sur {{ idioma.name }}, vous aurez accès à :
+                Sur {{ platform.name }}, vous aurez accès à :
             </mj-text>
             <mj-text color="#637381" font-size="16px">
                 <ul>
@@ -38,8 +38,8 @@
                     </li>
                 </ul>
             </mj-text>
-            <mj-button background-color="#3d165b" align="center" color="#ffffff" font-size="17px"
-                       font-weight="bold" href="{{ idioma.find_teacher }}" width="300px">
+            <mj-button background-color="{{ platform.primary_color }}" align="center" color="#ffffff" font-size="17px"
+                       font-weight="bold" href="{{ platform.find_teacher }}" width="300px">
                 Réserver un cours
             </mj-button>
             <mj-text color="#637381" font-size="16px" padding-top="30px">
@@ -51,7 +51,7 @@
                 Bonne découverte et bon apprentissage !
             </mj-text>
             <mj-text color="#637381" font-size="16px" padding-bottom="0">
-                L'équipe {{ idioma.name }}
+                L'équipe {{ platform.name }}
             </mj-text>
         </mj-column>
     </mj-section>

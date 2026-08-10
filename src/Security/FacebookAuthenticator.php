@@ -23,6 +23,7 @@ class FacebookAuthenticator extends OAuth2Authenticator implements Authenticatio
         private readonly ClientRegistry         $clientRegistry,
         private readonly EntityManagerInterface $entityManager,
         private readonly JWTTokenManagerInterface $jwtManager,
+        private readonly string                 $appUrl,
     ) {}
 
     public function supports(Request $request): ?bool
@@ -62,7 +63,7 @@ class FacebookAuthenticator extends OAuth2Authenticator implements Authenticatio
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
         $jwt = $this->jwtManager->create($token->getUser());
-        $url = 'https://idioma.vercel.app/login';
+        $url = $this->appUrl . '/login';
         $targetUrl = "$url?access_token=$jwt";
 
         return new RedirectResponse($targetUrl);

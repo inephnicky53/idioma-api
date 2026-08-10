@@ -6,11 +6,13 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class SmsService
 {
-    public function __construct(private readonly HttpClientInterface $httpClient)
+    public function __construct(
+        private readonly HttpClientInterface $httpClient,
+        private readonly string $smsFrom
+    )
     {
     }
 
-    public const SMS_FROM = "IDIOMA";
     private const BASE_URL = 'https://www.unikron.tech/api/v2/sms/send';
 
     private function getAppKey(): string
@@ -35,7 +37,7 @@ class SmsService
         $numbers = is_array($number) 
             ? implode(',', array_map(fn($n) => ltrim(trim($n), '+'), $number)) 
             : ltrim(trim($number), '+');
-        $from = substr($sender ?? self::SMS_FROM, 0, 11);
+        $from = substr($sender ?? $this->smsFrom, 0, 11);
 
         $payload = [
             'number' => $numbers,
@@ -79,6 +81,6 @@ class SmsService
      */
     public function sendBc($phone, $message): array
     {
-        return $this->send($phone, $message, self::SMS_FROM);
+        return $this->send($phone, $message, $this->smsFrom);
     }
 }

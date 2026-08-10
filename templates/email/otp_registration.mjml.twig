@@ -12,11 +12,11 @@
                 Bonjour,
             </mj-text>
             <mj-text color="#637381" font-size="16px">
-                Bienvenue sur {{ idioma.name }} ! Pour finaliser votre inscription, veuillez utiliser le code de vérification ci-dessous :
+                Bienvenue sur {{ platform.name }} ! Pour finaliser votre inscription, veuillez utiliser le code de vérification ci-dessous :
             </mj-text>
             <mj-section background-color="#f8f9fa" padding="20px" border-radius="8px">
                 <mj-column width="100%">
-                    <mj-text color="#3d165b" font-weight="bold" font-size="32px" align="center" letter-spacing="8px" font-family="monospace">
+                    <mj-text color="{{ platform.primary_color }}" font-weight="bold" font-size="32px" align="center" letter-spacing="8px" font-family="monospace">
                         {{ data.otp }}
                     </mj-text>
                 </mj-column>
@@ -31,7 +31,7 @@
                 Merci de votre confiance !
             </mj-text>
             <mj-text color="#637381" font-size="16px" padding-bottom="0">
-                L'équipe {{ idioma.name }}
+                L'équipe {{ platform.name }}
             </mj-text>
         </mj-column>
     </mj-section>

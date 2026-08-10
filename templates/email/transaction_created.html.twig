@@ -12,7 +12,7 @@
                 Cher/Chère {{ data.transaction.user.fullname }},
             </mj-text>
             <mj-text color="#637381" font-size="16px">
-                Une nouvelle transaction a été initiée pour votre commande sur {{ idioma.name }}.
+                Une nouvelle transaction a été initiée pour votre commande sur {{ platform.name }}.
             </mj-text>
             
             <mj-divider border-color="#e5e7eb" border-width="1px" padding="20px 0"></mj-divider>
@@ -51,8 +51,8 @@
                 Nous traiterons votre paiement dans les plus brefs délais. Vous recevrez une notification dès que la transaction sera confirmée.
             </mj-text>
             
-            <mj-button background-color="#3d165b" align="center" color="#ffffff" font-size="17px"
-                       font-weight="bold" href="{{ idioma.dashboard }}" width="300px">
+            <mj-button background-color="{{ platform.primary_color }}" align="center" color="#ffffff" font-size="17px"
+                       font-weight="bold" href="{{ platform.dashboard }}" width="300px">
                 Suivre ma transaction
             </mj-button>
             
@@ -60,7 +60,7 @@
                 Merci de votre patience !
             </mj-text>
             <mj-text color="#637381" font-size="16px" padding-bottom="0">
-                L'équipe {{ idioma.name }}
+                L'équipe {{ platform.name }}
             </mj-text>
         </mj-column>
     </mj-section>

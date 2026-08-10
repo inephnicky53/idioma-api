@@ -1,14 +1,21 @@
 twig:
     file_name_pattern: '*.twig'
     globals:
-        idioma:
-            name: Idioma International
-            url: '%env(APP_URL)%'
-            address: Avenue Chute de Lofoy 16, Kintambo
-            city: Kinshasa, RDC
-            find_teacher: '%env(APP_URL)%/teachers'
-            teacher_dashboard: '%env(APP_URL)%/dashboard'
-            dashboard: '%env(APP_URL)%/dashboard'
+        platform:
+            name: '%app.name%'
+            short_name: '%app.short_name%'
+            url: '%app.url%'
+            address: '%app.address%'
+            city: '%app.city%'
+            teacher_label: '%app.teacher_label%'
+            logo_path: '%app.logo_path%'
+            favicon_path: '%app.favicon_path%'
+            primary_color: '%app.primary_color%'
+            secondary_color: '%app.secondary_color%'
+            find_teacher: '%app.url%/teachers'
+            teacher_dashboard: '%app.url%/dashboard'
+            dashboard: '%app.url%/dashboard'
+        features: '%app.features%'
 
 
 when@test:

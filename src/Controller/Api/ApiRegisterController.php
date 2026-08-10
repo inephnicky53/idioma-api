@@ -37,7 +37,8 @@ class ApiRegisterController extends AbstractController
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
         private readonly EmailSender $emailSender,
-    ) 
+        private readonly string $appShortName,
+    )
     {
     }
 
@@ -223,7 +224,8 @@ class ApiRegisterController extends AbstractController
     {
         try {
             $message = sprintf(
-                'Bienvenue ! Votre code de vérification Idioma est : %s. Ce code expire dans %d minutes.',
+                'Bienvenue ! Votre code de vérification %s est : %s. Ce code expire dans %d minutes.',
+                $this->appShortName,
                 $otp,
                 self::OTP_EXPIRY_MINUTES
             );

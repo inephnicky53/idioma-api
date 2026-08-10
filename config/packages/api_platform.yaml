@@ -1,5 +1,5 @@
 api_platform:
-    title: Idioma API
+    title: '%env(APP_SHORT_NAME)% API'
     version: 1.0.0
     mapping:
         paths:

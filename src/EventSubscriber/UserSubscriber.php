@@ -15,6 +15,7 @@ readonly class UserSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private MailerInterface $mailer,
+        private string $appName,
     )
     {
     }
@@ -23,7 +24,7 @@ readonly class UserSubscriber implements EventSubscriberInterface
     {
         $user = $event->getUser();
         try {
-            $subject = "Bienvenue sur Idioma International";
+            $subject = "Bienvenue sur {$this->appName}";
             $email = (new TemplatedEmail())
                 ->to(new Address($user->getEmail()))
                 ->subject($subject)

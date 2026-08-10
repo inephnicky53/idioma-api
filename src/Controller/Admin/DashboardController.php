@@ -45,7 +45,10 @@ class DashboardController extends AbstractDashboardController
         private readonly UploaderHelper        $uploaderHelper,
         private readonly AdminUrlGenerator     $adminUrlGenerator,
         private readonly DashboardStatsService $statsService,
-        private readonly LoggerInterface       $logger
+        private readonly LoggerInterface       $logger,
+        private readonly string                $appName,
+        private readonly string                $logoPath,
+        private readonly string                $faviconPath
     )
     {
     }
@@ -79,8 +82,8 @@ class DashboardController extends AbstractDashboardController
     public function configureDashboard(): Dashboard
     {
         return Dashboard::new()
-            ->setTitle('<img src="/images/logo.png" alt="Idioma Admin" width="130" class="admin-logo">')
-            ->setFaviconPath('/images/favicon.ico')
+            ->setTitle(sprintf('<img src="%s" alt="%s Admin" width="130" class="admin-logo">', $this->logoPath, $this->appName))
+            ->setFaviconPath($this->faviconPath)
             ->renderContentMaximized()
             ->renderSidebarMinimized()
             ->setLocales([

@@ -15,7 +15,7 @@ class PaypalGateway implements GatewayInterface
     private SandboxEnvironment $environment;
     private PayPalHttpClient $client;
 
-    public function __construct()
+    public function __construct(private readonly string $apiUrl)
     {
         $this->environment = new SandboxEnvironment($_ENV['PAYPAL_CLIENT_ID'], $_ENV['PAYPAL_CLIENT_SECRET']);
         $this->client = new PayPalHttpClient($this->environment);
@@ -26,8 +26,8 @@ class PaypalGateway implements GatewayInterface
         $reference = $transaction->getReference();
         $total = $transaction->getAmount();
         $currency = $transaction->getCurrency()->getMin();
-        $returnUrl = "https://api.idioma.international/checkout/success";
-        $cancelUrl = "https://api.idioma.international/checkout/cancel";
+        $returnUrl = "{$this->apiUrl}/checkout/success";
+        $cancelUrl = "{$this->apiUrl}/checkout/cancel";
 
         try {
             $payment = $this->createPayment($total, $currency, $returnUrl, $cancelUrl, $reference);

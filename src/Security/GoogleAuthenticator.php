@@ -24,6 +24,7 @@ class GoogleAuthenticator extends OAuth2Authenticator implements AuthenticationE
         private readonly ClientRegistry           $clientRegistry,
         private readonly EntityManagerInterface   $entityManager,
         private readonly JWTTokenManagerInterface $jwtManager,
+        private readonly string                   $appUrl,
     )
     {
     }
@@ -65,7 +66,7 @@ class GoogleAuthenticator extends OAuth2Authenticator implements AuthenticationE
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
         $jwt = $this->jwtManager->create($token->getUser());
-        $url = 'https://idioma.vercel.app/login';
+        $url = $this->appUrl . '/login';
 
         $targetUrl = "$url?access_token=$jwt";
 

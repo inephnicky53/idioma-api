@@ -11,6 +11,14 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class SecurityController extends AbstractController
 {
+    public function __construct(
+        private readonly string $appShortName,
+        private readonly string $logoPath,
+        private readonly string $faviconPath
+    )
+    {
+    }
+
     #[Route(path: '/', name: 'app_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
@@ -24,9 +32,9 @@ class SecurityController extends AbstractController
 
             // OPTIONAL parameters to customize the login form:
             'translation_domain' => 'admin',
-            'favicon_path' => 'img/favicon.png',
+            'favicon_path' => $this->faviconPath,
             'page_title' => 'Connexion',
-            'logo' => '<img src="./images/logo.png" alt="Idioma" style="width: 120px; height: auto;"/>',
+            'logo' => sprintf('<img src=".%s" alt="%s" style="width: 120px; height: auto;"/>', $this->logoPath, $this->appShortName),
             'csrf_token_intention' => 'authenticate',
             'target_path' => $this->generateUrl('admin'),
             'username_label' => 'Email',
