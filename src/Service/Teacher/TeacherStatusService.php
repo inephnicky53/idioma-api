@@ -62,8 +62,8 @@ readonly class TeacherStatusService
             $currentUser = $this->security->getUser();
             
             $teacher->setIsActive(false)
-                ->setActivatedAt(new \DateTimeImmutable()) // Correction: devrait être deactivatedAt
-                ->setActivatedBy($currentUser)
+                ->setActivatedAt(null)
+                ->setActivatedBy(null)
                 ->setStatus(Teacher::STATUS_DEACTIVATE); // Ajout du statut
 
             $this->entityManager->flush();

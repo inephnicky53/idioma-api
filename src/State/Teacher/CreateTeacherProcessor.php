@@ -43,7 +43,8 @@ readonly class CreateTeacherProcessor implements ProcessorInterface
             $data->certifications,
             $data->formations,
             $data->availabilities,
-            $data->spokenLanguages
+            $data->spokenLanguages,
+            $data->languages
         ));
     }
 }

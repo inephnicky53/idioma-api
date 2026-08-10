@@ -19,6 +19,7 @@ use App\Repository\LanguageRepository;
 use App\Repository\UserTeacherRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
+use InvalidArgumentException;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 
@@ -40,13 +41,21 @@ readonly class TeacherManager
     {
         $language = $this->languageRepository->findOneBy(['locale' => $model->language]);
         if (is_null($language))
-            throw new Exception("La langue sélectionnée n'existe pas");
+            throw new InvalidArgumentException("La langue sélectionnée n'existe pas");
 
         $currency = $this->currencyRepository->findOneBy(['min' => $model->currency]);
         if (is_null($currency))
-            throw new Exception("La devise sélectionnée n'existe pas");
+            throw new InvalidArgumentException("La devise sélectionnée n'existe pas");
 
+        /** @var User $user */
         $user = $this->security->getUser();
+
+        if ($model->firstname) {
+            $user->setFirstname($model->firstname);
+        }
+        if ($model->lastname) {
+            $user->setName($model->lastname);
+        }
 
         $teacher = (new Teacher())
             ->setUser($user)
@@ -76,7 +85,7 @@ readonly class TeacherManager
             $lang = $this->languageRepository->findOneBy(['locale' => $item->language]);
 
             if (is_null($lang))
-                throw new Exception("La langue sélectionnée n'existe pas");
+                throw new InvalidArgumentException("La langue sélectionnée n'existe pas");
 
             $teacher->addTeachingLanguage(
                 (new TeachingLanguage())
@@ -88,7 +97,7 @@ readonly class TeacherManager
             $lang = $this->languageRepository->findOneBy(['locale' => $item->language]);
             
             if (is_null($lang))
-                throw new Exception("La langue sélectionnée n'existe pas");
+                throw new InvalidArgumentException("La langue sélectionnée n'existe pas");
 
             $teacher->addTeacherCertification(
                 (new TeacherCertification())
@@ -140,6 +149,11 @@ readonly class TeacherManager
         $teacher->setIsVerified(true);
         $teacher->setVerifiedAt(new \DateTimeImmutable());
         $teacher->setVerifiedBy($this->security->getUser());
+
+        $user = $teacher->getUser();
+        if ($user instanceof User && !in_array('ROLE_TEACHER', $user->getRoles(), true)) {
+            $user->setRoles([...$user->getRoles(), 'ROLE_TEACHER']);
+        }
 
         $this->em->persist($teacher);
         $this->em->flush();

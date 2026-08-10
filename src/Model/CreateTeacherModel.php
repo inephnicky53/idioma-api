@@ -7,9 +7,9 @@ class CreateTeacherModel
     public function __construct(
         public string $fullname,
 
-        public string $firstname,
+        public ?string $firstname,
 
-        public string $lastname,
+        public ?string $lastname,
 
         public string $country,
 
@@ -21,23 +21,23 @@ class CreateTeacherModel
 
         public string $currency,
 
-        public string $profile,
+        public ?string $profile,
 
-        public string $video,
+        public ?string $video,
 
-        public string $link,
+        public ?string $link,
 
-        public ?string $shortDescription = null,
+        public ?string $shortDescription,
 
-        public string $description,
+        public ?string $description,
 
-        public string $experience,
+        public ?string $experience,
 
-        public string $motivation,
+        public ?string $motivation,
 
-        public string $hookTitle,
+        public ?string $hookTitle,
 
-        public string $timezone,
+        public ?string $timezone,
 
         /** @var CertificationModel[] $certifications */
         public array  $certifications = [],

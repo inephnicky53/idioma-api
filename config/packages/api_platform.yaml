@@ -26,3 +26,5 @@ api_platform:
         html: ['text/html']
     keep_legacy_inflector: false
     use_symfony_listeners: true
+    exception_to_status:
+        InvalidArgumentException: 400
