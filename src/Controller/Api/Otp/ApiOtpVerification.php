@@ -30,6 +30,7 @@ class ApiOtpVerification extends AbstractController
             //$user = $userRepository->find($otp?->getTypeId());
             $user->setIsPhoneVerified(true);
             $userRepository->add($user, true);
+            $OTPRepository->remove($otp, true);
             $status = Idioma::STATE_SUCCESS;
             $message = "Votre numéro de téléphone a été confirmé";
         }
