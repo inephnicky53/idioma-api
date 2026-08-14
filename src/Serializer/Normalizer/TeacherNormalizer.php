@@ -14,7 +14,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 readonly class TeacherNormalizer implements NormalizerInterface
 {
     public function __construct(
-        #[Autowire(service: 'serializer.normalizer.object')]
+        #[Autowire(service: 'api_platform.jsonld.normalizer.item')]
         private NormalizerInterface $normalizer,
         private Security            $security
     )

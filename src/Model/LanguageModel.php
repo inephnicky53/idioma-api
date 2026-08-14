@@ -6,7 +6,7 @@ class LanguageModel
 {
     public function __construct(
         public string $language,
-        public string $level
+        public ?string $level = null
     )
     {
     }

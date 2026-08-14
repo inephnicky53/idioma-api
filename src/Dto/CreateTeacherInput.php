@@ -31,6 +31,7 @@ class CreateTeacherInput
     )]
     public ?string $phone = null;
 
+    #[Assert\NotNull]
     #[Assert\Positive] // S'assurer que le prix est positif
     public ?float $price = null;
 

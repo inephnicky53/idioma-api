@@ -83,6 +83,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
         ),
         new Post(
             uriTemplate: "teachers/become",
+            itemUriTemplate: "/teachers/{id}",
             security: "is_granted('ROLE_USER')",
             input: CreateTeacherInput::class,
             processor: CreateTeacherProcessor::class,
@@ -169,7 +170,7 @@ class Teacher
     #[Groups(['teacher:list', 'course:list', 'user:courses', 'user:teacher:get', 'planning:show', 'user:inbox', 'order:list'])]
     private ?User $user = null;
 
-    #[ORM\ManyToMany(targetEntity: Language::class, inversedBy: 'teachers')]
+    #[ORM\ManyToMany(targetEntity: Language::class)]
     #[Groups(['teacher:list'])]
     private Collection $languages;
 
@@ -184,7 +185,7 @@ class Teacher
     #[ORM\OneToMany(targetEntity: Course::class, mappedBy: 'teacher')]
     private Collection $courses;
 
-    #[ORM\Column(type: Types::TEXT)]
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Groups(['teacher:list', 'teacher:show', 'teacher:become', 'planning:show', 'teacher:update'])]
     private ?string $description = null;
 
@@ -434,7 +435,7 @@ class Teacher
         return $this->description;
     }
 
-    public function setDescription(string $description): static
+    public function setDescription(?string $description): static
     {
         $this->description = $description;
 

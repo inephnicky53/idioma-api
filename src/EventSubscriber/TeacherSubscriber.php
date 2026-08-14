@@ -43,7 +43,10 @@ readonly class TeacherSubscriber implements EventSubscriberInterface
         }
 
         $message = "Votre demande pour devenir idiomaster est en cours de traitement";
-        $this->smsService->sendBc($teacher->getUser()->getPhone(), $message);
+        try {
+            $this->smsService->sendBc($teacher->getUser()->getPhone(), $message);
+        } catch (\Throwable $e) {
+        }
     }
 
     public function onTeacherValidated(TeacherValidatedEvent $event): void
@@ -67,7 +70,10 @@ readonly class TeacherSubscriber implements EventSubscriberInterface
 
         $message = "Votre demande pour devenir idiomaster vient d'etre valide, vous pouvez consulter votre compte";
 
-        $this->smsService->sendBc($user->getPhone(), $message);
+        try {
+            $this->smsService->sendBc($user->getPhone(), $message);
+        } catch (\Throwable $e) {
+        }
     }
 
     public static function getSubscribedEvents(): array
