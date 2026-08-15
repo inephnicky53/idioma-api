@@ -236,7 +236,7 @@ class Teacher
     private ?string $timezone = null;
 
     #[ORM\OneToMany(targetEntity: Disponibility::class, mappedBy: 'teacher', cascade: ["persist"], orphanRemoval: true)]
-    #[Groups(['teacher:show', 'teacher:disponibilities'])]
+    #[Groups(['teacher:list', 'teacher:show', 'teacher:disponibilities'])]
     private Collection $disponibilities;
 
     #[ORM\Column(nullable: true)]

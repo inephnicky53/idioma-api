@@ -16,22 +16,22 @@ class Disponibility
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['teacher:show', 'teacher:disponibilities'])]
+    #[Groups(['teacher:list', 'teacher:show', 'teacher:disponibilities'])]
     private ?string $day = null;
 
     #[ORM\Column]
-    #[Groups(['teacher:show', 'teacher:disponibilities'])]
+    #[Groups(['teacher:list', 'teacher:show', 'teacher:disponibilities'])]
     private ?string $start = null;
 
     #[ORM\Column]
-    #[Groups(['teacher:show', 'teacher:disponibilities'])]
+    #[Groups(['teacher:list', 'teacher:show', 'teacher:disponibilities'])]
     private ?string $end = null;
 
     #[ORM\ManyToOne(inversedBy: 'disponibilities')]
     private ?Teacher $teacher = null;
 
     #[ORM\Column]
-    #[Groups(['teacher:show'])]
+    #[Groups(['teacher:list', 'teacher:show'])]
     private ?bool $isActive;
 
     public function __construct()
