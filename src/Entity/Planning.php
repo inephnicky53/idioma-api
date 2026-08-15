@@ -26,6 +26,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
     operations: [
         new GetCollection(
             uriTemplate: "user/plannings",
+            security: "is_granted('ROLE_USER')",
             provider: UserPlanningProvider::class
         ),
         new Post(
@@ -43,18 +44,18 @@ use Symfony\Component\Serializer\Annotation\Groups;
         new Patch(
             uriTemplate: "plannings/{id}/start",
             denormalizationContext: ['groups' => ['planning:start']],
-            security: "is_granted('ROLE_USER')",
+            security: "is_granted('ROLE_USER') and is_granted('PLANNING_MANAGE', object)",
             processor: StartPlanningProcessor::class
         ),
         new Patch(
             uriTemplate: "plannings/{id}/link",
             denormalizationContext: ['groups' => ['planning:meeting:link']],
-            security: "is_granted('ROLE_USER')",
+            security: "is_granted('ROLE_USER') and is_granted('PLANNING_MANAGE', object)",
             processor: PersistProcessor::class
         ),
         new Delete(
             uriTemplate: "plannings/{id}/cancel",
-            security: "is_granted('ROLE_USER')",
+            security: "is_granted('ROLE_USER') and is_granted('PLANNING_MANAGE', object)",
             processor: PlanningCancelProcessor::class
         ),
     ],
