@@ -24,13 +24,53 @@ readonly class InboxManager
     {
         /** @var User $user */
         $user = $this->security->getUser();
+        $teacher = $data->getTeacher();
 
-        if ($user === $data->getTeacher()->getUser())
-            throw new \Exception("You can't create a thread to yourself");
+        if (!$teacher) {
+            throw new \InvalidArgumentException('Teacher is required');
+        }
 
-        $thread = $this->em->getRepository(InboxThread::class)->findOneBy(['teacher' => $data->getTeacher()]);
-        if ($thread)
-            throw new \Exception("You already have a thread with this teacher");
+        $teacherUser = $teacher->getUser();
+        $isTeacherInitiator = $teacherUser && $user === $teacherUser;
+
+        if ($isTeacherInitiator) {
+            $student = null;
+            foreach ($data->getParticipants() as $participant) {
+                if ($participant !== $user) {
+                    $student = $participant;
+                    break;
+                }
+            }
+
+            if (!$student instanceof User) {
+                throw new \InvalidArgumentException('A student participant is required');
+            }
+
+            foreach ($this->em->getRepository(InboxThread::class)->findBy(['teacher' => $teacher]) as $existing) {
+                if ($existing->getParticipants()->contains($student)) {
+                    return $existing;
+                }
+            }
+
+            if (!$data->getParticipants()->contains($user)) {
+                $data->addParticipant($user);
+            }
+        } else {
+            if ($user === $teacherUser) {
+                throw new \InvalidArgumentException("You can't create a thread with yourself");
+            }
+
+            foreach ($user->getInboxThreads() as $existing) {
+                if ($existing->getTeacher()?->getId() === $teacher->getId()) {
+                    return $existing;
+                }
+            }
+
+            $data->addParticipant($user);
+            if ($teacherUser) {
+                $data->addParticipant($teacherUser);
+            }
+        }
 
         $this->em->persist($data);
         $this->em->flush();

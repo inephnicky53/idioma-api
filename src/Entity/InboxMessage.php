@@ -9,6 +9,7 @@ use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use App\Repository\InboxMessageRepository;
+use App\State\Inbox\SendInboxMessageProcessor;
 use App\Trait\Datable;
 use App\Trait\Deletable;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -21,7 +22,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ApiResource(
     operations: [
         new Get(
-            security: "is_granted('MESSAGE_READ', object)"
+            security: "is_granted('ROLE_USER')"
         ),
         new GetCollection(
             security: "is_granted('ROLE_USER')"
@@ -37,6 +38,8 @@ use Symfony\Component\Serializer\Annotation\Groups;
         new Post(
             normalizationContext: ['groups' => ['inbox:chat:send']],
             denormalizationContext: ['groups' => ['inbox:chat:send']],
+            processor: SendInboxMessageProcessor::class,
+            security: "is_granted('ROLE_USER')",
         ),
         new Patch()
     ],

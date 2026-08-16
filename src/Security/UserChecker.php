@@ -37,8 +37,17 @@ class UserChecker implements UserCheckerInterface
      */
     public function checkPostAuth(UserInterface $user): void
     {
-        if ($user instanceof User && null !== $user->getConfirmationToken()) {
-            throw new UserNotFoundException();
+        if (!$user instanceof User || null === $user->getConfirmationToken()) {
+            return;
         }
+
+        // Admins can access the back-office even if email verification is pending.
+        // JWT login (/api/login) does not use this checker, so blocking admins here
+        // would reject valid credentials on the Symfony login form only.
+        if (in_array('ROLE_ADMIN', $user->getRoles(), true)) {
+            return;
+        }
+
+        throw new UserNotFoundException();
     }
 }

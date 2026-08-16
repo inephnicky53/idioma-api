@@ -8,6 +8,7 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use App\Repository\InboxThreadRepository;
 use App\State\Inbox\CreateInboxThreadProcessor;
+use App\State\Teacher\TeacherInboxThreadProvider;
 use App\Trait\Datable;
 use App\Trait\Deletable;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -22,13 +23,16 @@ use Symfony\Component\Serializer\Annotation\Groups;
             uriTemplate: "user/inbox/threads",
             normalizationContext: ['groups' => ['user:inbox']],
             security: "is_granted('ROLE_USER')",
+            provider: TeacherInboxThreadProvider::class,
+        ),
+        new Post(
+            uriTemplate: "user/inbox/threads",
+            denormalizationContext: ['groups' => ['inbox:new']],
+            processor: CreateInboxThreadProcessor::class,
+            security: "is_granted('ROLE_USER')",
         ),
         new Get(
             normalizationContext: ['groups' => ['inbox_thread:read']],
-        ),
-        new Post(
-            denormalizationContext: ['groups' => ['inbox:new']],
-            processor: CreateInboxThreadProcessor::class,
         ),
     ]
 )]

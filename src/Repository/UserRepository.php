@@ -75,13 +75,11 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
      */
     public function loadUserByIdentifier($phoneOrEmail): ?UserInterface
     {
-        dd($phoneOrEmail);
         return $this->createQueryBuilder('u')
-            ->where('u.u.phone = :query OR u.email = :query')
+            ->where('u.phone = :query OR u.email = :query')
             ->setParameter('query', $phoneOrEmail)
             ->getQuery()
             ->getOneOrNullResult();
-
     }
 
     public function findByPhoneOrUsername(string $emailOrPhone)

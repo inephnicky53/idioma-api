@@ -16,6 +16,7 @@ use App\Entity\InboxThread;
 use App\Entity\Language;
 use App\Entity\Order;
 use App\Entity\Package;
+use App\Entity\Partner;
 use App\Entity\Planning;
 use App\Entity\Rate;
 use App\Entity\Transaction;
@@ -117,6 +118,7 @@ class DashboardController extends AbstractDashboardController
 
         yield MenuItem::linkToCrud('Langues', 'fas fa-language', Language::class);
         yield MenuItem::linkToCrud('Catégories', 'fas fa-tags', Category::class);
+        yield MenuItem::linkToCrud('Partenaires', 'fas fa-handshake', Partner::class);
 
         // Section Pédagogie
         yield MenuItem::section('Pédagogie')
