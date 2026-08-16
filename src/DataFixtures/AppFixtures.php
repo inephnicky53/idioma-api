@@ -3,6 +3,7 @@
 namespace App\DataFixtures;
 
 use App\Entity\Category;
+use App\Entity\Attachment;
 use App\Entity\Course;
 use App\Entity\CourseLesson;
 use App\Entity\CourseSection;
@@ -273,6 +274,15 @@ class AppFixtures extends Fixture
                 $this->addCurriculum($course);
                 // duration is a manual fallback; getTotalDurationMinutes() prefers the curriculum sum.
                 $course->setDuration($this->faker->randomElement([30, 45, 60, 90]));
+
+                // Deterministic seeded stock photo per course so the cover image always resolves,
+                // instead of leaving thumbnails empty and falling back to the theme's placeholder art.
+                $thumbnail = (new Attachment())->setName(sprintf(
+                    'https://picsum.photos/seed/course-%s/600/400',
+                    substr(md5($course->getTitle() . $i), 0, 10)
+                ));
+                $course->addThumbnail($thumbnail);
+                $manager->persist($thumbnail);
 
                 $manager->persist($course);
                 $courses[] = $course;

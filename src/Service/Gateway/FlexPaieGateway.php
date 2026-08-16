@@ -14,17 +14,16 @@ class FlexPaieGateway implements GatewayInterface
 {
     private array $options = [
         'currency' => 'USD',
-        'merchant_phone' => '243974807116',
-        'merchant_name' => 'IDIOMA',
         'type' => 1,
     ];
-
-    private string $flexPayToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJcL2xvZ2luIiwicm9sZXMiOlsiTUVSQ0hBTlQiXSwiZXhwIjoxNzk2Mzk1NTQwLCJzdWIiOiJhMjc0ZjkwNzAwYjM3ZWMyNDhhNGIwOGQ1NTZlY2NkMyJ9.TTjErhzq3FqzJPR65cZ0pTTK3Hepw6qDGt-f780VuTo";
 
     public function __construct(
         private readonly EntityManagerInterface $manager,
         private readonly RouterInterface        $router,
         private readonly HttpClientInterface    $httpClient,
+        private readonly string                 $flexPayToken,
+        private readonly string                 $flexPayEndpoint,
+        private readonly string                 $merchantName,
     )
     {
     }
@@ -36,7 +35,7 @@ class FlexPaieGateway implements GatewayInterface
 
     private function getFlexpaieRemoteEndpoint(): string
     {
-        return 'https://backend.flexpay.cd/api/rest/v1';
+        return $this->flexPayEndpoint;
     }
 
     public function process(Transaction $transaction): array|false
@@ -79,7 +78,7 @@ class FlexPaieGateway implements GatewayInterface
         $callbackUrl = $this->router->generate('callback_flexpaie', [], UrlGeneratorInterface::ABSOLUTE_URL);
 
         $request = [
-            'merchant' => $this->options['merchant_name'],
+            'merchant' => $this->merchantName,
             'type' => $type,
             'phone' => $transaction->getPhone(),
             'reference' => $transaction->getReference(),

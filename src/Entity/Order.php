@@ -65,12 +65,19 @@ class Order
     #[Groups(['order:list'])]
     private ?string $operator = null;
 
+    /**
+     * @var Collection<int, UserCourse>
+     */
+    #[ORM\OneToMany(targetEntity: UserCourse::class, mappedBy: 'command')]
+    private Collection $userCourses;
+
     public function __construct()
     {
         if (is_null($this->createdAt))
             $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = new \DateTimeImmutable();
         $this->products = new ArrayCollection();
+        $this->userCourses = new ArrayCollection();
     }
 
     public function getId(): ?int

@@ -21,6 +21,13 @@ parameters:
     subscriptions: '%env(bool:FEATURE_SUBSCRIPTIONS)%'
     course_marketplace: '%env(bool:FEATURE_COURSE_MARKETPLACE)%'
     sms: '%env(bool:FEATURE_SMS)%'
+  app.frontend_url: '%env(FRONTEND_URL)%'
+  flexpay.token: '%env(FLEXPAY)%'
+  flexpay.endpoint: '%env(FLEXPAY_ENDPOINT)%'
+  flexpay.merchant_name: '%env(FLEXPAY_MERCHANT_NAME)%'
+  paypal.client_id: '%env(PAYPAL_ID)%'
+  paypal.client_secret: '%env(PAYPAL_KEY)%'
+  paypal.mode: '%env(PAYPAL_MODE)%'
 
 services:
   # default configuration for services in *this* file
@@ -82,6 +89,18 @@ services:
       $processor: '@api_platform.doctrine.orm.state.persist_processor'
 
   App\Service\Gateway\FlexPaieGateway:
+    arguments:
+      $flexPayToken: '%flexpay.token%'
+      $flexPayEndpoint: '%flexpay.endpoint%'
+      $merchantName: '%flexpay.merchant_name%'
+    tags: [ 'app.payment_gateway' ]
+
+  App\Service\Gateway\PaypalGateway:
+    arguments:
+      $clientId: '%paypal.client_id%'
+      $clientSecret: '%paypal.client_secret%'
+      $mode: '%paypal.mode%'
+      $frontendUrl: '%app.frontend_url%'
     tags: [ 'app.payment_gateway' ]
 
   App\Service\OperatorProcess:

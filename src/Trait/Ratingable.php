@@ -20,6 +20,7 @@ trait Ratingable
     /**
      * @return Collection<int, Rating>
      */
+    #[Groups(['course:view'])]
     public function getRatings(): Collection
     {
         return $this->ratings;

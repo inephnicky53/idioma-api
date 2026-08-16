@@ -8,6 +8,7 @@ use App\Entity\Order;
 use App\Entity\OrderProduct;
 use App\Entity\Transaction;
 use App\Entity\User;
+use App\Entity\UserCourse;
 use App\Entity\UserTeacher;
 use App\Event\OrderCreatedEvent;
 use App\Event\OrderConfirmedEvent;
@@ -61,17 +62,28 @@ readonly class TransactionManager
         foreach ($dto->products as $p) {
             $teacher = $p->teacher;
             $package = $p->package;
+            $course = $p->course;
 
-            if (!$teacher || !$package) {
+            if ($course) {
+                $price = $course->isIsPromote() && $course->getAmountPromo() > 0
+                    ? $course->getAmountPromo()
+                    : $course->getAmount();
+                $amount += $price;
+
+                $product = (new OrderProduct())
+                    ->setCourse($course)
+                    ->setAmount($price);
+            } elseif ($teacher && $package) {
+                $price = ($teacher->getPrice() * $package->getHours()) * (1 - $package->getDiscount() / 100);
+                $amount += $price;
+
+                $product = (new OrderProduct())
+                    ->setTeacher($teacher)
+                    ->setPackage($package)
+                    ->setAmount($price);
+            } else {
                 throw new PaymentException('Invalid product data.');
             }
-
-            $amount += ($teacher->getPrice() * $package->getHours()) * (1 - $package->getDiscount() / 100);
-
-            $product = (new OrderProduct())
-                ->setTeacher($teacher)
-                ->setPackage($package)
-                ->setAmount($amount);
 
             $this->em->persist($product);
             $order->addProduct($product);
@@ -122,9 +134,12 @@ readonly class TransactionManager
         // Dispatch TransactionCreatedEvent
         $this->eventDispatcher->dispatch(new TransactionCreatedEvent($transaction));
 
-        $this->process->process($transaction);
+        $result = $this->process->process($transaction);
 
-        return new JsonResponse(['message' => 'Transaction created successfully.']);
+        return new JsonResponse(array_merge(
+            ['message' => 'Transaction created successfully.', 'transactionId' => $transaction->getId()],
+            is_array($result) ? $result : []
+        ));
     }
 
     /**
@@ -190,11 +205,39 @@ readonly class TransactionManager
             throw new \Exception('User not found for order.');
 
         foreach ($order->getProducts() as $product) {
+            if ($product->getCourse()) {
+                $this->updateUserCourseData($user, $product, $transaction);
+                continue;
+            }
+
             $this->updateUserTeacherData($user, $product, $transaction);
             $this->updateTeacherWallet($product, $transaction);
         }
 
         $this->em->flush();
+    }
+
+    private function updateUserCourseData(User $user, OrderProduct $product, Transaction $transaction): void
+    {
+        $course = $product->getCourse();
+        $userCourse = $this->em->getRepository(UserCourse::class)
+            ->findOneBy(['user' => $user, 'course' => $course]);
+
+        if (!$userCourse) {
+            $userCourse = (new UserCourse())
+                ->setUser($user)
+                ->setCourse($course);
+        }
+
+        $userCourse
+            ->setIsBuyed(true)
+            ->setBuyedAt(new \DateTimeImmutable())
+            ->setAmount($product->getAmount() ?? 0)
+            ->setCurrency($transaction->getCurrency())
+            ->setCommand($transaction->getCommand())
+            ->setStatus('active');
+
+        $this->em->persist($userCourse);
     }
 
     private function updateUserTeacherData(User $user, OrderProduct $product, Transaction $transaction): void

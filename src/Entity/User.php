@@ -122,7 +122,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:show', 'teacher:list', 'user:courses', 'user:teacher:get', 'user:inbox', 'planning:show', 'rating:list', 'payment:get'])]
+    #[Groups(['user:show', 'teacher:list', 'user:courses', 'user:teacher:get', 'user:inbox', 'planning:show', 'rating:list', 'payment:get', 'course:view'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
@@ -332,7 +332,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return (string)$this->email;
     }
 
-    #[Groups(['teacher:list', 'course:list', 'user:teacher:get', 'user:inbox', 'rating:list', 'payment:get', 'order:list'])]
+    #[Groups(['teacher:list', 'course:list', 'user:teacher:get', 'user:inbox', 'rating:list', 'payment:get', 'order:list', 'course:view'])]
     public function getFullname(): ?string
     {
         $fullname = $this->firstname;
