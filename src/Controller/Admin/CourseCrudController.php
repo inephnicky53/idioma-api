@@ -132,6 +132,38 @@ class CourseCrudController extends AbstractCrudController
         yield AssociationField::new('currency', "Dévise")
             ->onlyOnForms()
             ->setColumns(6);
+
+        yield TextField::new('shortDescription', "Résumé court")
+            ->hideOnIndex()
+            ->setColumns(12)
+            ->setHelp('Affiché dans les listes de résultats et les cartes de cours');
+
+        yield BooleanField::new('isBestseller', "Best-seller")
+            ->hideOnIndex()
+            ->setColumns(3);
+
+        yield BooleanField::new('isNew', "Nouveauté")
+            ->hideOnIndex()
+            ->setColumns(3);
+
+        yield BooleanField::new('hasCertificate', "Certificat")
+            ->hideOnIndex()
+            ->setColumns(3);
+
+        yield BooleanField::new('hasLifetimeAccess', "Accès à vie")
+            ->hideOnIndex()
+            ->setColumns(3);
+
+        yield IntegerField::new('quizzesCount', "Nombre de quiz")
+            ->hideOnIndex()
+            ->setColumns(6)
+            ->setHelp('Nombre de quiz affiché sur la fiche cours');
+
+        yield CollectionField::new('sections', 'Modules du cours')
+            ->useEntryCrudForm(CourseSectionCrudController::class)
+            ->hideOnIndex()
+            ->setColumns(12)
+            ->setHelp('Gérez les modules et leçons du cours');
     }
 
 }

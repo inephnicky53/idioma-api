@@ -132,6 +132,31 @@ class Course
     #[ORM\Column(length: 255)]
     private ?string $shortDescription = null;
 
+    #[ORM\Column(options: ['default' => false])]
+    #[Groups(['course:list'])]
+    private ?bool $isBestseller = false;
+
+    #[ORM\Column(options: ['default' => false])]
+    #[Groups(['course:list'])]
+    private ?bool $isNew = false;
+
+    #[ORM\Column(options: ['default' => true])]
+    #[Groups(['course:list'])]
+    private ?bool $hasCertificate = true;
+
+    #[ORM\Column(options: ['default' => true])]
+    #[Groups(['course:list'])]
+    private ?bool $hasLifetimeAccess = true;
+
+    #[ORM\Column(options: ['default' => 0])]
+    #[Groups(['course:list'])]
+    private ?int $quizzesCount = 0;
+
+    #[ORM\OneToMany(mappedBy: 'course', targetEntity: CourseSection::class, cascade: ['persist'], orphanRemoval: true)]
+    #[ORM\OrderBy(['position' => 'ASC'])]
+    #[Groups(['course:list'])]
+    private Collection $sections;
+
     public function __construct()
     {
         $this->categories = new ArrayCollection();
@@ -142,6 +167,7 @@ class Course
         $this->updatedAt = new \DateTimeImmutable();
         $this->thumbnails = new ArrayCollection();
         $this->studentCourses = new ArrayCollection();
+        $this->sections = new ArrayCollection();
     }
 
     public static function getDifficulties()
@@ -494,6 +520,127 @@ class Course
         $this->shortDescription = $shortDescription;
 
         return $this;
+    }
+
+    public function isIsBestseller(): ?bool
+    {
+        return $this->isBestseller;
+    }
+
+    public function setIsBestseller(bool $isBestseller): static
+    {
+        $this->isBestseller = $isBestseller;
+
+        return $this;
+    }
+
+    public function isIsNew(): ?bool
+    {
+        return $this->isNew;
+    }
+
+    public function setIsNew(bool $isNew): static
+    {
+        $this->isNew = $isNew;
+
+        return $this;
+    }
+
+    public function isHasCertificate(): ?bool
+    {
+        return $this->hasCertificate;
+    }
+
+    public function setHasCertificate(bool $hasCertificate): static
+    {
+        $this->hasCertificate = $hasCertificate;
+
+        return $this;
+    }
+
+    public function isHasLifetimeAccess(): ?bool
+    {
+        return $this->hasLifetimeAccess;
+    }
+
+    public function setHasLifetimeAccess(bool $hasLifetimeAccess): static
+    {
+        $this->hasLifetimeAccess = $hasLifetimeAccess;
+
+        return $this;
+    }
+
+    public function getQuizzesCount(): ?int
+    {
+        return $this->quizzesCount;
+    }
+
+    public function setQuizzesCount(int $quizzesCount): static
+    {
+        $this->quizzesCount = $quizzesCount;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, CourseSection>
+     */
+    public function getSections(): Collection
+    {
+        return $this->sections;
+    }
+
+    public function addSection(CourseSection $section): static
+    {
+        if (!$this->sections->contains($section)) {
+            $this->sections->add($section);
+            $section->setCourse($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSection(CourseSection $section): static
+    {
+        if ($this->sections->removeElement($section)) {
+            if ($section->getCourse() === $this) {
+                $section->setCourse(null);
+            }
+        }
+
+        return $this;
+    }
+
+    #[Groups(['course:list'])]
+    public function getEnrolledCount(): int
+    {
+        return $this->studentCourses->count();
+    }
+
+    #[Groups(['course:list'])]
+    public function getLessonsCount(): int
+    {
+        $count = 0;
+        foreach ($this->sections as $section) {
+            $count += $section->getLessons()->count();
+        }
+        return $count;
+    }
+
+    /**
+     * Total duration in minutes: sum of lesson durations if a curriculum
+     * exists, otherwise falls back to the manually set `duration` field.
+     */
+    #[Groups(['course:list'])]
+    public function getTotalDurationMinutes(): int
+    {
+        $sum = 0;
+        foreach ($this->sections as $section) {
+            foreach ($section->getLessons() as $lesson) {
+                $sum += $lesson->getDurationMinutes() ?? 0;
+            }
+        }
+        return $sum > 0 ? $sum : (int) $this->duration;
     }
 
 }

@@ -4,6 +4,8 @@ namespace App\DataFixtures;
 
 use App\Entity\Category;
 use App\Entity\Course;
+use App\Entity\CourseLesson;
+use App\Entity\CourseSection;
 use App\Entity\Currency;
 use App\Entity\Disponibility;
 use App\Entity\Language;
@@ -49,6 +51,25 @@ class AppFixtures extends Fixture
         'Rédaction et écriture',
     ];
 
+    private const SECTION_TOPICS = [
+        'Introduction et objectifs',
+        'Les fondamentaux',
+        'Mise en pratique',
+        'Approfondissement',
+        'Cas pratiques',
+        'Révisions et évaluation',
+    ];
+
+    private const LESSON_TOPICS = [
+        'Présentation de la leçon',
+        'Vocabulaire clé',
+        'Exercice guidé',
+        'Dialogue commenté',
+        'Point de grammaire',
+        'Mise en situation',
+        'Quiz de validation',
+    ];
+
     public function __construct(
         private readonly UserPasswordHasherInterface $hasher
     ) {
@@ -73,6 +94,7 @@ class AppFixtures extends Fixture
 
         $this->createBookingsAndRatings($manager, $teachers, $students);
         $this->createEnrollments($manager, $courses, $students);
+        $this->createCourseRatings($manager, $courses, $students);
         $manager->flush();
     }
 
@@ -221,24 +243,36 @@ class AppFixtures extends Fixture
                 $course = new Course();
                 $course->setTitle(sprintf('%s : %s', $language?->getName() ?? 'Langue', $topic));
                 $course->setShortDescription($this->faker->sentence(12));
-                $course->setDescription($this->faker->paragraphs(2, true));
+                $course->setDescription($this->faker->paragraphs(3, true));
                 $course->setStatus('published');
                 $course->setDifficulty($this->faker->randomElement([
                     Course::DIFFICULTY_EASY, Course::DIFFICULTY_NORMAL, Course::DIFFICULTY_HARD,
                 ]));
                 $course->setLevel($this->faker->randomElement(['A1', 'A2', 'B1', 'B2', 'C1']));
-                $course->setDuration($this->faker->randomElement([30, 45, 60, 90]));
                 $course->setIsPaid(true);
                 $course->setLanguage($language);
                 $course->setTeacher($teacher);
-                $course->setAmount((float) $this->faker->numberBetween(10, 60));
-                $course->setAmountPromo(0.0);
-                $course->setIsPromote(false);
+
+                $amount = (float) $this->faker->numberBetween(15, 80);
+                $isPromoted = $this->faker->boolean(35);
+                $course->setAmount($amount);
+                $course->setAmountPromo($isPromoted ? round($amount * $this->faker->randomFloat(2, 0.5, 0.8), 2) : 0.0);
+                $course->setIsPromote($isPromoted);
                 $course->setCurrency($teacher->getCurrency());
+
+                $course->setIsBestseller($this->faker->boolean(20));
+                $course->setIsNew($this->faker->boolean(25));
+                $course->setHasCertificate($this->faker->boolean(80));
+                $course->setHasLifetimeAccess($this->faker->boolean(90));
+                $course->setQuizzesCount($this->faker->numberBetween(0, 5));
 
                 foreach ($this->faker->randomElements($this->categories, rand(1, 2)) as $category) {
                     $course->addCategory($category);
                 }
+
+                $this->addCurriculum($course);
+                // duration is a manual fallback; getTotalDurationMinutes() prefers the curriculum sum.
+                $course->setDuration($this->faker->randomElement([30, 45, 60, 90]));
 
                 $manager->persist($course);
                 $courses[] = $course;
@@ -246,6 +280,37 @@ class AppFixtures extends Fixture
         }
 
         return $courses;
+    }
+
+    private function addCurriculum(Course $course): void
+    {
+        $sectionTopics = $this->faker->randomElements(
+            self::SECTION_TOPICS,
+            min(count(self::SECTION_TOPICS), rand(3, 5))
+        );
+
+        foreach (array_values($sectionTopics) as $sectionIndex => $sectionTitle) {
+            $section = (new CourseSection())
+                ->setTitle(sprintf('%d. %s', $sectionIndex + 1, $sectionTitle))
+                ->setPosition($sectionIndex);
+
+            $lessonCount = rand(2, 5);
+            for ($l = 0; $l < $lessonCount; $l++) {
+                $lessonTitle = $this->faker->randomElement(self::LESSON_TOPICS);
+                $isQuiz = $lessonTitle === 'Quiz de validation';
+
+                $section->addLesson(
+                    (new CourseLesson())
+                        ->setTitle(sprintf('%d.%d %s', $sectionIndex + 1, $l + 1, $lessonTitle))
+                        ->setType($isQuiz ? CourseLesson::TYPE_QUIZ : CourseLesson::TYPE_VIDEO)
+                        ->setDurationMinutes($isQuiz ? 0 : $this->faker->numberBetween(4, 18))
+                        ->setPosition($l)
+                        ->setIsPreview($sectionIndex === 0 && $l === 0)
+                );
+            }
+
+            $course->addSection($section);
+        }
     }
 
     /**
@@ -334,6 +399,27 @@ class AppFixtures extends Fixture
             $userCourse->setStatus('active');
 
             $manager->persist($userCourse);
+        }
+    }
+
+    /**
+     * @param Course[] $courses
+     * @param User[] $students
+     */
+    private function createCourseRatings(ObjectManager $manager, array $courses, array $students): void
+    {
+        foreach ($courses as $course) {
+            $reviewCount = $this->faker->numberBetween(0, 12);
+            $reviewers = $this->faker->randomElements($students, min($reviewCount, count($students)));
+
+            foreach ($reviewers as $student) {
+                $rating = new Rating();
+                $rating->setCourse($course);
+                $rating->setUser($student);
+                $rating->setStars((float) $this->faker->randomElement([3, 3.5, 4, 4, 4.5, 4.5, 5, 5]));
+                $rating->setComment($this->faker->sentence(rand(8, 20)));
+                $manager->persist($rating);
+            }
         }
     }
 }
