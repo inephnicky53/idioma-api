@@ -103,12 +103,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
         ),
         new Patch(
             denormalizationContext: ['groups' => ['teacher:update']],
-            security: "is_granted('ROLE_USER')",
+            security: "is_granted('ROLE_USER') and is_granted('TEACHER_MANAGE', object)",
         ),
         new Patch(
             uriTemplate: "teacher/{id}/pricing",
             denormalizationContext: ['groups' => ['teacher:pricing']],
-            security: "is_granted('ROLE_USER')",
+            security: "is_granted('ROLE_USER') and is_granted('TEACHER_MANAGE', object)",
         ),
         new Patch(
             uriTemplate: '/teacher/disponibilities',
