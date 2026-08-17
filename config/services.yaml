@@ -24,6 +24,7 @@ parameters:
   app.frontend_url: '%env(FRONTEND_URL)%'
   flexpay.token: '%env(FLEXPAY)%'
   flexpay.endpoint: '%env(FLEXPAY_ENDPOINT)%'
+  flexpay.card_endpoint: '%env(FLEXPAY_CARD_ENDPOINT)%'
   flexpay.merchant_name: '%env(FLEXPAY_MERCHANT_NAME)%'
   paypal.client_id: '%env(PAYPAL_ID)%'
   paypal.client_secret: '%env(PAYPAL_KEY)%'
@@ -100,6 +101,15 @@ services:
       $clientId: '%paypal.client_id%'
       $clientSecret: '%paypal.client_secret%'
       $mode: '%paypal.mode%'
+      $frontendUrl: '%app.frontend_url%'
+    tags: [ 'app.payment_gateway' ]
+
+  App\Service\Gateway\FlexPayCardGateway:
+    arguments:
+      $flexPayToken: '%flexpay.token%'
+      $flexPayEndpoint: '%flexpay.endpoint%'
+      $flexPayCardEndpoint: '%flexpay.card_endpoint%'
+      $merchantName: '%flexpay.merchant_name%'
       $frontendUrl: '%app.frontend_url%'
     tags: [ 'app.payment_gateway' ]
 

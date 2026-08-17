@@ -41,7 +41,7 @@ class Rating
     private ?int $id = null;
 
     #[ORM\Column]
-    #[Groups(['rating:list', 'rating:create', 'course:view'])]
+    #[Groups(['rating:list', 'rating:create', 'course:view', 'teacher:show'])]
     private ?float $stars = null;
 
     #[ORM\ManyToOne(inversedBy: 'ratings')]
@@ -54,11 +54,11 @@ class Rating
 
     #[ORM\ManyToOne(inversedBy: 'ratings')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['rating:list', 'course:view'])]
+    #[Groups(['rating:list', 'course:view', 'teacher:show'])]
     private ?User $user = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['rating:list', 'rating:create', 'course:view'])]
+    #[Groups(['rating:list', 'rating:create', 'course:view', 'teacher:show'])]
     private ?string $comment = null;
 
     public function __construct()
