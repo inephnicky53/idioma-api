@@ -37,7 +37,7 @@ class Rating
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['rating:list'])]
+    #[Groups(['rating:list', 'course:view', 'teacher:show'])]
     private ?int $id = null;
 
     #[ORM\Column]
