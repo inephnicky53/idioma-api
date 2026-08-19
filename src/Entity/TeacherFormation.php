@@ -104,7 +104,7 @@ class TeacherFormation
         return $this->yearStart;
     }
 
-    public function setYearStart(int $start): static
+    public function setYearStart(?int $start): static
     {
         $this->yearStart = $start;
 
@@ -116,7 +116,7 @@ class TeacherFormation
         return $this->yearEnd;
     }
 
-    public function setYearEnd(int $end): static
+    public function setYearEnd(?int $end): static
     {
         $this->yearEnd = $end;
 

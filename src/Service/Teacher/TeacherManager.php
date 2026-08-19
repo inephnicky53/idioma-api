@@ -96,10 +96,14 @@ readonly class TeacherManager
         }
 
         foreach ($model->certifications as $item) {
-            $lang = $this->languageRepository->findOneBy(['locale' => $item->language]);
-            
+            $lang = $item->language
+                ? $this->languageRepository->findOneBy(['locale' => $item->language])
+                : null;
+
+            // Skip incomplete/invalid certifications instead of failing the whole
+            // become-teacher request.
             if (is_null($lang))
-                throw new InvalidArgumentException("La langue sélectionnée n'existe pas");
+                continue;
 
             $teacher->addTeacherCertification(
                 (new TeacherCertification())
@@ -117,8 +121,8 @@ readonly class TeacherManager
                     ->setCertificate($item->certificate)
                     ->setUniversity($item->university)
                     ->setSpeciality($item->speciality)
-                    ->setYearStart($item->yearStart)
-                    ->setYearEnd($item->yearEnd)
+                    ->setYearStart($item->yearStart !== null && $item->yearStart !== '' ? (int) $item->yearStart : null)
+                    ->setYearEnd($item->yearEnd !== null && $item->yearEnd !== '' ? (int) $item->yearEnd : null)
                     ->setProofImage($item->proofImage)
             );
         }
