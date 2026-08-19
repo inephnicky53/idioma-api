@@ -9,7 +9,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 trait Datable
 {
     #[ORM\Column(nullable: true)]
-    #[Groups(['course:show', 'course:list', 'course:view', 'teacher:show'])]
+    #[Groups(['course:show', 'course:list', 'course:view', 'teacher:show', 'rating:list'])]
     private ?DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]

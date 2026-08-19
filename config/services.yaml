@@ -81,6 +81,11 @@ services:
     arguments:
       $features: '%app.features%'
 
+  App\Service\Streaming\GetStreamService:
+    arguments:
+      $apiKey: '%env(default::GETSTREAM_API_KEY)%'
+      $apiSecret: '%env(default::GETSTREAM_API_SECRET)%'
+
   App\State\Teacher\TeacherPricingProcessor:
     bind:
       $processor: '@api_platform.doctrine.orm.state.persist_processor'
