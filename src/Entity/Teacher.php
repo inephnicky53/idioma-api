@@ -13,14 +13,13 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Patch;
 use App\Controller\Api\Teacher\TeacherMediaController;
 use App\Controller\Api\Teacher\TeacherGetCoursesController;
-use App\Dto\CreateTeacherInput;
+use App\Controller\Api\Teacher\BecomeTeacherController;
 use App\Dto\DisponibilityOutput;
 use App\Dto\UpdateDisponibilitiesInput;
 use App\Dto\UpdateTeacherInput;
 use App\Dto\Wallet\WithdrawalRequestInput;
 use App\Idioma;
 use App\Repository\TeacherRepository;
-use App\State\Teacher\CreateTeacherProcessor;
 use App\State\Teacher\TeacherDisponibilitiesAdvancedProvider;
 use App\State\Teacher\TeacherCollectionProvider;
 use App\State\Teacher\TeacherCheckProvider;
@@ -83,10 +82,11 @@ use Symfony\Component\Serializer\Annotation\Groups;
         ),
         new Post(
             uriTemplate: "teachers/become",
-            itemUriTemplate: "/teachers/{id}",
+            controller: BecomeTeacherController::class,
+            read: false,
+            deserialize: false,
+            validate: false,
             security: "is_granted('ROLE_USER')",
-            input: CreateTeacherInput::class,
-            processor: CreateTeacherProcessor::class,
         ),
         new Post(
             uriTemplate: 'teacher/media',

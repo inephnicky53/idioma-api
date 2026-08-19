@@ -56,9 +56,11 @@ readonly class TeacherManager
         if ($model->lastname) {
             $user->setName($model->lastname);
         }
+        if ($model->phone) {
+            $user->setPhone($model->phone);
+        }
 
         $teacher = (new Teacher())
-            ->setUser($user)
             ->setPrice($model->price)
             ->setCurrency($currency)
             ->setShortDescription($model->shortDescription)
@@ -133,6 +135,8 @@ readonly class TeacherManager
             }, $item->programs);
         }
 
+
+        $user->setTeacher($teacher);
 
         $this->em->persist($teacher);
         $this->em->flush();
