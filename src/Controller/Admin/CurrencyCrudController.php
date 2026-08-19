@@ -5,7 +5,7 @@ namespace App\Controller\Admin;
 use App\Entity\Currency;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
-use EasyCorp\Bundle\EasyAdminBundle\Field\CurrencyField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
 class CurrencyCrudController extends AbstractCrudController
 {
@@ -27,7 +27,7 @@ class CurrencyCrudController extends AbstractCrudController
 
     public function configureFields(string $pageName): iterable
     {
-        yield CurrencyField::new('name');
-        yield CurrencyField::new('min');
+        yield TextField::new('name')->setLabel('Nom');
+        yield TextField::new('min')->setLabel('Code / symbole');
     }
 }

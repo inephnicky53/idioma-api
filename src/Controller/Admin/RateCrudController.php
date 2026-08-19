@@ -5,7 +5,6 @@ namespace App\Controller\Admin;
 use App\Entity\Rate;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\CurrencyField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\NumberField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
@@ -33,7 +32,7 @@ class RateCrudController extends AbstractCrudController
             ->onlyOnForms()
             ->setColumns(6);
 
-        yield CurrencyField::new('currency')
+        yield TextField::new('currency.min', 'Devise')
             ->hideOnForm()
             ->setColumns(6);
     }
