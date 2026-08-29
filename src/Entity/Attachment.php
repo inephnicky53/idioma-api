@@ -27,21 +27,24 @@ class Attachment implements Stringable, UploadedFileAwareInterface
     #[ORM\Column(length: 255)]
     #[Groups([
         'article:list', 'establishment:list',
-        'course:list', 'user:courses', 'teacher:list'
+        'course:list', 'user:courses', 'teacher:list',
+        'inbox_thread:read', 'user:inbox',
     ])]
     private string $name = '';
 
     #[ORM\Column(options: ["unsigned" => true])]
-    #[Groups(['article:list', 'establishment:list'])]
+    #[Groups(['article:list', 'establishment:list', 'inbox_thread:read', 'user:inbox'])]
     private int $size = 0;
 
     #[Vich\UploadableField(mapping: "attachments", fileNameProperty: "name", size: "size", mimeType: "mimeType", originalName: "originalName", dimensions: "dimensions")]
     private ?File $file = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['inbox_thread:read', 'user:inbox'])]
     private ?string $mimeType = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['inbox_thread:read', 'user:inbox'])]
     private ?string $originalName = null;
 
     #[ORM\Column(type: Types::JSON, nullable: true)]
@@ -192,6 +195,14 @@ class Attachment implements Stringable, UploadedFileAwareInterface
         $this->user = $user;
 
         return $this;
+    }
+
+    #[Groups(['inbox_thread:read', 'user:inbox'])]
+    public function getUrl(): string
+    {
+        $year = $this->createdAt?->format('Y') ?: date('Y');
+
+        return '/uploads/attachments/' . $year . '/' . $this->name;
     }
 }
 

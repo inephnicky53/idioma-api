@@ -48,7 +48,11 @@ use Symfony\Component\Serializer\Annotation\Groups;
     operations: [
         new GetCollection(
             normalizationContext: ['groups' => ['teacher:list']],
-            provider: TeacherCollectionProvider::class
+            provider: TeacherCollectionProvider::class,
+            paginationEnabled: true,
+            paginationItemsPerPage: 8,
+            paginationMaximumItemsPerPage: 30,
+            paginationClientItemsPerPage: true,
         ),
         new Get(
             provider: TeacherGetProvider::class,
@@ -90,9 +94,10 @@ use Symfony\Component\Serializer\Annotation\Groups;
         ),
         new Post(
             uriTemplate: 'teacher/media',
-            inputFormats: ['multipart' => ['multipart/form-data']],
             controller: TeacherMediaController::class,
-            denormalizationContext: ['groups' => ['teacher:media']],
+            read: false,
+            deserialize: false,
+            validate: false,
             security: "is_granted('ROLE_USER')",
         ),
         new Post(
@@ -128,8 +133,11 @@ use Symfony\Component\Serializer\Annotation\Groups;
 #[ApiFilter(SearchFilter::class, properties: [
     'id' => 'exact',
     'language' => 'exact',
+    'language.name' => 'exact',
+    'languages' => 'exact',
     'teachingLanguages' => 'exact',
     'spokenLanguages' => 'exact',
+    'spokenLanguages.language' => 'exact',
     'categories' => 'exact',
     'status' => 'exact',
     'user.country' => 'exact',
@@ -211,7 +219,7 @@ class Teacher
     #[Groups(['teacher:list', 'teacher:become', 'teacher:update'])]
     private ?string $shortDescription = null;
 
-    #[ORM\OneToMany(targetEntity: SpokenLanguage::class, mappedBy: 'teacher', cascade: ["persist"])]
+    #[ORM\OneToMany(targetEntity: SpokenLanguage::class, mappedBy: 'teacher', cascade: ['persist'], orphanRemoval: true)]
     #[Groups(['teacher:list', 'teacher:become', 'teacher:update'])]
     private Collection $spokenLanguages;
 
@@ -232,6 +240,10 @@ class Teacher
     private ?string $video = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['teacher:list', 'teacher:show', 'teacher:media'])]
+    private ?string $videoPoster = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['teacher:show', 'teacher:disponibilities', 'teacher:update'])]
     private ?string $timezone = null;
 
@@ -250,11 +262,11 @@ class Teacher
     #[Groups(['teacher:show'])]
     private ?int $step = 1;
 
-    #[ORM\OneToMany(targetEntity: TeacherCertification::class, mappedBy: 'teacher', cascade: ["persist"])]
+    #[ORM\OneToMany(targetEntity: TeacherCertification::class, mappedBy: 'teacher', cascade: ['persist'], orphanRemoval: true)]
     #[Groups(['teacher:show', 'teacher:certifications'])]
     private Collection $teacherCertifications;
 
-    #[ORM\OneToMany(targetEntity: TeacherFormation::class, mappedBy: 'teacher', cascade: ["persist"])]
+    #[ORM\OneToMany(targetEntity: TeacherFormation::class, mappedBy: 'teacher', cascade: ['persist'], orphanRemoval: true)]
     #[Groups(['teacher:show', 'teacher:certifications'])]
     private Collection $teacherFormations;
 
@@ -267,6 +279,7 @@ class Teacher
     private ?string $profile = null;
 
     #[ORM\Column(length: 255, options: ['default' => self::STATUS_WAITING])]
+    #[Groups(['teacher:list', 'teacher:show'])]
     private ?string $status = null;
 
     #[Groups(['teacher:list'])]
@@ -624,6 +637,18 @@ class Teacher
     public function setVideo(?string $video): static
     {
         $this->video = $video;
+
+        return $this;
+    }
+
+    public function getVideoPoster(): ?string
+    {
+        return $this->videoPoster;
+    }
+
+    public function setVideoPoster(?string $videoPoster): static
+    {
+        $this->videoPoster = $videoPoster;
 
         return $this;
     }

@@ -11,7 +11,7 @@ use App\Event\OrderConfirmedEvent;
 use App\Event\TransactionConfirmedEvent;
 use App\Event\TransactionFailedEvent;
 use App\Idioma;
-use App\Kimia;
+use App\Service\Transaction\TransactionManager;
 use DateTime;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
@@ -23,16 +23,19 @@ class CheckTransaction
     private EntityManagerInterface $em;
     private OperatorProcess $process;
     private EventDispatcherInterface $eventDispatcher;
+    private TransactionManager $transactionManager;
 
     public function __construct(
         EntityManagerInterface $em,
         OperatorProcess $process,
-        EventDispatcherInterface $eventDispatcher
+        EventDispatcherInterface $eventDispatcher,
+        TransactionManager $transactionManager
     )
     {
         $this->em = $em;
         $this->process = $process;
         $this->eventDispatcher = $eventDispatcher;
+        $this->transactionManager = $transactionManager;
     }
 
     public function all()
@@ -83,20 +86,26 @@ class CheckTransaction
             $this->disapproveOrder($transaction);
             $transaction->setStatus(Idioma::STATUS_ERROR);
         }
-        $transaction->setMessage($body['message']);
-        $transaction->setResponsedAt(new DateTimeImmutable());
+        $transaction->setMessage($body['message'] ?? null);
+        $transaction->setRespondedAt(new DateTimeImmutable());
 
         $this->em->persist($transaction);
         $this->em->flush();
     }
 
+    /**
+     * Delegates to TransactionManager so the buyer is actually credited.
+     * Setting the order status here directly would mark it confirmed while
+     * granting nothing — and TransactionManager::confirmTransaction() treats
+     * that status as its "already done" guard, so the credit would be lost.
+     *
+     * @throws \Exception
+     */
     public function approuveOrder(Transaction $transaction): void
     {
-        $order = $transaction->getCommand();
-        $order->setStatus(Idioma::STATUS_SUCCESS);
+        $this->transactionManager->confirmTransaction($transaction);
 
-        // Dispatch OrderConfirmedEvent
-        $this->eventDispatcher->dispatch(new OrderConfirmedEvent($order));
+        $this->eventDispatcher->dispatch(new OrderConfirmedEvent($transaction->getCommand()));
 
         $this->em->flush();
     }

@@ -23,7 +23,7 @@ class PartnerRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('p')
             ->andWhere('p.isActive = :active')
-            ->andWhere('p.site = :both OR p.site = :site')
+            ->andWhere('(p.site = :both OR p.site = :site)')
             ->setParameter('active', true)
             ->setParameter('both', Partner::SITE_BOTH)
             ->setParameter('site', $site)

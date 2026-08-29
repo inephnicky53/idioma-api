@@ -25,6 +25,14 @@ final class BecomeTeacherController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
         if ($existing = $user->getTeacher()) {
+            $input = $parser->parse($request);
+            $violations = $validator->validate($input);
+            if ($violations->count() > 0) {
+                throw new ValidationFailedException($input, $violations);
+            }
+
+            $manager->updateFromBecomeInput($existing, $input);
+
             return $this->json([
                 'id' => $existing->getId(),
                 'status' => $existing->getStatus(),
@@ -50,6 +58,7 @@ final class BecomeTeacherController extends AbstractController
             $input->currency,
             $input->profile,
             $input->video,
+            $input->videoPoster,
             $input->link,
             $input->shortDescription,
             $input->description,

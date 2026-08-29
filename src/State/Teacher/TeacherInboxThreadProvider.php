@@ -28,6 +28,13 @@ readonly class TeacherInboxThreadProvider implements ProviderInterface
             $threads = array_merge($threads, $teacherThreads);
         }
 
-        return $threads;
+        $unique = [];
+        foreach ($threads as $thread) {
+            if ($thread->getId()) {
+                $unique[$thread->getId()] = $thread;
+            }
+        }
+
+        return array_values($unique);
     }
 }

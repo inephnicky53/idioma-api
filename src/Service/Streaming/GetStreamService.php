@@ -25,7 +25,11 @@ class GetStreamService
     }
 
     /**
-     * @param list<string> $memberUserIds Stream user ids (stringified app user ids)
+     * Interactive classroom uses Stream `default` so every participant can speak.
+     * `livestream` would mute learners (broadcast-only).
+     *
+     * @param list<string> $memberUserIds
+     * @param array<string, string> $userNames keyed by user id
      * @return array{callId: string, callType: string, apiKey: string, token: string, userId: string, isHost: bool}
      */
     public function prepareCall(
@@ -33,17 +37,17 @@ class GetStreamService
         string $callType,
         string $hostUserId,
         array $memberUserIds,
+        string $joiningUserId,
         bool $isHost,
+        array $userNames = [],
     ): array {
         if (!$this->isConfigured()) {
             throw new \RuntimeException('GetStream is not configured (GETSTREAM_API_KEY / GETSTREAM_API_SECRET).');
         }
 
-        $this->upsertUser($hostUserId);
-        foreach ($memberUserIds as $memberId) {
-            if ($memberId !== $hostUserId) {
-                $this->upsertUser($memberId);
-            }
+        $allIds = array_values(array_unique(array_merge([$hostUserId], $memberUserIds, [$joiningUserId])));
+        foreach ($allIds as $memberId) {
+            $this->upsertUser($memberId, $userNames[$memberId] ?? null);
         }
 
         $members = array_map(
@@ -51,7 +55,7 @@ class GetStreamService
                 'user_id' => $id,
                 'role' => $id === $hostUserId ? 'admin' : 'user',
             ],
-            array_values(array_unique(array_merge([$hostUserId], $memberUserIds)))
+            $allIds
         );
 
         $serverToken = $this->createServerToken($hostUserId);
@@ -81,8 +85,8 @@ class GetStreamService
             'callId' => $callId,
             'callType' => $callType,
             'apiKey' => $this->apiKey,
-            'token' => $this->createUserToken($hostUserId),
-            'userId' => $hostUserId,
+            'token' => $this->createUserToken($joiningUserId),
+            'userId' => $joiningUserId,
             'isHost' => $isHost,
         ];
     }
@@ -106,10 +110,36 @@ class GetStreamService
         ]);
     }
 
-    private function upsertUser(string $userId): void
+    public function endCall(string $callId, string $callType, string $hostUserId): void
+    {
+        if (!$this->isConfigured()) {
+            return;
+        }
+
+        $serverToken = $this->createServerToken($hostUserId);
+        $this->httpClient->request(
+            'POST',
+            self::API_BASE . "/video/call/{$callType}/{$callId}/end?api_key={$this->apiKey}",
+            [
+                'headers' => [
+                    'Authorization' => $serverToken,
+                    'Content-Type' => 'application/json',
+                    'stream-auth-type' => 'jwt',
+                ],
+                'json' => [],
+            ]
+        );
+    }
+
+    private function upsertUser(string $userId, ?string $name = null): void
     {
         $serverToken = $this->createServerToken('system');
-        $this->httpClient->request(
+        $user = ['id' => $userId, 'role' => 'user'];
+        if ($name) {
+            $user['name'] = $name;
+        }
+
+        $response = $this->httpClient->request(
             'POST',
             self::API_BASE . "/users?api_key={$this->apiKey}",
             [
@@ -120,11 +150,15 @@ class GetStreamService
                 ],
                 'json' => [
                     'users' => [
-                        $userId => ['id' => $userId, 'role' => 'user'],
+                        $userId => $user,
                     ],
                 ],
             ]
         );
+
+        if ($response->getStatusCode() >= 400) {
+            throw new \RuntimeException('GetStream user upsert failed: ' . $response->getContent(false));
+        }
     }
 
     /** @param array<string, mixed> $payload */

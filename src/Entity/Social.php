@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\SocialRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: SocialRepository::class)]
 class Social
@@ -14,12 +15,15 @@ class Social
     private ?int $id = null;
 
     #[ORM\Column(length: 20)]
+    #[Groups(['teacher:show', 'teacher:socials'])]
     private ?string $type = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['teacher:show', 'teacher:socials'])]
     private ?string $link = null;
 
     #[ORM\Column(length: 50, nullable: true)]
+    #[Groups(['teacher:show', 'teacher:socials'])]
     private ?string $icon = null;
 
     #[ORM\ManyToOne(inversedBy: 'socials')]

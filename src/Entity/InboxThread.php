@@ -66,6 +66,10 @@ class InboxThread
     #[Groups(['inbox:new', 'user:inbox'])]
     private ?Course $course = null;
 
+    #[ORM\OneToOne(inversedBy: 'salonThread')]
+    #[ORM\JoinColumn(nullable: true, unique: true, onDelete: 'CASCADE')]
+    private ?Planning $planning = null;
+
     public function __construct()
     {
         $this->dateConstructor();
@@ -156,6 +160,24 @@ class InboxThread
         return $this;
     }
 
+    public function getPlanning(): ?Planning
+    {
+        return $this->planning;
+    }
+
+    public function setPlanning(?Planning $planning): static
+    {
+        $this->planning = $planning;
+
+        return $this;
+    }
+
+    #[Groups(['user:inbox', 'inbox_thread:read'])]
+    public function getPlanningId(): ?int
+    {
+        return $this->planning?->getId();
+    }
+
     #[Groups(['user:inbox'])]
     public function getLastMessage(): ?InboxMessage
     {
@@ -167,6 +189,10 @@ class InboxThread
 
     public function __toString(): string
     {
-        return $this->getTeacher()->getUser()->getFullname();
+        if ($this->planning) {
+            return 'Salon #' . $this->planning->getId();
+        }
+
+        return $this->getTeacher()?->getUser()?->getFullname() ?: 'Conversation';
     }
 }

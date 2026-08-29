@@ -25,6 +25,8 @@ class CreateTeacherModel
 
         public ?string $video,
 
+        public ?string $videoPoster,
+
         public ?string $link,
 
         public ?string $shortDescription,

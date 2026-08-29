@@ -10,6 +10,7 @@ use App\Repository\PartnerRepository;
 use App\State\Partner\PartnerCollectionProvider;
 use App\Trait\Datable;
 use Doctrine\ORM\Mapping as ORM;
+use DateTimeImmutable;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
@@ -116,6 +117,9 @@ class Partner implements UploadedFileAwareInterface
     public function setLogoFile(?File $logoFile): static
     {
         $this->logoFile = $logoFile;
+        if ($logoFile) {
+            $this->setUpdatedAt(new DateTimeImmutable());
+        }
 
         return $this;
     }

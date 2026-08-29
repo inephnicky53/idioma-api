@@ -28,7 +28,8 @@ class JWTCreatedListener
         $user = $event->getUser();
         $assetThumbnail = count($user->getThumbnails()) > 0 ?
             $this->uploaderHelper->asset($user->getThumbnail(), 'file') : null;
-        $schemeAndHttpHost = $this->request->getMainRequest()->getSchemeAndHttpHost();
+        $mainRequest = $this->request->getMainRequest();
+        $schemeAndHttpHost = $mainRequest?->getSchemeAndHttpHost() ?? '';
 
         $payload = $event->getData();
         $payload['id'] = $user->getId();
@@ -36,13 +37,19 @@ class JWTCreatedListener
         $payload['name'] = $user->getName();
         $payload['postname'] = $user->getPostname();
         $payload['fullname'] = $user->getFullname();
-        $payload['avatar'] = $user->getThumbnail() ? "{$schemeAndHttpHost}{$assetThumbnail}" : null;
+        $payload['avatar'] = $user->getThumbnail() && $schemeAndHttpHost ? "{$schemeAndHttpHost}{$assetThumbnail}" : null;
         $payload['profile'] = $user->getProfile();
+        $teacherProfile = $user->getTeacher()?->getProfile();
+        if ($teacherProfile) {
+            $payload['teacher_profile'] = $teacherProfile;
+            if (!$payload['profile']) {
+                $payload['profile'] = $teacherProfile;
+            }
+        }
         $payload['phone'] = $user->getPhone();
         $payload['email'] = $user->getEmail();
-        $payload['isTeacher'] = (bool)$user->getTeacher();
+        $payload['isTeacher'] = (bool) $user->getTeacher();
         $payload['teacher_id'] = $user->getTeacher()?->getId();
-        $payload['teacher_profile'] = $user->getTeacher()?->getProfile();
         $payload['host'] = $schemeAndHttpHost;
         $payload['isActive'] = $user->isIsActive();
         $payload['roles'] = $user->getRoles();

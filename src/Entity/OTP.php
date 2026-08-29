@@ -14,6 +14,8 @@ class OTP
     const TYPE_RESET_PASSWORD = 'TYPE_RESET_PASSWORD';
     const TYPE_WALLET = 'TYPE_WALLET';
     const TYPE_WITHDRAWAL = 'TYPE_WITHDRAWAL';
+    const TYPE_PHONE_CHANGE = 'TYPE_PHONE_CHANGE';
+    const TYPE_EMAIL_CHANGE = 'TYPE_EMAIL_CHANGE';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -33,7 +35,7 @@ class OTP
     #[ORM\Column(length: 255)]
     private ?string $type = null;
 
-    #[ORM\Column(length: 15)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $phone = null;
 
     #[ORM\Column]
@@ -42,14 +44,36 @@ class OTP
     public static function generate(User $user, $n = 4, $minutes = 1, $type = self::TYPE_USER, $phone = null, $typeId = null)
     {
         $result = Generator::generate($n);
+        $destination = self::normalizeDestination($phone);
 
         return (new self())
             ->setUser($user)
             ->setPass($result)
             ->setType($type)
             ->setTypeId($typeId)
-            ->setPhone($phone)
+            ->setPhone($destination)
             ->setExpiredAt((new DateTimeImmutable())->modify("+$minutes minutes"));
+    }
+
+    /** Phone numbers stay ≤15 digits; emails / other destinations may be longer. */
+    private static function normalizeDestination(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        if (str_contains($value, '@')) {
+            return mb_substr($value, 0, 255);
+        }
+
+        $digits = preg_replace('/\D+/', '', $value) ?? '';
+
+        return $digits !== '' ? mb_substr($digits, 0, 15) : mb_substr($value, 0, 255);
     }
 
 
@@ -70,9 +94,9 @@ class OTP
         return $this;
     }
 
-    public function isExpired(): ?bool
+    public function isExpired(): bool
     {
-        return false;
+        return $this->expiredAt !== null && $this->expiredAt < new DateTimeImmutable();
     }
 
     public function getExpiredAt(): ?DateTimeImmutable
@@ -116,7 +140,7 @@ class OTP
         return $this->phone;
     }
 
-    public function setPhone(string $phone): self
+    public function setPhone(?string $phone): self
     {
         $this->phone = $phone;
 

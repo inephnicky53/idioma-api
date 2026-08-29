@@ -33,6 +33,11 @@ trait Activable
         return $this->isActive;
     }
 
+    public function getIsActive(): ?bool
+    {
+        return $this->isActive;
+    }
+
     public function setIsActive(bool $isActive): self
     {
         $this->isActive = $isActive;

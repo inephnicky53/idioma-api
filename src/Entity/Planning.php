@@ -102,6 +102,14 @@ class Planning
     #[Groups(['planning:show'])]
     private Collection $participants;
 
+    /**
+     * A free first session with this teacher: no prepaid hour is consumed when
+     * booking it, and none is refunded when cancelling it. Must be persisted —
+     * as a plain property it reverted to false on reload, so cancelling a trial
+     * credited an hour that was never paid for.
+     */
+    #[ORM\Column(options: ['default' => false])]
+    #[Groups(['planning:show'])]
     private bool $isTrial = false;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -113,7 +121,14 @@ class Planning
     private ?string $status;
 
     #[ORM\Column]
+    #[Groups(['planning:show'])]
     private ?\DateTimeImmutable $createdAt = null;
+
+    #[ORM\OneToMany(mappedBy: 'planning', targetEntity: PlanningAttendance::class, cascade: ['persist'], orphanRemoval: true)]
+    private Collection $attendances;
+
+    #[ORM\OneToOne(mappedBy: 'planning', targetEntity: InboxThread::class)]
+    private ?InboxThread $salonThread = null;
 
     public function __construct()
     {
@@ -121,6 +136,7 @@ class Planning
             $this->createdAt = new DateTimeImmutable();
         $this->start = (new DateTimeImmutable())->modify('60 minutes');
         $this->participants = new ArrayCollection();
+        $this->attendances = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -264,5 +280,33 @@ class Planning
         $this->createdAt = $createdAt;
 
         return $this;
+    }
+
+    /**
+     * @return Collection<int, PlanningAttendance>
+     */
+    public function getAttendances(): Collection
+    {
+        return $this->attendances;
+    }
+
+    public function getSalonThread(): ?InboxThread
+    {
+        return $this->salonThread;
+    }
+
+    public function setSalonThread(?InboxThread $salonThread): static
+    {
+        $this->salonThread = $salonThread;
+        if ($salonThread && $salonThread->getPlanning() !== $this) {
+            $salonThread->setPlanning($this);
+        }
+
+        return $this;
+    }
+
+    public function isSalon(): bool
+    {
+        return $this->participants->count() > 1;
     }
 }

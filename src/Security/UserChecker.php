@@ -26,6 +26,10 @@ class UserChecker implements UserCheckerInterface
             throw new UserBannedException();
         }
 
+        if ($user instanceof User && $user->isIsActive() === false) {
+            throw new UserBannedException('Ce compte a été fermé.');
+        }
+
         if ($user instanceof User && $this->loginAttemptService->limitReachedFor($user)) {
             throw new TooManyBadCredentialsException();
         }

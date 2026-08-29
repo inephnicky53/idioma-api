@@ -25,7 +25,6 @@ use App\State\User\NewsletterSubscriptionProcessor;
 use App\Trait\Datable;
 use DateTime;
 use DateTimeImmutable;
-use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -126,7 +125,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
-    #[Groups(['user:show', 'user:register', 'course:list', 'user:inbox', 'planning:show', 'payment:get', 'order:list'])]
+    #[Groups(['user:show', 'user:register', 'user:me', 'course:list', 'user:inbox', 'planning:show', 'payment:get', 'order:list'])]
     private ?string $email = null;
 
     #[ORM\Column]
@@ -141,7 +140,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $plainPassword = null;
 
     #[ORM\Column(length: 3, nullable: true, options: ["default" => "CD"])]
-    #[Groups(['user:show', 'user:update', 'user:register', 'teacher:list', 'user:inbox', 'planning:show'])]
+    #[Groups(['user:show', 'user:update', 'user:register', 'teacher:list', 'teacher:show', 'user:inbox', 'planning:show'])]
     private ?string $country;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -150,8 +149,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?DateTimeImmutable $lastLoginAt = null;
 
+    /**
+     * Concrete class, not DateTimeInterface: Doctrine cannot infer a column
+     * type from the interface and silently fell back to `string`, so the
+     * column was created as VARCHAR and flushing a real date threw
+     * "object of class DateTimeImmutable could not be converted to string".
+     */
     #[ORM\Column(nullable: true)]
-    private ?DateTimeInterface $bannedAt = null;
+    private ?DateTimeImmutable $bannedAt = null;
 
     #[ORM\Column(nullable: true)]
     private ?string $confirmationToken = null;
@@ -161,11 +166,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private bool $isVerified = false;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['user:register', 'planning:show', 'user:update', 'user:inbox'])]
+    #[Groups(['user:show', 'user:me', 'user:register', 'planning:show', 'user:update', 'user:inbox'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['user:register', 'planning:show', 'user:update', 'user:inbox'])]
+    #[Groups(['user:show', 'user:me', 'user:register', 'planning:show', 'user:update', 'user:inbox'])]
     private ?string $firstname = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -173,10 +178,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $postname = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['user:me', 'user:update'])]
     private ?\DateTime $birthdayAt;
 
     #[ORM\Column(length: 15, unique: true, nullable: true)]
-    #[Groups(['user:register', 'planning:show', 'user:inbox'])]
+    #[Groups(['user:register', 'user:me', 'planning:show', 'user:inbox'])]
     private ?string $phone = null;
 
     #[ORM\Column]
@@ -217,7 +223,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?Teacher $teacher = null;
 
     #[ORM\Column]
-    #[Groups(['user:phone:verify'])]
+    #[Groups(['user:phone:verify', 'user:me'])]
     private ?bool $isPhoneVerified;
 
     #[ORM\OneToMany(targetEntity: Attachment::class, mappedBy: 'user', cascade: ["persist"])]
@@ -268,6 +274,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
     #[Groups(['user:show', 'user:me'])]
     private bool $isNewsletterSubscribed = false;
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $notificationSettings = null;
 
     public static function getRolesList(): array
     {
@@ -332,7 +341,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return (string)$this->email;
     }
 
-    #[Groups(['teacher:list', 'course:list', 'user:teacher:get', 'user:inbox', 'rating:list', 'payment:get', 'order:list', 'course:view'])]
+    #[Groups(['teacher:list', 'teacher:show', 'course:list', 'user:teacher:get', 'user:inbox', 'rating:list', 'payment:get', 'order:list', 'course:view'])]
     public function getFullname(): ?string
     {
         $fullname = $this->firstname;
@@ -449,12 +458,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return null !== $this->bannedAt;
     }
 
-    public function getBannedAt(): ?DateTimeInterface
+    public function getBannedAt(): ?DateTimeImmutable
     {
         return $this->bannedAt;
     }
 
-    public function setBannedAt(?DateTimeInterface $bannedAt): User
+    public function setBannedAt(?DateTimeImmutable $bannedAt): User
     {
         $this->bannedAt = $bannedAt;
 
@@ -1078,6 +1087,37 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setIsNewsletterSubscribed(bool $isNewsletterSubscribed): static
     {
         $this->isNewsletterSubscribed = $isNewsletterSubscribed;
+
+        return $this;
+    }
+
+    public static function defaultNotificationSettings(): array
+    {
+        return [
+            'sessionReminders' => true,
+            'messages' => true,
+            'teacherUpdates' => true,
+            'promotions' => false,
+            'instructorAnnouncements' => true,
+        ];
+    }
+
+    public function getNotificationSettings(): array
+    {
+        return array_merge(self::defaultNotificationSettings(), $this->notificationSettings ?? []);
+    }
+
+    #[Groups(['user:me'])]
+    public function getNotificationPreferences(): array
+    {
+        return array_merge($this->getNotificationSettings(), [
+            'newsletter' => $this->isNewsletterSubscribed,
+        ]);
+    }
+
+    public function setNotificationSettings(?array $notificationSettings): static
+    {
+        $this->notificationSettings = $notificationSettings;
 
         return $this;
     }

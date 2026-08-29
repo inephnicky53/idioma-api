@@ -70,6 +70,7 @@ readonly class TeacherManager
             ->setLanguage($language)
             ->setLink($model->link)
             ->setVideo($model->video)
+            ->setVideoPoster($model->videoPoster)
             ->setProfile($model->profile)
             ->setTimezone($model->timezone)
             ->setStatus(Teacher::STATUS_WAITING)
@@ -187,17 +188,19 @@ readonly class TeacherManager
 
     public function updateAvailabilities(Teacher $teacher, array $availabilities): Teacher
     {
-        $teacher->getDisponibilities()->clear();
+        foreach ($teacher->getDisponibilities()->toArray() as $disponibility) {
+            $teacher->removeDisponibility($disponibility);
+        }
 
         foreach ($availabilities as $availabilityModel) {
             foreach ($availabilityModel->programs as $timeSlot) {
-                $disponibility = (new Disponibility())
-                    ->setDay(ucfirst($availabilityModel->day))
-                    ->setStart($timeSlot->start)
-                    ->setEnd($timeSlot->end)
-                    ->setIsActive(true);
-
-                $teacher->addDisponibility($disponibility);
+                $teacher->addDisponibility(
+                    (new Disponibility())
+                        ->setDay(ucfirst($availabilityModel->day))
+                        ->setStart($timeSlot->start)
+                        ->setEnd($timeSlot->end)
+                        ->setIsActive(true)
+                );
             }
         }
 
@@ -252,6 +255,191 @@ readonly class TeacherManager
     }
 
     /**
+     * When a published profile changes, send it back to admin validation queue.
+     */
+    public function markForAdminReview(Teacher $teacher): Teacher
+    {
+        $teacher->setSubmitedAt(new \DateTimeImmutable());
+
+        $wasPublished = $teacher->isIsActive()
+            || (int) $teacher->getStatus() === Teacher::STATUS_VALIDATED;
+
+        if ($wasPublished) {
+            $this->invalidate($teacher);
+        }
+
+        $this->em->persist($teacher);
+        $this->em->flush();
+
+        return $teacher;
+    }
+
+    /**
+     * Full profile resubmission for an existing teacher (same payload as become flow).
+     */
+    public function updateFromBecomeInput(Teacher $teacher, \App\Dto\CreateTeacherInput $input): Teacher
+    {
+        /** @var User $user */
+        $user = $this->security->getUser();
+        $needsReview = false;
+
+        if ($input->firstname && $input->firstname !== $user->getFirstname()) {
+            $user->setFirstname($input->firstname);
+            $needsReview = true;
+        }
+        if ($input->lastname && $input->lastname !== $user->getName()) {
+            $user->setName($input->lastname);
+            $needsReview = true;
+        }
+        if ($input->phone && $input->phone !== $user->getPhone()) {
+            $user->setPhone($input->phone);
+            $needsReview = true;
+        }
+
+        if ($input->language) {
+            $language = $this->languageRepository->findOneBy(['locale' => $input->language]);
+            if ($language && $teacher->getLanguage()?->getId() !== $language->getId()) {
+                $teacher->setLanguage($language);
+                $needsReview = true;
+            }
+        }
+
+        if ($input->price !== null && (float) $input->price !== (float) $teacher->getPrice()) {
+            $teacher->setPrice($input->price);
+            $needsReview = true;
+        }
+
+        if ($input->currency) {
+            $currency = $this->currencyRepository->findOneBy(['min' => $input->currency]);
+            if ($currency) {
+                $teacher->setCurrency($currency);
+            }
+        }
+
+        if ($input->profile && $input->profile !== $teacher->getProfile()) {
+            $teacher->setProfile($input->profile);
+            $user->setProfile($input->profile);
+            $needsReview = true;
+        }
+        if ($input->video && $input->video !== $teacher->getVideo()) {
+            $teacher->setVideo($input->video);
+            $teacher->setLink(null);
+            $needsReview = true;
+        } elseif ($input->link !== null && $input->link !== $teacher->getLink()) {
+            $teacher->setLink($input->link ?: null);
+            if ($input->link) {
+                $teacher->setVideo(null);
+            }
+            $needsReview = true;
+        }
+        if ($input->videoPoster && $input->videoPoster !== $teacher->getVideoPoster()) {
+            $teacher->setVideoPoster($input->videoPoster);
+            $needsReview = true;
+        }
+        if ($input->shortDescription !== null && $input->shortDescription !== $teacher->getShortDescription()) {
+            $teacher->setShortDescription($input->shortDescription);
+            $needsReview = true;
+        }
+        if ($input->description !== null && $input->description !== $teacher->getDescription()) {
+            $teacher->setDescription($input->description);
+            $needsReview = true;
+        }
+        if ($input->experience !== null && $input->experience !== $teacher->getExperience()) {
+            $teacher->setExperience($input->experience);
+            $needsReview = true;
+        }
+        if ($input->motivation !== null && $input->motivation !== $teacher->getMotivation()) {
+            $teacher->setMotivation($input->motivation);
+            $needsReview = true;
+        }
+        if ($input->timezone && $input->timezone !== $teacher->getTimezone()) {
+            $teacher->setTimezone($input->timezone);
+        }
+
+        if ($input->spokenLanguages) {
+            foreach ($teacher->getSpokenLanguages()->toArray() as $spokenLanguage) {
+                $teacher->removeSpokenLanguage($spokenLanguage);
+            }
+            foreach ($input->spokenLanguages as $item) {
+                $teacher->addSpokenLanguage(
+                    (new SpokenLanguage())
+                        ->setLanguage($item->language)
+                        ->setLevel($item->level)
+                );
+            }
+            $needsReview = true;
+        }
+
+        if ($input->languages) {
+            foreach ($teacher->getTeachingLanguages()->toArray() as $teachingLanguage) {
+                $teacher->removeTeachingLanguage($teachingLanguage);
+            }
+            foreach ($input->languages as $item) {
+                $lang = $this->languageRepository->findOneBy(['locale' => $item->language]);
+                if ($lang) {
+                    $teacher->addTeachingLanguage((new TeachingLanguage())->setLanguage($lang));
+                }
+            }
+            $needsReview = true;
+        }
+
+        if ($input->certifications !== []) {
+            foreach ($teacher->getTeacherCertifications()->toArray() as $cert) {
+                $teacher->removeTeacherCertification($cert);
+            }
+            foreach ($input->certifications as $item) {
+                $lang = $item->language
+                    ? $this->languageRepository->findOneBy(['locale' => $item->language])
+                    : null;
+                if (!$lang) {
+                    continue;
+                }
+                $teacher->addTeacherCertification(
+                    (new TeacherCertification())
+                        ->setCertification($item->certification)
+                        ->addLanguage($lang)
+                        ->setYearStart($item->yearStart)
+                        ->setYearEnd($item->yearEnd)
+                        ->setProofImage($item->proofImage)
+                );
+            }
+            $needsReview = true;
+        }
+
+        if ($input->formations !== []) {
+            foreach ($teacher->getTeacherFormations()->toArray() as $formation) {
+                $teacher->removeTeacherFormation($formation);
+            }
+            foreach ($input->formations as $item) {
+                $teacher->addTeacherFormation(
+                    (new TeacherFormation())
+                        ->setCertificate($item->certificate)
+                        ->setUniversity($item->university)
+                        ->setSpeciality($item->speciality)
+                        ->setYearStart($item->yearStart !== null && $item->yearStart !== '' ? (int) $item->yearStart : null)
+                        ->setYearEnd($item->yearEnd !== null && $item->yearEnd !== '' ? (int) $item->yearEnd : null)
+                        ->setProofImage($item->proofImage)
+                );
+            }
+            $needsReview = true;
+        }
+
+        if ($input->availabilities) {
+            $this->updateAvailabilities($teacher, $input->availabilities);
+        }
+
+        if ($needsReview) {
+            $this->markForAdminReview($teacher);
+        } else {
+            $this->em->persist($teacher);
+            $this->em->persist($user);
+            $this->em->flush();
+        }
+
+        return $teacher;
+    }
+
+    /**
      * @throws Exception
      */
     public function update(UpdateTeacherInput $updateData): Teacher
@@ -262,19 +450,33 @@ readonly class TeacherManager
         if (!$teacher)
             throw new Exception('User is not a teacher');
 
+        $needsReview = false;
+
         if (isset($updateData->shortDescription)) {
+            if ($updateData->shortDescription !== $teacher->getShortDescription()) {
+                $needsReview = true;
+            }
             $teacher->setShortDescription($updateData->shortDescription);
         }
 
         if (isset($updateData->description)) {
+            if ($updateData->description !== $teacher->getDescription()) {
+                $needsReview = true;
+            }
             $teacher->setDescription($updateData->description);
         }
 
         if (isset($updateData->experience)) {
+            if ($updateData->experience !== $teacher->getExperience()) {
+                $needsReview = true;
+            }
             $teacher->setExperience($updateData->experience);
         }
 
         if (isset($updateData->motivation)) {
+            if ($updateData->motivation !== $teacher->getMotivation()) {
+                $needsReview = true;
+            }
             $teacher->setMotivation($updateData->motivation);
         }
 
@@ -283,33 +485,82 @@ readonly class TeacherManager
         }
 
         if (isset($updateData->profile)) {
+            if ($updateData->profile !== $teacher->getProfile()) {
+                $needsReview = true;
+            }
             $teacher->setProfile($updateData->profile);
         }
 
         if (isset($updateData->price)) {
+            if ((float) $updateData->price !== (float) $teacher->getPrice()) {
+                $needsReview = true;
+            }
             $teacher->setPrice($updateData->price);
         }
 
         if (isset($updateData->spokenLanguages) && is_array($updateData->spokenLanguages)) {
+            $previous = $this->normalizeSpokenLanguages($teacher);
+            $next = $this->normalizeSpokenLanguagesInput($updateData->spokenLanguages);
+            if ($previous !== $next) {
+                $needsReview = true;
+            }
+
             foreach ($teacher->getSpokenLanguages() as $spokenLanguage) {
                 $teacher->removeSpokenLanguage($spokenLanguage);
             }
 
             foreach ($updateData->spokenLanguages as $item) {
-                $lang = $this->languageRepository->findOneBy(['locale' => $item->language]);
-                if ($lang) {
+                $locale = is_object($item) ? ($item->language ?? null) : ($item['language'] ?? null);
+                $level = is_object($item) ? ($item->level ?? null) : ($item['level'] ?? null);
+                $lang = $locale ? $this->languageRepository->findOneBy(['locale' => $locale]) : null;
+                if ($lang && $level) {
                     $teacher->addSpokenLanguage(
                         (new SpokenLanguage())
-                            ->setLanguage($lang)
-                            ->setLevel($item->level)
+                            ->setLanguage($lang->getLocale())
+                            ->setLevel($level)
                     );
                 }
             }
+        }
+
+        if ($needsReview) {
+            return $this->markForAdminReview($teacher);
         }
 
         $this->em->persist($teacher);
         $this->em->flush();
 
         return $teacher;
+    }
+
+    /** @return list<array{language: string, level: string|null}> */
+    private function normalizeSpokenLanguages(Teacher $teacher): array
+    {
+        $items = [];
+        foreach ($teacher->getSpokenLanguages() as $spokenLanguage) {
+            $items[] = [
+                'language' => (string) $spokenLanguage->getLanguage(),
+                'level' => $spokenLanguage->getLevel(),
+            ];
+        }
+        usort($items, fn(array $a, array $b) => strcmp($a['language'], $b['language']));
+
+        return $items;
+    }
+
+    /** @return list<array{language: string, level: string|null}> */
+    private function normalizeSpokenLanguagesInput(array $input): array
+    {
+        $items = [];
+        foreach ($input as $item) {
+            $locale = is_object($item) ? ($item->language ?? null) : ($item['language'] ?? null);
+            $level = is_object($item) ? ($item->level ?? null) : ($item['level'] ?? null);
+            if ($locale) {
+                $items[] = ['language' => (string) $locale, 'level' => $level];
+            }
+        }
+        usort($items, fn(array $a, array $b) => strcmp($a['language'], $b['language']));
+
+        return $items;
     }
 }

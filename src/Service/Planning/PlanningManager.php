@@ -2,19 +2,22 @@
 
 namespace App\Service\Planning;
 
-use App\Entity\Disponibility;
 use App\Entity\Planning;
 use App\Entity\User;
 use App\Entity\UserTeacher;
+use App\Entity\Course;
 use App\Event\PlanningBookedEvent;
 use App\Event\PlanningCreatedEvent;
 use App\Exception\InsufficientHoursException;
 use App\Exception\OverlappingBookingException;
 use App\Repository\PlanningRepository;
+use App\Service\Inbox\SalonThreadService;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 readonly class PlanningManager
 {
@@ -22,7 +25,8 @@ readonly class PlanningManager
         private Security                 $security,
         private EventDispatcherInterface $dispatcher,
         private EntityManagerInterface   $em,
-        private PlanningRepository       $planningRepository
+        private PlanningRepository       $planningRepository,
+        private SalonThreadService       $salonThreads,
     )
     {
     }
@@ -46,6 +50,7 @@ readonly class PlanningManager
             $this->dispatcher->dispatch(new PlanningCreatedEvent($data));
 
             $this->em->flush();
+            $this->salonThreads->findOrCreateForPlanning($data);
             $this->em->commit();
 
             return $data;
@@ -56,43 +61,103 @@ readonly class PlanningManager
     }
 
     /**
+     * Hours are deducted at booking time. Starting the live room only
+     * flips the planning status — never debit again.
+     *
      * @throws \Exception
      */
-    public function start(string $meetingLink): Planning
+    public function start(int|string $planningId): Planning
     {
-        $planning = $this->planningRepository->findOneBy(['meetingLink' => $meetingLink]);
-        if (!$planning) {
-            throw new \Exception("Planning not found for meeting link $meetingLink");
-        }
-        $now = new \DateTimeImmutable('now');
+        $planning = is_numeric((string) $planningId)
+            ? $this->planningRepository->find((int) $planningId)
+            : $this->planningRepository->findOneBy(['meetingLink' => (string) $planningId]);
 
-        if ($planning->getEnd() <= $now->modify('-30 minutes')) {
+        if (!$planning) {
+            throw new \Exception("Planning not found for $planningId");
+        }
+
+        $now = new \DateTimeImmutable('now');
+        if ($planning->getEnd() && $planning->getEnd() <= $now->modify('-30 minutes')) {
             throw new \Exception("La date de fin du planning ({$planning->getEnd()->format('Y-m-d H:i:s')}) ne peut pas être inférieure à l'heure actuelle moins 30 minutes.");
         }
 
-        $planning->setStatus(Planning::STATUS_STARTED);
-
-        foreach ($planning->getParticipants() as $participant) {
-            $userTeacher = $this->em->getRepository(UserTeacher::class)->findOneBy([
-                'teacher' => $participant->getTeacher()->getId(),
-                'user' => $this->security->getUser()
-            ]);
-
-            if (!$userTeacher)
-                throw new \Exception("Impossible de trouver l'association UserTeacher pour l'utilisateur et l'enseignant ID {$participant->getTeacher()->getId()}.");
-
-            $newHours = $userTeacher->getHours() - 1;
-            if ($newHours < 0)
-                throw new \Exception("L'utilisateur n'a pas assez d'heures disponibles.");
-
-            $userTeacher->setHours($newHours);
-            $this->em->persist($userTeacher);
+        if (!in_array($planning->getStatus(), [Planning::STATUS_CREATED, Planning::STATUS_STARTED, Planning::STATUS_PENDING], true)) {
+            throw new \Exception("Cette séance ne peut pas être démarrée.");
         }
 
+        $planning->setStatus(Planning::STATUS_STARTED);
         $this->em->persist($planning);
         $this->em->flush();
 
         return $planning;
+    }
+
+    /**
+     * Teacher organizes a 1:1 or salon (group) live session.
+     *
+     * @param list<int> $studentIds
+     */
+    public function organize(\DateTimeImmutable $start, array $studentIds, ?\DateTimeImmutable $end = null, ?Course $course = null): Planning
+    {
+        /** @var User $user */
+        $user = $this->security->getUser();
+        $teacher = $user?->getTeacher();
+        if (!$teacher) {
+            throw new AccessDeniedHttpException('Seul un professeur peut organiser une séance.');
+        }
+
+        $studentIds = array_values(array_unique(array_map('intval', $studentIds)));
+        if ($studentIds === []) {
+            throw new BadRequestHttpException('Sélectionnez au moins un apprenant.');
+        }
+
+        $this->em->beginTransaction();
+        try {
+            $planning = (new Planning())
+                ->setTeacher($teacher)
+                ->setStart($start)
+                ->setCourse($course)
+                ->setStatus(Planning::STATUS_CREATED);
+
+            $planning->setEnd($end ?: $start->modify('+50 minutes'));
+
+            foreach ($studentIds as $studentId) {
+                $student = $this->em->getRepository(User::class)->find($studentId);
+                if (!$student instanceof User) {
+                    throw new BadRequestHttpException("Apprenant #$studentId introuvable.");
+                }
+
+                $link = $this->em->getRepository(UserTeacher::class)->findOneBy([
+                    'user' => $student,
+                    'teacher' => $teacher,
+                ]);
+                $hours = $link ? $link->getHours() : 0;
+                if ($hours < 1) {
+                    $name = $student->getFullname() ?: $student->getEmail();
+                    throw new InsufficientHoursException("$name n'a plus d'heures disponibles.");
+                }
+
+                $link->setHours($hours - 1);
+                $this->em->persist($link);
+                $planning->addParticipant($student);
+            }
+
+            foreach ($planning->getParticipants() as $student) {
+                $this->checkOverlappingBookings($planning, $student);
+            }
+            $this->checkTeacherAvailability($planning);
+
+            $this->em->persist($planning);
+            $this->dispatcher->dispatch(new PlanningCreatedEvent($planning));
+            $this->em->flush();
+            $this->salonThreads->findOrCreateForPlanning($planning);
+            $this->em->commit();
+
+            return $planning;
+        } catch (\Exception $e) {
+            $this->em->rollback();
+            throw $e;
+        }
     }
 
 
@@ -177,7 +242,10 @@ readonly class PlanningManager
         $this->checkOverlappingBookings($data, $user);
         $this->checkTeacherAvailability($data);
 
-        if ($userTeacher) {
+        // The first session with a teacher is a free trial: debiting an hour
+        // here charged for it, while cancel() refuses to refund a trial — so
+        // the student lost a prepaid hour on a session that costs nothing.
+        if ($userTeacher && !$canTrial) {
             $userTeacher->setHours($hours - 1);
             $this->em->persist($userTeacher);
         }
@@ -206,18 +274,33 @@ readonly class PlanningManager
      */
     private function checkTeacherAvailability(Planning $data): void
     {
-        $teacherAvailabilities = $data->getTeacher()->getDisponibilities()->toArray();
-        $currentYear = date('Y');
-
-        /** @var Disponibility $availability */
-        foreach ($teacherAvailabilities as $availability) {
-            $day = $availability->getDay();
-            $start = \DateTimeImmutable::createFromFormat('Y-m-d H:i', "$currentYear-" . date('W', strtotime($day)) . '-1 ' . $availability->getStart());
-            $end = \DateTimeImmutable::createFromFormat('Y-m-d H:i', "$currentYear-" . date('W', strtotime($day)) . '-1 ' . $availability->getEnd());
-
-            if ($availability->isIsActive() && $this->isOverlapping($data->getStart(), $data->getEnd(), $start, $end))
-                throw new \Exception("Le idiomaster n'est pas disponible à ce créneau.");
+        $availabilities = [];
+        foreach ($data->getTeacher()->getDisponibilities() as $availability) {
+            if ($availability->isIsActive()) {
+                $availabilities[] = $availability;
+            }
         }
+
+        if ($availabilities === []) {
+            return;
+        }
+
+        $weekday = strtolower($data->getStart()->format('l'));
+        $startHm = $data->getStart()->format('H:i');
+        $endHm = $data->getEnd()->format('H:i');
+
+        foreach ($availabilities as $availability) {
+            if (strtolower((string) $availability->getDay()) !== $weekday) {
+                continue;
+            }
+            $avStart = substr((string) $availability->getStart(), 0, 5);
+            $avEnd = substr((string) $availability->getEnd(), 0, 5);
+            if ($startHm >= $avStart && $endHm <= $avEnd) {
+                return;
+            }
+        }
+
+        throw new \Exception("Le idiomaster n'est pas disponible à ce créneau.");
     }
 
     private function isOverlapping(?\DateTimeImmutable $start1, ?\DateTimeImmutable $end1, ?\DateTimeImmutable $start2, ?\DateTimeImmutable $end2): bool
@@ -247,6 +330,7 @@ readonly class PlanningManager
             $this->dispatcher->dispatch(new PlanningBookedEvent($data));
 
             $this->em->flush();
+            $this->salonThreads->findOrCreateForPlanning($data);
             $this->em->commit();
 
             return $data;

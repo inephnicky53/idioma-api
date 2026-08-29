@@ -49,6 +49,13 @@ class TransactionRepository extends ServiceEntityRepository
 //        ;
 //    }
 
+    /**
+     * Transactions awaiting a provider verdict.
+     *
+     * Filters on STATUS_PROCESS: that is what the gateways set once the payment
+     * request has been accepted by FlexPay. STATUS_WAIT is never assigned
+     * anywhere, so this query always came back empty and nothing was reconciled.
+     */
     public function findWaitingsResults()
     {
         $waiting = (new DateTime())->modify(Idioma::WAITING_TIME);
@@ -57,11 +64,9 @@ class TransactionRepository extends ServiceEntityRepository
             ->andWhere('t.status = :val')
             ->andWhere('t.providerReference IS NOT NULL')
             ->andWhere('t.createdAt < :last')
-            //->andWhere('t.is_sms_send = false')
             ->setParameter('last', $waiting, Types::DATETIME_MUTABLE)
-            ->setParameter('val', Idioma::STATUS_WAIT)
+            ->setParameter('val', Idioma::STATUS_PROCESS)
             ->orderBy('t.id', 'ASC')
-            //->setMaxResults(10)
             ->getQuery()
             ->getResult();
     }

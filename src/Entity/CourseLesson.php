@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\CourseLessonRepository;
+use App\Service\Media\VimeoUrl;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 
@@ -43,6 +44,9 @@ class CourseLesson
     #[ORM\Column(options: ['default' => false])]
     #[Groups(['course:list'])]
     private ?bool $isPreview = false;
+
+    #[ORM\Column(length: 500, nullable: true)]
+    private ?string $vimeoUrl = null;
 
     public function getId(): ?int
     {
@@ -119,6 +123,34 @@ class CourseLesson
         $this->isPreview = $isPreview;
 
         return $this;
+    }
+
+    public function getVimeoUrl(): ?string
+    {
+        return $this->vimeoUrl;
+    }
+
+    public function setVimeoUrl(?string $vimeoUrl): static
+    {
+        $this->vimeoUrl = $vimeoUrl ?: null;
+
+        return $this;
+    }
+
+    #[Groups(['course:list'])]
+    public function hasVimeo(): bool
+    {
+        return (bool) $this->vimeoUrl;
+    }
+
+    #[Groups(['course:list'])]
+    public function getPreviewEmbedUrl(): ?string
+    {
+        if (!$this->isPreview || !$this->vimeoUrl) {
+            return null;
+        }
+
+        return VimeoUrl::toEmbed($this->vimeoUrl);
     }
 
     public function __toString(): string

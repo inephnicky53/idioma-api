@@ -7,10 +7,12 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\Field;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ImageField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\UrlField;
+use Vich\UploaderBundle\Form\Type\VichImageType;
 
 class PartnerCrudController extends AbstractCrudController
 {
@@ -30,10 +32,17 @@ class PartnerCrudController extends AbstractCrudController
     public function configureFields(string $pageName): iterable
     {
         yield TextField::new('name', 'Nom');
-        yield ImageField::new('logoFile', 'Logo')
+        yield ImageField::new('logoName', 'Logo')
             ->setBasePath('/uploads/partners')
-            ->setUploadDir('public/uploads/partners')
-            ->setUploadedFileNamePattern('[slug]-[timestamp].[extension]');
+            ->onlyOnIndex();
+        yield Field::new('logoFile', 'Logo')
+            ->setFormType(VichImageType::class)
+            ->setFormTypeOptions([
+                'allow_delete' => false,
+                'download_uri' => false,
+                'required' => $pageName === Crud::PAGE_NEW,
+            ])
+            ->onlyOnForms();
         yield UrlField::new('website', 'Site web')->hideOnIndex();
         yield IntegerField::new('position', 'Ordre');
         yield ChoiceField::new('site', 'Site')

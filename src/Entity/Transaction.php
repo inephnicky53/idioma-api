@@ -23,6 +23,8 @@ use Symfony\Component\Serializer\Annotation\Groups;
         ),
         new Get(
             uriTemplate: 'transactions/{id}/check',
+            normalizationContext: ['groups' => ['transaction:list']],
+            security: "is_granted('ROLE_USER')",
             provider: CheckTransactionProvider::class,
         )
     ]

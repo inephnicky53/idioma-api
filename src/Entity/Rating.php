@@ -25,7 +25,7 @@ use function Symfony\Component\Translation\t;
         new Post(
             denormalizationContext: ['groups' => ['rating:create']],
             security: "is_granted('ROLE_USER')",
-            provider: TeacherRatingProcessor::class,
+            processor: TeacherRatingProcessor::class,
         )
     ],
     normalizationContext: ['groups' => ['rating:list']]

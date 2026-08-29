@@ -42,6 +42,8 @@ class CreateTeacherInput
 
     public ?string $video = null; 
 
+    public ?string $videoPoster = null;
+
     public ?string $link = null; 
 
     public ?string $shortDescription = null; 

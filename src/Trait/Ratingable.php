@@ -26,7 +26,7 @@ trait Ratingable
         return $this->ratings;
     }
 
-    #[Groups(['teacher:list', 'course:list'])]
+    #[Groups(['teacher:list', 'teacher:show', 'course:list'])]
     public function getRatingStars(): array
     {
         $model = [
@@ -93,7 +93,7 @@ trait Ratingable
         return $starsMoy;
     }
 
-    #[Groups(['teacher:list', 'course:list'])]
+    #[Groups(['teacher:list', 'teacher:show', 'course:list'])]
     public function getRatingsCount(): int
     {
         return $this->ratings->count();

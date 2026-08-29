@@ -32,8 +32,8 @@ readonly class TeacherStudentsProvider implements ProviderInterface
 
         return $this->userTeacherRepository->createQueryBuilder('ut')
             ->andWhere('ut.teacher = :teacher')
-            ->andWhere('ut.hours > 0')
             ->setParameter('teacher', $teacher)
+            ->orderBy('ut.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
     }

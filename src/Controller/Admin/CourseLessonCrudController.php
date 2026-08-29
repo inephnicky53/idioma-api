@@ -32,6 +32,11 @@ class CourseLessonCrudController extends AbstractCrudController
             ])
             ->setColumns(4);
 
+        yield TextField::new('vimeoUrl', 'URL Vimeo')
+            ->setHelp('Lien player.vimeo.com ou vimeo.com/123456 — lecture pour les apprenants inscrits')
+            ->hideOnIndex()
+            ->setColumns(12);
+
         yield IntegerField::new('durationMinutes', 'Durée (minutes)')
             ->setColumns(4);
 

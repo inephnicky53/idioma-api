@@ -22,6 +22,13 @@ final class TeacherBecomeRequestParser
     {
         $data = $request->request->all();
         if ($data === [] && $request->files->count() === 0) {
+            $contentLength = (int) ($request->headers->get('Content-Length') ?? 0);
+            if ($contentLength > 0) {
+                throw new BadRequestHttpException(
+                    'Le formulaire est trop volumineux pour le serveur (photo/vidéo). '
+                    .'Réduisez la taille des fichiers ou réessayez après avoir rechargé la page.'
+                );
+            }
             throw new BadRequestHttpException('Aucune donnée reçue. Envoyez un formulaire multipart.');
         }
 
@@ -42,15 +49,9 @@ final class TeacherBecomeRequestParser
         $input->hookTitle = $this->stringOrNull($data['hookTitle'] ?? null);
         $input->timezone = $this->stringOrNull($data['timezone'] ?? null);
 
-        $photo = $request->files->get('photo');
-        if ($photo instanceof UploadedFile) {
-            $input->profile = $this->uploads->store($photo, 'photos');
-        }
-
-        $video = $request->files->get('video');
-        if ($video instanceof UploadedFile) {
-            $input->video = $this->uploads->store($video, 'videos');
-        }
+        $input->profile = $this->storeUpload($request->files->get('photo'), 'photos');
+        $input->video = $this->storeUpload($request->files->get('video'), 'videos');
+        $input->videoPoster = $this->storeUpload($request->files->get('thumbnail'), 'thumbnails');
 
         $input->certifications = $this->mapCertifications($data['certifications'] ?? [], $request);
         $input->formations = $this->mapFormations($data['formations'] ?? [], $request);
@@ -80,10 +81,10 @@ final class TeacherBecomeRequestParser
             $model->yearStart = $this->parseYear($item['yearStart'] ?? null);
             $model->yearEnd = $this->parseYear($item['yearEnd'] ?? null);
 
-            $proof = $request->files->get('certProof_'.$index);
-            if ($proof instanceof UploadedFile) {
-                $model->proofImage = $this->uploads->store($proof, 'certifications');
-            }
+            $model->proofImage = $this->storeUpload(
+                $request->files->get('certProof_'.$index),
+                'certifications'
+            );
 
             $models[] = $model;
         }
@@ -104,10 +105,10 @@ final class TeacherBecomeRequestParser
                 continue;
             }
 
-            $proof = $request->files->get('formationProof_'.$index);
-            $proofImage = $proof instanceof UploadedFile
-                ? $this->uploads->store($proof, 'formations')
-                : null;
+            $proofImage = $this->storeUpload(
+                $request->files->get('formationProof_'.$index),
+                'formations'
+            );
 
             $models[] = new FormationModel(
                 university: $this->stringOrNull($item['university'] ?? null),
@@ -179,6 +180,15 @@ final class TeacherBecomeRequestParser
         }
 
         return $models;
+    }
+
+    private function storeUpload(mixed $file, string $subdir): ?string
+    {
+        if (!$file instanceof UploadedFile || !$file->isValid()) {
+            return null;
+        }
+
+        return $this->uploads->store($file, $subdir);
     }
 
     private function stringOrNull(mixed $value): ?string

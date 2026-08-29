@@ -18,7 +18,10 @@ use App\Entity\Order;
 use App\Entity\Package;
 use App\Entity\Partner;
 use App\Entity\Planning;
+use App\Entity\Faq;
 use App\Entity\Rate;
+use App\Entity\SiteContact;
+use App\Entity\SiteSocial;
 use App\Entity\Transaction;
 use App\Entity\User;
 use App\Entity\UserCourse;
@@ -119,6 +122,9 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkToCrud('Langues', 'fas fa-language', Language::class);
         yield MenuItem::linkToCrud('Catégories', 'fas fa-tags', Category::class);
         yield MenuItem::linkToCrud('Partenaires', 'fas fa-handshake', Partner::class);
+        yield MenuItem::linkToCrud('Coordonnées', 'fas fa-address-card', SiteContact::class);
+        yield MenuItem::linkToCrud('Réseaux sociaux', 'fas fa-share-alt', SiteSocial::class);
+        yield MenuItem::linkToCrud('FAQ', 'fas fa-question-circle', Faq::class);
 
         // Section Pédagogie
         yield MenuItem::section('Pédagogie')
