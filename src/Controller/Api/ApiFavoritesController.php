@@ -39,6 +39,30 @@ class ApiFavoritesController extends AbstractController
         return new JsonResponse(['ids' => $this->ids($user)]);
     }
 
+    #[Route('/api/user/favorites/merge', name: 'api_user_favorites_merge', methods: ['POST'])]
+    public function merge(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $ids = $request->toArray()['ids'] ?? [];
+        if (!is_array($ids)) {
+            return new JsonResponse(['error' => 'ids doit être un tableau'], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Add-only merge (union): never removes existing favorites.
+        $repo = $this->em->getRepository(Teacher::class);
+        foreach ($ids as $id) {
+            $teacher = $repo->find($id);
+            if ($teacher && !$user->hasFavoriteTeacher($teacher)) {
+                $user->addFavoriteTeacher($teacher);
+            }
+        }
+        $this->em->flush();
+
+        return new JsonResponse(['ids' => $this->ids($user)]);
+    }
+
     #[Route('/api/user/favorites/toggle', name: 'api_user_favorites_toggle', methods: ['POST'])]
     public function toggle(Request $request): JsonResponse
     {
