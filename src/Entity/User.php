@@ -257,6 +257,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\ManyToMany(targetEntity: Language::class)]
     private Collection $goals;
 
+    #[ORM\ManyToMany(targetEntity: Teacher::class)]
+    #[ORM\JoinTable(name: 'user_favorite_teachers')]
+    private Collection $favoriteTeachers;
+
     #[ORM\ManyToMany(targetEntity: Planning::class, mappedBy: 'participants')]
     private Collection $plannings;
 
@@ -309,6 +313,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->ratings = new ArrayCollection();
         $this->teachers = new ArrayCollection();
         $this->goals = new ArrayCollection();
+        $this->favoriteTeachers = new ArrayCollection();
         $this->plannings = new ArrayCollection();
         $this->inboxMessages = new ArrayCollection();
         $this->inboxThreads = new ArrayCollection();
@@ -981,6 +986,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->goals->removeElement($goal);
 
         return $this;
+    }
+
+    /** @return Collection<int, Teacher> */
+    public function getFavoriteTeachers(): Collection
+    {
+        return $this->favoriteTeachers;
+    }
+
+    public function addFavoriteTeacher(Teacher $teacher): static
+    {
+        if (!$this->favoriteTeachers->contains($teacher)) {
+            $this->favoriteTeachers->add($teacher);
+        }
+
+        return $this;
+    }
+
+    public function removeFavoriteTeacher(Teacher $teacher): static
+    {
+        $this->favoriteTeachers->removeElement($teacher);
+
+        return $this;
+    }
+
+    public function hasFavoriteTeacher(Teacher $teacher): bool
+    {
+        return $this->favoriteTeachers->contains($teacher);
     }
 
     /**
